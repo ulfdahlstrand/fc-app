@@ -1,0 +1,14 @@
+{
+  "app": {
+    "title": "FC App"
+  },
+  "home": {
+    "heading": "Lagadministration för fotbollslag",
+    "description": "Grundstrukturen är på plats. Se docs/product/product-spec.md för planerade sidor och funktioner."
+  },
+  "health": {
+    "checking": "Kontrollerar anslutning till servern…",
+    "ok": "Servern svarar — hela kedjan fungerar.",
+    "error": "Kunde inte nå servern. Kontrollera att backend körs."
+  }
+}

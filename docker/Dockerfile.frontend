@@ -1,0 +1,31 @@
+# Development-only Dockerfile for the frontend service.
+# No production-optimised build stage is included.
+
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install curl for health checks and connectivity verification
+RUN apk add --no-cache curl
+
+# Copy root workspace configuration files
+COPY package.json ./
+COPY turbo.json ./
+COPY tsconfig.json ./
+
+# Copy package manifests for all workspaces to allow npm install
+COPY apps/frontend/package.json ./apps/frontend/
+COPY packages/tsconfig/package.json ./packages/tsconfig/
+COPY packages/contracts/package.json ./packages/contracts/
+
+# Install all workspace dependencies
+RUN npm install
+
+# The apps/frontend source directory is bind-mounted at runtime via docker-compose.yml.
+# No COPY of source code is needed here — changes are reflected immediately (hot-reload).
+
+WORKDIR /app/apps/frontend
+
+EXPOSE ${FRONTEND_PORT}
+
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

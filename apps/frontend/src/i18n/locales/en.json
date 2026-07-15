@@ -1,0 +1,14 @@
+{
+  "app": {
+    "title": "FC App"
+  },
+  "home": {
+    "heading": "Team administration for football teams",
+    "description": "The foundation is in place. See docs/product/product-spec.md for planned pages and features."
+  },
+  "health": {
+    "checking": "Checking server connection…",
+    "ok": "Server is responding — the full stack works.",
+    "error": "Could not reach the server. Check that the backend is running."
+  }
+}

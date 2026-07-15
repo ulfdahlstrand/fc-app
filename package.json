@@ -1,0 +1,23 @@
+{
+  "name": "fc-app",
+  "version": "0.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "test": "turbo test",
+    "docker:up": "docker compose -f docker/docker-compose.yml --env-file .env up -d",
+    "docker:down": "docker compose -f docker/docker-compose.yml --env-file .env down",
+    "docker:build": "docker compose -f docker/docker-compose.yml --env-file .env build"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0"
+  },
+  "packageManager": "npm@11.6.0"
+}
