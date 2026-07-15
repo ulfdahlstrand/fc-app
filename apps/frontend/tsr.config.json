@@ -1,0 +1,5 @@
+{
+  "$schema": "https://unpkg.com/@tanstack/router-plugin/dist/schema.json",
+  "routesDirectory": "./src/routes",
+  "generatedRouteTree": "./src/route-tree.gen.ts"
+}

@@ -1,0 +1,31 @@
+{
+  "name": "@fc-app/backend",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch --env-file=.env --import tsx/esm src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "migrate": "node --env-file=.env --import tsx/esm src/db/migrate.ts"
+  },
+  "dependencies": {
+    "@fc-app/contracts": "*",
+    "@orpc/openapi": "^1.13.6",
+    "@orpc/server": "^1.13.6",
+    "@orpc/zod": "^1.13.6",
+    "kysely": "^0.27.4",
+    "pg": "^8.11.3",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@fc-app/tsconfig": "*",
+    "@types/node": "^20.12.7",
+    "@types/pg": "^8.11.5",
+    "tsx": "^4.7.3",
+    "typescript": "^5.4.5",
+    "vitest": "^2.1.0"
+  }
+}

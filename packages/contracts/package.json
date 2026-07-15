@@ -1,0 +1,26 @@
+{
+  "name": "@fc-app/contracts",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "devDependencies": {
+    "@fc-app/tsconfig": "*",
+    "typescript": "^5.4.5"
+  },
+  "dependencies": {
+    "@orpc/contract": "^1.13.6",
+    "zod": "^4.3.6"
+  }
+}
