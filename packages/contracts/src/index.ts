@@ -3,11 +3,6 @@ import { z } from "zod";
 
 // ---------------------------------------------------------------------------
 // Health procedure — Zod schemas
-//
-// The first (and so far only) procedure. It validates the full end-to-end
-// stack: contract → backend handler → typed frontend client. Domain
-// procedures (members, activities, attendance, …) are added here as the
-// product plan (docs/product/product-spec.md) is implemented.
 // ---------------------------------------------------------------------------
 
 export const healthInputSchema = z.object({
@@ -17,6 +12,30 @@ export const healthInputSchema = z.object({
 export const healthOutputSchema = z.object({
   status: z.literal("ok"),
   echo: z.string().optional(),
+});
+
+// ---------------------------------------------------------------------------
+// Auth — Zod schemas
+//
+// `me` returns the signed-in user derived from the session cookie, or null.
+// Sign-in itself is a browser redirect flow (GET /auth/google →
+// /auth/google/callback) and logout is POST /auth/logout — plain HTTP
+// endpoints on the backend, since they set/clear cookies and redirect.
+// ---------------------------------------------------------------------------
+
+export const userSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  email: z.string(),
+  imageUrl: z.string().nullable(),
+});
+
+export type User = z.infer<typeof userSchema>;
+
+export const meInputSchema = z.object({});
+
+export const meOutputSchema = z.object({
+  user: userSchema.nullable(),
 });
 
 // ---------------------------------------------------------------------------
@@ -34,6 +53,10 @@ export const contract = oc.router({
     .route({ method: "GET", path: "/health" })
     .input(healthInputSchema)
     .output(healthOutputSchema),
+  me: oc
+    .route({ method: "GET", path: "/me" })
+    .input(meInputSchema)
+    .output(meOutputSchema),
 });
 
 /** Inferred contract type — used by the frontend to create a typed oRPC client. */

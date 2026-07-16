@@ -10,5 +10,19 @@
     "checking": "Checking server connection…",
     "ok": "Server is responding — the full stack works.",
     "error": "Could not reach the server. Check that the backend is running."
+  },
+  "login": {
+    "heading": "Sign in",
+    "description": "Sign in to manage your team.",
+    "google": "Sign in with Google",
+    "error": "Sign-in failed. Please try again."
+  },
+  "profile": {
+    "language": "Language",
+    "languages": {
+      "sv": "Swedish",
+      "en": "English"
+    },
+    "logout": "Sign out"
   }
 }

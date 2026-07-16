@@ -1,6 +1,6 @@
-import { implement } from "@orpc/server";
-import { contract } from "@fc-app/contracts";
 import { healthHandler } from "./procedures/health.js";
+import { meHandler } from "./procedures/me.js";
+import { os } from "./orpc.js";
 
 /**
  * The oRPC router — implements every procedure defined in the @fc-app/contracts
@@ -11,8 +11,9 @@ import { healthHandler } from "./procedures/health.js";
  * at module-load time), keeping unit tests that import individual handler
  * files free from DATABASE_URL requirements.
  */
-export const router = implement(contract).router({
+export const router = os.router({
   health: healthHandler,
+  me: meHandler,
 });
 
 /** AppRouter type — re-exported for use in tests and future tooling. */

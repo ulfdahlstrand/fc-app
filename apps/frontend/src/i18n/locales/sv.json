@@ -10,5 +10,19 @@
     "checking": "Kontrollerar anslutning till servern…",
     "ok": "Servern svarar — hela kedjan fungerar.",
     "error": "Kunde inte nå servern. Kontrollera att backend körs."
+  },
+  "login": {
+    "heading": "Logga in",
+    "description": "Logga in för att administrera ditt lag.",
+    "google": "Logga in med Google",
+    "error": "Inloggningen misslyckades. Försök igen."
+  },
+  "profile": {
+    "language": "Språk",
+    "languages": {
+      "sv": "Svenska",
+      "en": "Engelska"
+    },
+    "logout": "Logga ut"
   }
 }
