@@ -1,19 +1,27 @@
 /**
- * Index route — renders at the "/" path.
+ * Index route — renders at the "/" path. Requires sign-in; redirects to
+ * /login otherwise.
  *
- * Placeholder home page. It demonstrates the full stack end-to-end:
- * TanStack Router file-based routing, react-i18next translations, and a
- * typed oRPC call to the backend `health` procedure via TanStack Query.
+ * Placeholder home page demonstrating the full stack end-to-end: TanStack
+ * Router file-based routing, react-i18next translations, and a typed oRPC
+ * call to the backend `health` procedure via TanStack Query.
  */
 import Alert from "@mui/material/Alert";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { ensureMe } from "../lib/auth";
 import { orpc } from "../orpc-client";
 
 export const Route = createFileRoute("/")({
+  beforeLoad: async () => {
+    const user = await ensureMe();
+    if (!user) {
+      throw redirect({ to: "/login" });
+    }
+  },
   component: HomePage,
 });
 

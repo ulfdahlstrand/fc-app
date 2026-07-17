@@ -9,6 +9,9 @@
  * HTTP endpoint (exposed via OpenAPIHandler). The OpenAPILink derives HTTP method
  * and path from the contract definition, rather than using the plain RPC protocol.
  *
+ * Requests are sent with `credentials: "include"` so the HTTP-only session
+ * cookie follows every call (the backend allows this via its CORS config).
+ *
  * The backend API base URL is read exclusively from the VITE_API_URL environment
  * variable. No URL is hardcoded. If VITE_API_URL is unset, the client is created
  * with an empty base URL — API calls will fail with a network error, but the
@@ -23,6 +26,8 @@ const apiUrl: string = import.meta.env["VITE_API_URL"] ?? "";
 
 const link = new OpenAPILink(contract, {
   url: apiUrl,
+  fetch: (request, init) =>
+    globalThis.fetch(request, { ...init, credentials: "include" }),
 });
 
 export const orpc = createORPCClient<ContractRouterClient<AppRouter>>(link);

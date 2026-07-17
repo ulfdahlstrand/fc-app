@@ -5,9 +5,14 @@ import { onError } from "@orpc/server";
 import { CORSPlugin } from "@orpc/server/plugins";
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4";
 import { contract } from "@fc-app/contracts";
+import { handleAuthRequest } from "./auth/http.js";
+import { resolveContext } from "./context.js";
 import { router } from "./router.js";
 
 const port = Number(process.env["BACKEND_PORT"] ?? 3001);
+const frontendOrigin = new URL(
+  process.env["FRONTEND_URL"] ?? "http://localhost:5173"
+).origin;
 
 const generator = new OpenAPIGenerator({
   schemaConverters: [new ZodToJsonSchemaConverter()],
@@ -19,7 +24,11 @@ const spec = await generator.generate(contract, {
 const specJson = JSON.stringify(spec);
 
 const handler = new OpenAPIHandler(router, {
-  plugins: [new CORSPlugin()],
+  plugins: [
+    // credentials: the SPA sends the session cookie cross-origin (5173 → 3001),
+    // which requires a concrete allowed origin instead of "*".
+    new CORSPlugin({ origin: frontendOrigin, credentials: true }),
+  ],
   interceptors: [
     onError((error) => {
       console.error("[backend] unhandled error:", error);
@@ -28,17 +37,34 @@ const handler = new OpenAPIHandler(router, {
 });
 
 const server = createServer(async (req, res) => {
-  if (req.method === "GET" && req.url === "/openapi.json") {
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(specJson);
-    return;
-  }
+  try {
+    if (req.method === "GET" && req.url === "/openapi.json") {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(specJson);
+      return;
+    }
 
-  const result = await handler.handle(req, res, { context: {} });
+    if (await handleAuthRequest(req, res)) {
+      return;
+    }
 
-  if (!result.matched) {
-    res.statusCode = 404;
-    res.end(JSON.stringify({ error: "Not Found" }));
+    const context = await resolveContext(req);
+    const result = await handler.handle(req, res, { context });
+
+    if (!result.matched) {
+      res.statusCode = 404;
+      res.end(JSON.stringify({ error: "Not Found" }));
+    }
+  } catch (error) {
+    // A throwing endpoint (e.g. missing auth env vars) must not crash the
+    // process via an unhandled rejection.
+    console.error("[backend] request failed:", error);
+    if (!res.headersSent) {
+      res.statusCode = 500;
+      res.end(JSON.stringify({ error: "Internal Server Error" }));
+    } else {
+      res.end();
+    }
   }
 });
 
