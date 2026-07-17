@@ -4,12 +4,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node --watch --env-file=.env --import tsx/esm src/index.ts",
+    "dev": "node --watch --env-file=../../.env --import tsx/esm src/index.ts",
+    "dev:docker": "node --watch --import tsx/esm src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "migrate": "node --env-file=.env --import tsx/esm src/db/migrate.ts"
+    "migrate": "node --env-file=../../.env --import tsx/esm src/db/migrate.ts"
   },
   "dependencies": {
     "@fc-app/contracts": "*",
