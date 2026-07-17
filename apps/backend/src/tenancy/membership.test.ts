@@ -12,7 +12,7 @@ const MEMBERSHIP_ROW = {
   id: "550e8400-e29b-41d4-a716-446655440004",
   user_id: USER_ID,
   club_id: CLUB_ID,
-  team_id: null,
+  team_id: null as string | null,
   role: "admin",
 };
 
@@ -79,6 +79,26 @@ describe("requireTeamAccess", () => {
   it("throws FORBIDDEN when the caller is not a member of the team's club", async () => {
     const { db } = buildDbMock({
       membershipRow: undefined,
+      teamRow: { id: TEAM_ID, club_id: CLUB_ID },
+    });
+    await expect(requireTeamAccess(db, USER_ID, TEAM_ID)).rejects.toThrow(
+      ORPCError
+    );
+  });
+
+  it("allows a membership scoped to the requested team", async () => {
+    const { db } = buildDbMock({
+      membershipRow: { ...MEMBERSHIP_ROW, team_id: TEAM_ID },
+      teamRow: { id: TEAM_ID, club_id: CLUB_ID },
+    });
+    const result = await requireTeamAccess(db, USER_ID, TEAM_ID);
+    expect(result.teamId).toEqual(TEAM_ID);
+  });
+
+  it("throws FORBIDDEN when the membership is scoped to another team", async () => {
+    const OTHER_TEAM_ID = "550e8400-e29b-41d4-a716-446655440099";
+    const { db } = buildDbMock({
+      membershipRow: { ...MEMBERSHIP_ROW, team_id: OTHER_TEAM_ID },
       teamRow: { id: TEAM_ID, club_id: CLUB_ID },
     });
     await expect(requireTeamAccess(db, USER_ID, TEAM_ID)).rejects.toThrow(

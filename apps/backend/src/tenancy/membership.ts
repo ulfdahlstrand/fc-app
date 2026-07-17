@@ -51,9 +51,11 @@ export async function requireMembership(
 }
 
 /**
- * Returns the team if it belongs to a club the caller is a member of,
- * otherwise throws FORBIDDEN. The tenant check goes through the team's own
- * club_id — never a client-supplied club id.
+ * Returns the team if the caller's membership grants access to it, otherwise
+ * throws FORBIDDEN. The tenant check goes through the team's own club_id —
+ * never a client-supplied club id. A club-wide membership (team_id null)
+ * covers every team in the club; a team-scoped membership covers only its
+ * own team.
  */
 export async function requireTeamAccess(
   db: Kysely<Database>,
@@ -71,5 +73,10 @@ export async function requireTeamAccess(
   }
 
   const membership = await requireMembership(db, userId, team.club_id);
+
+  if (membership.teamId !== null && membership.teamId !== team.id) {
+    throw new ORPCError("FORBIDDEN", { message: "No access to this team" });
+  }
+
   return { teamId: team.id, clubId: team.club_id, membership };
 }
