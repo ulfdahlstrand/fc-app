@@ -39,6 +39,52 @@ export const meOutputSchema = z.object({
 });
 
 // ---------------------------------------------------------------------------
+// Clubs & teams — Zod schemas (ADR-003 multi-tenancy)
+//
+// A club is the tenant root; teams belong to a club. `myClubs` returns only
+// clubs the caller is a member of — the frontend's club/team switcher and
+// onboarding redirect are driven by it.
+// ---------------------------------------------------------------------------
+
+export const teamSchema = z.object({
+  id: z.string(),
+  clubId: z.string(),
+  name: z.string(),
+});
+
+export type Team = z.infer<typeof teamSchema>;
+
+export const clubSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+});
+
+export type Club = z.infer<typeof clubSchema>;
+
+export const myClubSchema = clubSchema.extend({
+  role: z.string(),
+  teams: z.array(teamSchema),
+});
+
+export type MyClub = z.infer<typeof myClubSchema>;
+
+export const myClubsInputSchema = z.object({});
+
+export const myClubsOutputSchema = z.object({
+  clubs: z.array(myClubSchema),
+});
+
+export const createClubInputSchema = z.object({
+  clubName: z.string().min(1).max(100),
+  teamName: z.string().min(1).max(100),
+});
+
+export const createClubOutputSchema = z.object({
+  club: clubSchema,
+  team: teamSchema,
+});
+
+// ---------------------------------------------------------------------------
 // Router contract
 //
 // Defines the shape of every procedure (input + output schemas) without any
@@ -57,6 +103,14 @@ export const contract = oc.router({
     .route({ method: "GET", path: "/me" })
     .input(meInputSchema)
     .output(meOutputSchema),
+  myClubs: oc
+    .route({ method: "GET", path: "/my-clubs" })
+    .input(myClubsInputSchema)
+    .output(myClubsOutputSchema),
+  createClub: oc
+    .route({ method: "POST", path: "/clubs" })
+    .input(createClubInputSchema)
+    .output(createClubOutputSchema),
 });
 
 /** Inferred contract type — used by the frontend to create a typed oRPC client. */

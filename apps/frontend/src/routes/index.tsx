@@ -1,10 +1,9 @@
 /**
- * Index route — renders at the "/" path. Requires sign-in; redirects to
- * /login otherwise.
+ * Index route — renders at the "/" path. Requires sign-in and at least one
+ * club membership; redirects to /login or /onboarding otherwise.
  *
- * Placeholder home page demonstrating the full stack end-to-end: TanStack
- * Router file-based routing, react-i18next translations, and a typed oRPC
- * call to the backend `health` procedure via TanStack Query.
+ * Placeholder home page until the dashboard (#20). Shows the selected team
+ * and verifies the stack with a typed `health` call.
  */
 import Alert from "@mui/material/Alert";
 import Stack from "@mui/material/Stack";
@@ -13,20 +12,22 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { ensureMe } from "../lib/auth";
+import { ensureMyClubs, useSelectedTeam } from "../lib/clubs";
 import { orpc } from "../orpc-client";
 
 export const Route = createFileRoute("/")({
   beforeLoad: async () => {
     const user = await ensureMe();
-    if (!user) {
-      throw redirect({ to: "/login" });
-    }
+    if (!user) throw redirect({ to: "/login" });
+    const clubs = await ensureMyClubs();
+    if (clubs.length === 0) throw redirect({ to: "/onboarding" });
   },
   component: HomePage,
 });
 
 function HomePage() {
   const { t } = useTranslation();
+  const selected = useSelectedTeam();
 
   const health = useQuery({
     queryKey: ["health"],
@@ -36,8 +37,11 @@ function HomePage() {
   return (
     <Stack spacing={2}>
       <Typography variant="h4" component="h1">
-        {t("home.heading")}
+        {selected ? selected.team.name : t("home.heading")}
       </Typography>
+      {selected && (
+        <Typography color="text.secondary">{selected.club.name}</Typography>
+      )}
       <Typography>{t("home.description")}</Typography>
       {health.isPending ? (
         <Alert severity="info">{t("health.checking")}</Alert>
