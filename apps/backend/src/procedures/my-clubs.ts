@@ -5,10 +5,11 @@ import type { Database } from "../db/types.js";
 import { os, requireUser } from "../orpc.js";
 
 /**
- * Lists the clubs the user is a member of, with the teams their membership
- * grants access to (all teams for club-wide memberships, only the own team
- * for team-scoped ones — mirrors requireTeamAccess) and the user's role.
- * Drives the frontend's onboarding redirect and club/team switcher.
+ * Lists the clubs the user is a member of, with the teams their memberships
+ * grant access to and the effective role per team (the team-scoped row wins
+ * over the club-wide one — mirrors requireTeamAccess). A user can hold
+ * several team-scoped memberships in the same club. Drives the frontend's
+ * onboarding redirect and club/team switcher.
  */
 export async function listMyClubs(
   db: Kysely<Database>,
@@ -29,28 +30,50 @@ export async function listMyClubs(
 
   if (rows.length === 0) return [];
 
+  interface ClubAccess {
+    id: string;
+    name: string;
+    clubWideRole: string | null;
+    teamRoles: Map<string, string>;
+  }
+
+  const clubs = new Map<string, ClubAccess>();
+  for (const row of rows) {
+    let club = clubs.get(row.id);
+    if (!club) {
+      club = { id: row.id, name: row.name, clubWideRole: null, teamRoles: new Map() };
+      clubs.set(row.id, club);
+    }
+    if (row.team_id === null) {
+      club.clubWideRole = row.role;
+    } else {
+      club.teamRoles.set(row.team_id, row.role);
+    }
+  }
+
   const teams = await db
     .selectFrom("teams")
     .select(["id", "club_id", "name"])
-    .where(
-      "club_id",
-      "in",
-      rows.map((row) => row.id)
-    )
+    .where("club_id", "in", [...clubs.keys()])
     .orderBy("name")
     .execute();
 
-  return rows.map((row) => ({
-    id: row.id,
-    name: row.name,
-    role: row.role,
+  return [...clubs.values()].map((club) => ({
+    id: club.id,
+    name: club.name,
+    role: club.clubWideRole,
     teams: teams
       .filter(
         (team) =>
-          team.club_id === row.id &&
-          (row.team_id === null || row.team_id === team.id)
+          team.club_id === club.id &&
+          (club.clubWideRole !== null || club.teamRoles.has(team.id))
       )
-      .map((team) => ({ id: team.id, clubId: team.club_id, name: team.name })),
+      .map((team) => ({
+        id: team.id,
+        clubId: team.club_id,
+        name: team.name,
+        role: club.teamRoles.get(team.id) ?? (club.clubWideRole as string),
+      })),
   }));
 }
 

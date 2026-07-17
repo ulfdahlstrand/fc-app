@@ -61,9 +61,18 @@ export const clubSchema = z.object({
 
 export type Club = z.infer<typeof clubSchema>;
 
-export const myClubSchema = clubSchema.extend({
+/** A team with the caller's effective role in it. */
+export const myTeamSchema = teamSchema.extend({
   role: z.string(),
-  teams: z.array(teamSchema),
+});
+
+export type MyTeam = z.infer<typeof myTeamSchema>;
+
+export const myClubSchema = clubSchema.extend({
+  /** The caller's club-wide role, or null when only team-scoped memberships exist. */
+  role: z.string().nullable(),
+  /** Teams the caller's memberships grant access to, with the effective role per team. */
+  teams: z.array(myTeamSchema),
 });
 
 export type MyClub = z.infer<typeof myClubSchema>;
