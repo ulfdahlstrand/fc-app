@@ -13,7 +13,7 @@ import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ensureMe } from "../lib/auth";
-import { ensureMyClubs, selectTeam } from "../lib/clubs";
+import { ensureMyClubs, myClubsQueryOptions, selectTeam } from "../lib/clubs";
 import { orpc } from "../orpc-client";
 import { queryClient } from "../query-client";
 
@@ -37,7 +37,10 @@ function OnboardingPage() {
     mutationFn: () => orpc.createClub({ clubName, teamName }),
     onSuccess: async ({ team }) => {
       selectTeam(team.id);
-      await queryClient.invalidateQueries({ queryKey: ["myClubs"] });
+      // fetchQuery, not invalidateQueries: the myClubs query is inactive on
+      // this page, so invalidation would only mark the cached [] stale and
+      // the "/" guard could reuse it and bounce straight back here.
+      await queryClient.fetchQuery(myClubsQueryOptions);
       await navigate({ to: "/" });
     },
   });

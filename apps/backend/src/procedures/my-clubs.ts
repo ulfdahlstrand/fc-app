@@ -5,8 +5,10 @@ import type { Database } from "../db/types.js";
 import { os, requireUser } from "../orpc.js";
 
 /**
- * Lists the clubs the user is a member of, with their teams and the user's
- * role. Drives the frontend's onboarding redirect and club/team switcher.
+ * Lists the clubs the user is a member of, with the teams their membership
+ * grants access to (all teams for club-wide memberships, only the own team
+ * for team-scoped ones — mirrors requireTeamAccess) and the user's role.
+ * Drives the frontend's onboarding redirect and club/team switcher.
  */
 export async function listMyClubs(
   db: Kysely<Database>,
@@ -15,7 +17,12 @@ export async function listMyClubs(
   const rows = await db
     .selectFrom("memberships")
     .innerJoin("clubs", "clubs.id", "memberships.club_id")
-    .select(["clubs.id", "clubs.name", "memberships.role"])
+    .select([
+      "clubs.id",
+      "clubs.name",
+      "memberships.role",
+      "memberships.team_id",
+    ])
     .where("memberships.user_id", "=", userId)
     .orderBy("clubs.name")
     .execute();
@@ -38,7 +45,11 @@ export async function listMyClubs(
     name: row.name,
     role: row.role,
     teams: teams
-      .filter((team) => team.club_id === row.id)
+      .filter(
+        (team) =>
+          team.club_id === row.id &&
+          (row.team_id === null || row.team_id === team.id)
+      )
       .map((team) => ({ id: team.id, clubId: team.club_id, name: team.name })),
   }));
 }
