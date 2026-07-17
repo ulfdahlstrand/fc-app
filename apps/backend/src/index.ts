@@ -9,9 +9,9 @@ import { handleAuthRequest } from "./auth/http.js";
 import { resolveContext } from "./context.js";
 import { router } from "./router.js";
 
-const port = Number(process.env["BACKEND_PORT"] ?? 3001);
+const port = Number(process.env["BACKEND_PORT"] ?? 4001);
 const frontendOrigin = new URL(
-  process.env["FRONTEND_URL"] ?? "http://localhost:5173"
+  process.env["FRONTEND_URL"] ?? "http://localhost:4173"
 ).origin;
 
 const generator = new OpenAPIGenerator({

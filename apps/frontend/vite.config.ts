@@ -17,7 +17,7 @@ export default defineConfig(({ mode }) => {
       react(),
     ],
     server: {
-      port: Number(env["VITE_PORT"] ?? 5173),
+      port: Number(env["VITE_PORT"] ?? 4173),
     },
   };
 });

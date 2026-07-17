@@ -32,7 +32,9 @@ npm run docker:up
 npm run dev
 ```
 
-Frontend: http://localhost:5173 — Backend: http://localhost:3001 (OpenAPI spec at `/openapi.json`).
+Frontend: http://localhost:4173 — Backend: http://localhost:4001 (OpenAPI spec at `/openapi.json`).
+PostgreSQL is exposed on host port 5433. Ports are offset from project-enigma's
+defaults (5173/3001/5432) so both projects can run side by side.
 
 ## Common commands
 
