@@ -25,13 +25,15 @@ services:
 
   # One-shot service: runs the Kysely migrator (apps/backend/src/db/migrate.ts)
   # against the db container, then exits. The backend waits for it to complete.
+  # The in-network DATABASE_URL is built here from POSTGRES_* — the .env
+  # DATABASE_URL is reserved for tools running on the host (localhost:5433).
   migrate:
     build:
       context: ..
       dockerfile: docker/Dockerfile.backend
     command: ["npx", "tsx", "src/db/migrate.ts"]
     environment:
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
     volumes:
       - ../apps/backend:/app/apps/backend
       - /app/apps/backend/node_modules
@@ -50,7 +52,7 @@ services:
     env_file:
       - ../.env
     environment:
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       BACKEND_PORT: ${BACKEND_PORT}
     ports:
       - "${BACKEND_PORT}:${BACKEND_PORT}"
