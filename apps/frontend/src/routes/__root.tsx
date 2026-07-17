@@ -3,8 +3,9 @@
  * This file is part of the TanStack Router file-based route system.
  *
  * The shell (AppBar + content container) persists across client-side
- * navigations. When signed in, the AppBar shows the user with a link to the
- * profile page. Navigation items are added here as feature pages land.
+ * navigations. When signed in, the AppBar shows the club/team switcher and
+ * the user with a link to the profile page. Navigation items are added here
+ * as feature pages land.
  */
 import AppBar from "@mui/material/AppBar";
 import Avatar from "@mui/material/Avatar";
@@ -16,6 +17,7 @@ import Typography from "@mui/material/Typography";
 import { useQuery } from "@tanstack/react-query";
 import { createRootRoute, Link, Outlet } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { TeamSwitcher } from "../components/TeamSwitcher";
 import { meQueryOptions } from "../lib/auth";
 
 export const Route = createRootRoute({
@@ -35,20 +37,23 @@ function RootLayout() {
             {t("app.title")}
           </Typography>
           {user && (
-            <Button
-              color="inherit"
-              component={Link}
-              to="/profile"
-              startIcon={
-                <Avatar
-                  {...(user.imageUrl ? { src: user.imageUrl } : {})}
-                  alt={user.name}
-                  sx={{ width: 28, height: 28 }}
-                />
-              }
-            >
-              {user.name}
-            </Button>
+            <>
+              <TeamSwitcher />
+              <Button
+                color="inherit"
+                component={Link}
+                to="/profile"
+                startIcon={
+                  <Avatar
+                    {...(user.imageUrl ? { src: user.imageUrl } : {})}
+                    alt={user.name}
+                    sx={{ width: 28, height: 28 }}
+                  />
+                }
+              >
+                {user.name}
+              </Button>
+            </>
           )}
         </Toolbar>
       </AppBar>

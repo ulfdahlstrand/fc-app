@@ -1,5 +1,7 @@
+import { createClubHandler } from "./procedures/create-club.js";
 import { healthHandler } from "./procedures/health.js";
 import { meHandler } from "./procedures/me.js";
+import { myClubsHandler } from "./procedures/my-clubs.js";
 import { os } from "./orpc.js";
 
 /**
@@ -14,6 +16,8 @@ import { os } from "./orpc.js";
 export const router = os.router({
   health: healthHandler,
   me: meHandler,
+  myClubs: myClubsHandler,
+  createClub: createClubHandler,
 });
 
 /** AppRouter type — re-exported for use in tests and future tooling. */

@@ -1,7 +1,7 @@
 import { createServer } from "node:http";
 import { OpenAPIGenerator } from "@orpc/openapi";
 import { OpenAPIHandler } from "@orpc/openapi/node";
-import { onError } from "@orpc/server";
+import { ORPCError, onError } from "@orpc/server";
 import { CORSPlugin } from "@orpc/server/plugins";
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4";
 import { contract } from "@fc-app/contracts";
@@ -9,9 +9,9 @@ import { handleAuthRequest } from "./auth/http.js";
 import { resolveContext } from "./context.js";
 import { router } from "./router.js";
 
-const port = Number(process.env["BACKEND_PORT"] ?? 3001);
+const port = Number(process.env["BACKEND_PORT"] ?? 4001);
 const frontendOrigin = new URL(
-  process.env["FRONTEND_URL"] ?? "http://localhost:5173"
+  process.env["FRONTEND_URL"] ?? "http://localhost:4173"
 ).origin;
 
 const generator = new OpenAPIGenerator({
@@ -31,6 +31,8 @@ const handler = new OpenAPIHandler(router, {
   ],
   interceptors: [
     onError((error) => {
+      // Expected client errors (401/403/422 …) are part of normal operation.
+      if (error instanceof ORPCError && error.status < 500) return;
       console.error("[backend] unhandled error:", error);
     }),
   ],

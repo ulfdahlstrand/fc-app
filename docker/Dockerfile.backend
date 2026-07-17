@@ -28,4 +28,6 @@ WORKDIR /app/apps/backend
 
 EXPOSE ${BACKEND_PORT}
 
-CMD ["npm", "run", "dev"]
+# dev:docker skips --env-file — configuration comes from docker-compose
+# (env_file/environment), and no .env exists inside the container.
+CMD ["npm", "run", "dev:docker"]

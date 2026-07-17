@@ -17,6 +17,18 @@
     "google": "Logga in med Google",
     "error": "Inloggningen misslyckades. Försök igen."
   },
+  "onboarding": {
+    "heading": "Skapa din klubb",
+    "description": "Kom igång genom att skapa klubben och ditt första lag. Du kan lägga till fler lag senare.",
+    "clubName": "Klubbens namn",
+    "teamName": "Lagets namn",
+    "teamNameHelp": "T.ex. P14, F12 eller Herrlag",
+    "submit": "Skapa klubb",
+    "error": "Kunde inte skapa klubben. Försök igen."
+  },
+  "switcher": {
+    "label": "Välj lag"
+  },
   "profile": {
     "language": "Språk",
     "languages": {

@@ -17,6 +17,18 @@
     "google": "Sign in with Google",
     "error": "Sign-in failed. Please try again."
   },
+  "onboarding": {
+    "heading": "Create your club",
+    "description": "Get started by creating the club and your first team. You can add more teams later.",
+    "clubName": "Club name",
+    "teamName": "Team name",
+    "teamNameHelp": "E.g. U14, Girls 12, or Men's team",
+    "submit": "Create club",
+    "error": "Could not create the club. Please try again."
+  },
+  "switcher": {
+    "label": "Select team"
+  },
   "profile": {
     "language": "Language",
     "languages": {

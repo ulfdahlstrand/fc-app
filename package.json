@@ -13,6 +13,7 @@
     "typecheck": "turbo typecheck",
     "test": "turbo test",
     "docker:up": "docker compose -f docker/docker-compose.yml --env-file .env up -d",
+    "docker:db": "docker compose -f docker/docker-compose.yml --env-file .env up -d db",
     "docker:down": "docker compose -f docker/docker-compose.yml --env-file .env down",
     "docker:build": "docker compose -f docker/docker-compose.yml --env-file .env build"
   },

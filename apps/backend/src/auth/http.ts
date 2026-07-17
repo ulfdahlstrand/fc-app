@@ -21,7 +21,7 @@ import { signInWithProfile } from "./sign-in.js";
 const STATE_COOKIE = "fc_oauth_state";
 
 function frontendUrl(): string {
-  return process.env["FRONTEND_URL"] ?? "http://localhost:5173";
+  return process.env["FRONTEND_URL"] ?? "http://localhost:4173";
 }
 
 /** CORS headers for the logout endpoint (called via fetch from the SPA). */

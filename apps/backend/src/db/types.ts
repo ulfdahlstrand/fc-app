@@ -34,8 +34,36 @@ export interface SessionsTable {
   created_at: Timestamp;
 }
 
+export interface ClubsTable {
+  id: Generated<string>;
+  name: string;
+  created_at: Timestamp;
+  updated_at: ColumnType<Date, never, Date>;
+}
+
+export interface TeamsTable {
+  id: Generated<string>;
+  club_id: string;
+  name: string;
+  created_at: Timestamp;
+}
+
+export interface MembershipsTable {
+  id: Generated<string>;
+  user_id: string;
+  club_id: string;
+  /** null = club-wide membership; set = scoped to a single team. */
+  team_id: string | null;
+  /** Plain text placeholder until the configurable role system (#5). */
+  role: string;
+  created_at: Timestamp;
+}
+
 export interface Database {
   users: UsersTable;
   identities: IdentitiesTable;
   sessions: SessionsTable;
+  clubs: ClubsTable;
+  teams: TeamsTable;
+  memberships: MembershipsTable;
 }
