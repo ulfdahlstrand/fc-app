@@ -30,7 +30,33 @@
     "label": "Select team"
   },
   "nav": {
+    "members": "Members",
     "clubSettings": "Club settings"
+  },
+  "members": {
+    "heading": "Members",
+    "add": "Add member",
+    "search": "Search name",
+    "showArchived": "Show archived",
+    "name": "Name",
+    "birthYear": "Birth year",
+    "contact": "Contact",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "email": "Email",
+    "phone": "Phone",
+    "archived": "Archived",
+    "archive_action": "Archive",
+    "unarchive": "Restore",
+    "newTitle": "New member",
+    "editTitle": "Edit member",
+    "empty": "No members yet.",
+    "noTeam": "Select a team to see members.",
+    "forbidden": "You do not have permission to view members in this team.",
+    "loadError": "Could not load members.",
+    "saveError": "Could not save. Please check the fields.",
+    "notFound": "Member not found.",
+    "backToList": "Back to list"
   },
   "common": {
     "loading": "Loading…",
