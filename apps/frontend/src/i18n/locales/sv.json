@@ -30,7 +30,33 @@
     "label": "Välj lag"
   },
   "nav": {
+    "members": "Medlemmar",
     "clubSettings": "Klubbinställningar"
+  },
+  "members": {
+    "heading": "Medlemmar",
+    "add": "Lägg till medlem",
+    "search": "Sök namn",
+    "showArchived": "Visa arkiverade",
+    "name": "Namn",
+    "birthYear": "Födelseår",
+    "contact": "Kontakt",
+    "firstName": "Förnamn",
+    "lastName": "Efternamn",
+    "email": "E-post",
+    "phone": "Telefon",
+    "archived": "Arkiverad",
+    "archive_action": "Arkivera",
+    "unarchive": "Återställ",
+    "newTitle": "Ny medlem",
+    "editTitle": "Redigera medlem",
+    "empty": "Inga medlemmar ännu.",
+    "noTeam": "Välj ett lag för att se medlemmar.",
+    "forbidden": "Du har inte behörighet att se medlemmar i det här laget.",
+    "loadError": "Kunde inte ladda medlemmar.",
+    "saveError": "Kunde inte spara. Kontrollera fälten.",
+    "notFound": "Medlemmen hittades inte.",
+    "backToList": "Tillbaka till listan"
   },
   "common": {
     "loading": "Laddar…",

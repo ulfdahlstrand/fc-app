@@ -87,6 +87,19 @@ export interface InvitationsTable {
   created_at: Timestamp;
 }
 
+export interface MembersTable {
+  id: Generated<string>;
+  team_id: string;
+  first_name: string;
+  last_name: string;
+  birth_year: number | null;
+  email: string | null;
+  phone: string | null;
+  archived: Generated<boolean>;
+  created_at: Timestamp;
+  updated_at: ColumnType<Date, never, Date>;
+}
+
 export interface Database {
   users: UsersTable;
   identities: IdentitiesTable;
@@ -97,4 +110,5 @@ export interface Database {
   roles: RolesTable;
   role_permissions: RolePermissionsTable;
   invitations: InvitationsTable;
+  members: MembersTable;
 }

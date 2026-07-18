@@ -29,6 +29,7 @@ function RootLayout() {
   const { t } = useTranslation();
   const me = useQuery(meQueryOptions);
   const user = me.data?.user;
+  const canViewMembers = useHasPermission("members.view");
   const canManageClub = useHasPermission("settings.club");
 
   return (
@@ -41,6 +42,11 @@ function RootLayout() {
           {user && (
             <>
               <TeamSwitcher />
+              {canViewMembers && (
+                <Button color="inherit" component={Link} to="/members">
+                  {t("nav.members")}
+                </Button>
+              )}
               {canManageClub && (
                 <Button color="inherit" component={Link} to="/settings/club">
                   {t("nav.clubSettings")}

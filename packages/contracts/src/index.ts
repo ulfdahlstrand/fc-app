@@ -271,6 +271,95 @@ export const acceptInvitationOutputSchema = z.object({
 });
 
 // ---------------------------------------------------------------------------
+// Members — Zod schemas (issue #7)
+//
+// A member is a roster person (usually a player), scoped to one team, distinct
+// from a user account. Core fields are kept minimal; team-specific fields come
+// via custom field definitions (#8). Members are archived, never hard-deleted.
+// ---------------------------------------------------------------------------
+
+export const memberSchema = z.object({
+  id: z.string(),
+  teamId: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
+  birthYear: z.number().int().nullable(),
+  email: z.string().nullable(),
+  phone: z.string().nullable(),
+  archived: z.boolean(),
+});
+
+export type Member = z.infer<typeof memberSchema>;
+
+const MIN_BIRTH_YEAR = 1900;
+const MAX_BIRTH_YEAR = 2100;
+
+/** Fields accepted when creating or updating a member. */
+const memberWriteFields = {
+  firstName: z.string().min(1).max(100),
+  lastName: z.string().min(1).max(100),
+  birthYear: z.number().int().min(MIN_BIRTH_YEAR).max(MAX_BIRTH_YEAR).nullable(),
+  email: z.string().email().max(255).nullable(),
+  phone: z.string().max(50).nullable(),
+};
+
+export const listMembersInputSchema = z.object({
+  teamId: z.string(),
+  includeArchived: z.boolean().optional(),
+  search: z.string().optional(),
+});
+
+export const listMembersOutputSchema = z.object({
+  members: z.array(memberSchema),
+});
+
+export const getMemberInputSchema = z.object({
+  teamId: z.string(),
+  memberId: z.string(),
+});
+
+export const getMemberOutputSchema = z.object({
+  member: memberSchema,
+});
+
+export const createMemberInputSchema = z.object({
+  teamId: z.string(),
+  firstName: memberWriteFields.firstName,
+  lastName: memberWriteFields.lastName,
+  birthYear: memberWriteFields.birthYear.optional(),
+  email: memberWriteFields.email.optional(),
+  phone: memberWriteFields.phone.optional(),
+});
+
+export const createMemberOutputSchema = z.object({
+  member: memberSchema,
+});
+
+export const updateMemberInputSchema = z.object({
+  teamId: z.string(),
+  memberId: z.string(),
+  firstName: memberWriteFields.firstName.optional(),
+  lastName: memberWriteFields.lastName.optional(),
+  birthYear: memberWriteFields.birthYear.optional(),
+  email: memberWriteFields.email.optional(),
+  phone: memberWriteFields.phone.optional(),
+});
+
+export const updateMemberOutputSchema = z.object({
+  member: memberSchema,
+});
+
+export const setMemberArchivedInputSchema = z.object({
+  teamId: z.string(),
+  memberId: z.string(),
+  archived: z.boolean(),
+});
+
+export const setMemberArchivedOutputSchema = z.object({
+  member: memberSchema,
+});
+
+// ---------------------------------------------------------------------------
 // Router contract
 //
 // Defines the shape of every procedure (input + output schemas) without any
@@ -333,6 +422,26 @@ export const contract = oc.router({
     .route({ method: "POST", path: "/invitations/accept" })
     .input(acceptInvitationInputSchema)
     .output(acceptInvitationOutputSchema),
+  listMembers: oc
+    .route({ method: "GET", path: "/members" })
+    .input(listMembersInputSchema)
+    .output(listMembersOutputSchema),
+  getMember: oc
+    .route({ method: "GET", path: "/members/get" })
+    .input(getMemberInputSchema)
+    .output(getMemberOutputSchema),
+  createMember: oc
+    .route({ method: "POST", path: "/members" })
+    .input(createMemberInputSchema)
+    .output(createMemberOutputSchema),
+  updateMember: oc
+    .route({ method: "POST", path: "/members/update" })
+    .input(updateMemberInputSchema)
+    .output(updateMemberOutputSchema),
+  setMemberArchived: oc
+    .route({ method: "POST", path: "/members/archive" })
+    .input(setMemberArchivedInputSchema)
+    .output(setMemberArchivedOutputSchema),
 });
 
 /** Inferred contract type — used by the frontend to create a typed oRPC client. */
