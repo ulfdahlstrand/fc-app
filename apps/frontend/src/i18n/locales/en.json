@@ -31,6 +31,7 @@
   },
   "nav": {
     "members": "Members",
+    "teamSettings": "Team settings",
     "clubSettings": "Club settings"
   },
   "members": {
@@ -50,6 +51,9 @@
     "unarchive": "Restore",
     "newTitle": "New member",
     "editTitle": "Edit member",
+    "customFields": "Custom fields",
+    "editFields": "Edit fields",
+    "noFields": "No custom fields are defined for this team.",
     "empty": "No members yet.",
     "noTeam": "Select a team to see members.",
     "forbidden": "You do not have permission to view members in this team.",
@@ -58,12 +62,21 @@
     "notFound": "Member not found.",
     "backToList": "Back to list"
   },
+  "fieldType": {
+    "text": "Text",
+    "number": "Number",
+    "date": "Date",
+    "boolean": "Yes/No",
+    "select": "List"
+  },
   "common": {
     "loading": "Loading…",
     "edit": "Edit",
     "delete": "Delete",
     "save": "Save",
-    "close": "Close"
+    "close": "Close",
+    "yes": "Yes",
+    "no": "No"
   },
   "permissions": {
     "members.view": "View members",
@@ -93,6 +106,25 @@
       "view": "View",
       "loadError": "Could not load roles.",
       "saveError": "Could not save. The name may already be in use."
+    },
+    "team": {
+      "heading": "Team settings",
+      "forbidden": "You do not have permission to change team settings.",
+      "fields": "Custom member fields",
+      "newField": "New field",
+      "editField": "Edit field",
+      "fieldName": "Field name",
+      "fieldType": "Field type",
+      "options": "Options",
+      "optionsHelp": "One option per line.",
+      "required": "Required",
+      "requiredLabel": "Required field",
+      "archived": "Archived",
+      "archive": "Archive",
+      "restore": "Restore",
+      "empty": "No custom fields yet.",
+      "loadError": "Could not load fields.",
+      "saveError": "Could not save. Please check the fields."
     }
   },
   "invitations": {

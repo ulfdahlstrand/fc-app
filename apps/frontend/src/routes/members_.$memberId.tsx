@@ -16,9 +16,12 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { formatFieldValue } from "../components/memberFieldDisplay";
+import { MemberFieldValuesDialog } from "../components/MemberFieldValuesDialog";
 import { MemberFormDialog } from "../components/MemberFormDialog";
 import { ensureMe } from "../lib/auth";
 import { ensureMyClubs, useHasPermission, useSelectedTeam } from "../lib/clubs";
+import { useMemberFields, useSetMemberFieldValues } from "../lib/member-fields";
 import { useMember, useSetMemberArchived, useUpdateMember } from "../lib/members";
 
 export const Route = createFileRoute("/members_/$memberId")({
@@ -57,9 +60,12 @@ function MemberDetail({
   const { t } = useTranslation();
   const canManage = useHasPermission("members.manage");
   const member = useMember(teamId, memberId);
+  const fields = useMemberFields(teamId);
   const updateMember = useUpdateMember(teamId);
   const setArchived = useSetMemberArchived(teamId);
+  const setFieldValues = useSetMemberFieldValues(teamId);
   const [editing, setEditing] = useState(false);
+  const [editingFields, setEditingFields] = useState(false);
 
   if (member.isPending) {
     return <Typography color="text.secondary">{t("common.loading")}</Typography>;
@@ -69,6 +75,7 @@ function MemberDetail({
   }
 
   const m = member.data.member;
+  const activeFields = fields.data?.fields ?? [];
 
   return (
     <Stack spacing={3}>
@@ -118,6 +125,37 @@ function MemberDetail({
         </Stack>
       </Paper>
 
+      {activeFields.length > 0 && (
+        <Box>
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+            sx={{ mb: 1 }}
+          >
+            <Typography variant="h6">{t("members.customFields")}</Typography>
+            {canManage && (
+              <Button size="small" onClick={() => setEditingFields(true)}>
+                {t("members.editFields")}
+              </Button>
+            )}
+          </Stack>
+          <Paper variant="outlined" sx={{ p: 3 }}>
+            <Stack spacing={2}>
+              {activeFields.map((field, index) => (
+                <Box key={field.id}>
+                  {index > 0 && <Divider sx={{ mb: 2 }} />}
+                  <Field
+                    label={field.name}
+                    value={formatFieldValue(field, m.customFields[field.id], t)}
+                  />
+                </Box>
+              ))}
+            </Stack>
+          </Paper>
+        </Box>
+      )}
+
       {editing && (
         <MemberFormDialog
           member={m}
@@ -128,6 +166,20 @@ function MemberDetail({
             setEditing(false);
           }}
           onClose={() => setEditing(false)}
+        />
+      )}
+
+      {editingFields && (
+        <MemberFieldValuesDialog
+          fields={activeFields}
+          member={m}
+          saving={setFieldValues.isPending}
+          error={setFieldValues.isError}
+          onSave={async (values) => {
+            await setFieldValues.mutateAsync({ memberId: m.id, values });
+            setEditingFields(false);
+          }}
+          onClose={() => setEditingFields(false)}
         />
       )}
     </Stack>

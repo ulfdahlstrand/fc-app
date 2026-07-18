@@ -7,6 +7,13 @@ import {
   listInvitationsHandler,
   revokeInvitationHandler,
 } from "./procedures/invitations.js";
+import {
+  archiveMemberFieldHandler,
+  createMemberFieldHandler,
+  listMemberFieldsHandler,
+  setMemberFieldValuesHandler,
+  updateMemberFieldHandler,
+} from "./procedures/member-fields.js";
 import { meHandler } from "./procedures/me.js";
 import {
   createMemberHandler,
@@ -52,6 +59,11 @@ export const router = os.router({
   createMember: createMemberHandler,
   updateMember: updateMemberHandler,
   setMemberArchived: setMemberArchivedHandler,
+  listMemberFields: listMemberFieldsHandler,
+  createMemberField: createMemberFieldHandler,
+  updateMemberField: updateMemberFieldHandler,
+  archiveMemberField: archiveMemberFieldHandler,
+  setMemberFieldValues: setMemberFieldValuesHandler,
 });
 
 /** AppRouter type — re-exported for use in tests and future tooling. */
