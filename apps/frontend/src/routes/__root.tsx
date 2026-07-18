@@ -30,6 +30,7 @@ function RootLayout() {
   const me = useQuery(meQueryOptions);
   const user = me.data?.user;
   const canViewMembers = useHasPermission("members.view");
+  const canManageTeam = useHasPermission("settings.team");
   const canManageClub = useHasPermission("settings.club");
 
   return (
@@ -45,6 +46,11 @@ function RootLayout() {
               {canViewMembers && (
                 <Button color="inherit" component={Link} to="/members">
                   {t("nav.members")}
+                </Button>
+              )}
+              {canManageTeam && (
+                <Button color="inherit" component={Link} to="/settings/team">
+                  {t("nav.teamSettings")}
                 </Button>
               )}
               {canManageClub && (

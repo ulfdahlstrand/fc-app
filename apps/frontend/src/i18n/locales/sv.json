@@ -31,6 +31,7 @@
   },
   "nav": {
     "members": "Medlemmar",
+    "teamSettings": "Laginställningar",
     "clubSettings": "Klubbinställningar"
   },
   "members": {
@@ -50,6 +51,9 @@
     "unarchive": "Återställ",
     "newTitle": "Ny medlem",
     "editTitle": "Redigera medlem",
+    "customFields": "Egna fält",
+    "editFields": "Redigera fält",
+    "noFields": "Inga egna fält är definierade för laget.",
     "empty": "Inga medlemmar ännu.",
     "noTeam": "Välj ett lag för att se medlemmar.",
     "forbidden": "Du har inte behörighet att se medlemmar i det här laget.",
@@ -58,12 +62,21 @@
     "notFound": "Medlemmen hittades inte.",
     "backToList": "Tillbaka till listan"
   },
+  "fieldType": {
+    "text": "Text",
+    "number": "Nummer",
+    "date": "Datum",
+    "boolean": "Ja/Nej",
+    "select": "Lista"
+  },
   "common": {
     "loading": "Laddar…",
     "edit": "Redigera",
     "delete": "Ta bort",
     "save": "Spara",
-    "close": "Stäng"
+    "close": "Stäng",
+    "yes": "Ja",
+    "no": "Nej"
   },
   "permissions": {
     "members.view": "Se medlemmar",
@@ -93,6 +106,25 @@
       "view": "Visa",
       "loadError": "Kunde inte ladda roller.",
       "saveError": "Kunde inte spara. Namnet kanske redan används."
+    },
+    "team": {
+      "heading": "Laginställningar",
+      "forbidden": "Du har inte behörighet att ändra laginställningar.",
+      "fields": "Egna medlemsfält",
+      "newField": "Nytt fält",
+      "editField": "Redigera fält",
+      "fieldName": "Fältnamn",
+      "fieldType": "Fälttyp",
+      "options": "Alternativ",
+      "optionsHelp": "Ett alternativ per rad.",
+      "required": "Obligatoriskt",
+      "requiredLabel": "Obligatoriskt fält",
+      "archived": "Arkiverat",
+      "archive": "Arkivera",
+      "restore": "Återställ",
+      "empty": "Inga egna fält ännu.",
+      "loadError": "Kunde inte ladda fält.",
+      "saveError": "Kunde inte spara. Kontrollera fälten."
     }
   },
   "invitations": {

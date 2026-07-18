@@ -23,9 +23,11 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { formatFieldValue } from "../components/memberFieldDisplay";
 import { MemberFormDialog } from "../components/MemberFormDialog";
 import { ensureMe } from "../lib/auth";
 import { ensureMyClubs, useHasPermission, useSelectedTeam } from "../lib/clubs";
+import { useMemberFields } from "../lib/member-fields";
 import { useCreateMember, useMembers } from "../lib/members";
 
 export const Route = createFileRoute("/members")({
@@ -62,7 +64,9 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
   const [creating, setCreating] = useState(false);
 
   const members = useMembers(teamId, { search, includeArchived });
+  const fields = useMemberFields(teamId);
   const createMember = useCreateMember(teamId);
+  const customColumns = fields.data?.fields ?? [];
 
   return (
     <Stack spacing={3}>
@@ -123,7 +127,9 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
                 <TableCell>{t("members.name")}</TableCell>
                 <TableCell>{t("members.birthYear")}</TableCell>
                 <TableCell>{t("members.contact")}</TableCell>
-                <TableCell />
+                {customColumns.map((field) => (
+                  <TableCell key={field.id}>{field.name}</TableCell>
+                ))}
               </TableRow>
             </TableHead>
             <TableBody>
@@ -151,7 +157,11 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
                   </TableCell>
                   <TableCell>{member.birthYear ?? "—"}</TableCell>
                   <TableCell>{member.email ?? member.phone ?? "—"}</TableCell>
-                  <TableCell />
+                  {customColumns.map((field) => (
+                    <TableCell key={field.id}>
+                      {formatFieldValue(field, member.customFields[field.id], t)}
+                    </TableCell>
+                  ))}
                 </TableRow>
               ))}
             </TableBody>

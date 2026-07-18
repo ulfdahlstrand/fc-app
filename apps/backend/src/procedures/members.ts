@@ -3,10 +3,14 @@ import type { Kysely, Selectable } from "kysely";
 import type { Member } from "@fc-app/contracts";
 import { getDb } from "../db/client.js";
 import type { Database, MembersTable } from "../db/types.js";
+import { loadMemberValues } from "../members/values.js";
 import { os, requireUser } from "../orpc.js";
 import { requireTeamPermission } from "../tenancy/membership.js";
 
-function toMember(row: Selectable<MembersTable>): Member {
+function toMember(
+  row: Selectable<MembersTable>,
+  customFields: Record<string, string>
+): Member {
   return {
     id: row.id,
     teamId: row.team_id,
@@ -16,6 +20,7 @@ function toMember(row: Selectable<MembersTable>): Member {
     email: row.email,
     phone: row.phone,
     archived: row.archived,
+    customFields,
   };
 }
 
@@ -34,7 +39,8 @@ async function loadMember(
   if (!row) {
     throw new ORPCError("NOT_FOUND", { message: "Member not found" });
   }
-  return toMember(row);
+  const values = await loadMemberValues(db, [memberId]);
+  return toMember(row, values.get(memberId) ?? {});
 }
 
 export const listMembersHandler = os.listMembers.handler(
@@ -67,7 +73,13 @@ export const listMembersHandler = os.listMembers.handler(
       .orderBy("last_name")
       .orderBy("first_name")
       .execute();
-    return { members: rows.map(toMember) };
+    const values = await loadMemberValues(
+      db,
+      rows.map((row) => row.id)
+    );
+    return {
+      members: rows.map((row) => toMember(row, values.get(row.id) ?? {})),
+    };
   }
 );
 
@@ -98,7 +110,7 @@ export const createMemberHandler = os.createMember.handler(
       })
       .returningAll()
       .executeTakeFirstOrThrow();
-    return { member: toMember(inserted) };
+    return { member: toMember(inserted, {}) };
   }
 );
 
@@ -132,7 +144,8 @@ export const updateMemberHandler = os.updateMember.handler(
       .where("team_id", "=", input.teamId)
       .returningAll()
       .executeTakeFirstOrThrow();
-    return { member: toMember(updated) };
+    const values = await loadMemberValues(db, [input.memberId]);
+    return { member: toMember(updated, values.get(input.memberId) ?? {}) };
   }
 );
 
@@ -151,6 +164,7 @@ export const setMemberArchivedHandler = os.setMemberArchived.handler(
       .where("team_id", "=", input.teamId)
       .returningAll()
       .executeTakeFirstOrThrow();
-    return { member: toMember(updated) };
+    const values = await loadMemberValues(db, [input.memberId]);
+    return { member: toMember(updated, values.get(input.memberId) ?? {}) };
   }
 );

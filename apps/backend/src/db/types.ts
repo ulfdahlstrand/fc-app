@@ -100,6 +100,24 @@ export interface MembersTable {
   updated_at: ColumnType<Date, never, Date>;
 }
 
+export interface MemberFieldDefinitionsTable {
+  id: Generated<string>;
+  team_id: string;
+  name: string;
+  field_type: string;
+  options: ColumnType<string[], string, string>;
+  required: Generated<boolean>;
+  sort_order: Generated<number>;
+  archived: Generated<boolean>;
+  created_at: Timestamp;
+}
+
+export interface MemberFieldValuesTable {
+  member_id: string;
+  definition_id: string;
+  value: string;
+}
+
 export interface Database {
   users: UsersTable;
   identities: IdentitiesTable;
@@ -111,4 +129,6 @@ export interface Database {
   role_permissions: RolePermissionsTable;
   invitations: InvitationsTable;
   members: MembersTable;
+  member_field_definitions: MemberFieldDefinitionsTable;
+  member_field_values: MemberFieldValuesTable;
 }
