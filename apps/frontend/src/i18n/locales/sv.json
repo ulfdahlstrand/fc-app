@@ -29,6 +29,46 @@
   "switcher": {
     "label": "Välj lag"
   },
+  "nav": {
+    "clubSettings": "Klubbinställningar"
+  },
+  "common": {
+    "loading": "Laddar…",
+    "edit": "Redigera",
+    "delete": "Ta bort",
+    "save": "Spara",
+    "close": "Stäng"
+  },
+  "permissions": {
+    "members.view": "Se medlemmar",
+    "members.manage": "Hantera medlemmar",
+    "activities.manage": "Hantera aktiviteter",
+    "attendance.record": "Registrera närvaro",
+    "callups.manage": "Hantera kallelser",
+    "callups.respond": "Svara på kallelser",
+    "posts.manage": "Hantera anslag",
+    "tracking.manage": "Hantera uppföljningslistor",
+    "settings.team": "Laginställningar",
+    "settings.club": "Klubbinställningar"
+  },
+  "settings": {
+    "club": {
+      "heading": "Klubbinställningar",
+      "forbidden": "Du har inte behörighet att administrera någon klubb.",
+      "roles": "Roller",
+      "newRole": "Ny roll",
+      "editRole": "Redigera roll",
+      "roleName": "Rollens namn",
+      "permissions": "Behörigheter",
+      "permissionsCount": "behörigheter",
+      "memberCount_one": "{{count}} medlem",
+      "memberCount_other": "{{count}} medlemmar",
+      "system": "System",
+      "view": "Visa",
+      "loadError": "Kunde inte ladda roller.",
+      "saveError": "Kunde inte spara. Namnet kanske redan används."
+    }
+  },
   "profile": {
     "language": "Språk",
     "languages": {

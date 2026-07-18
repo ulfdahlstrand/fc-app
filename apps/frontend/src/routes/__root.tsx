@@ -19,6 +19,7 @@ import { createRootRoute, Link, Outlet } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { TeamSwitcher } from "../components/TeamSwitcher";
 import { meQueryOptions } from "../lib/auth";
+import { useHasPermission } from "../lib/clubs";
 
 export const Route = createRootRoute({
   component: RootLayout,
@@ -28,6 +29,7 @@ function RootLayout() {
   const { t } = useTranslation();
   const me = useQuery(meQueryOptions);
   const user = me.data?.user;
+  const canManageClub = useHasPermission("settings.club");
 
   return (
     <Box sx={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
@@ -39,6 +41,11 @@ function RootLayout() {
           {user && (
             <>
               <TeamSwitcher />
+              {canManageClub && (
+                <Button color="inherit" component={Link} to="/settings/club">
+                  {t("nav.clubSettings")}
+                </Button>
+              )}
               <Button
                 color="inherit"
                 component={Link}

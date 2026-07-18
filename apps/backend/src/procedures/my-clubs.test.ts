@@ -13,63 +13,123 @@ const TEAM_ROWS = [
   { id: TEAM_B, club_id: CLUB_ID, name: "P15" },
 ];
 
-function buildDbMock(membershipRows: unknown[]) {
-  const membershipChain = {
-    innerJoin: vi.fn().mockReturnThis(),
-    select: vi.fn().mockReturnThis(),
-    where: vi.fn().mockReturnThis(),
-    orderBy: vi.fn().mockReturnThis(),
-    execute: vi.fn().mockResolvedValue(membershipRows),
-  };
-  const teamChain = {
-    select: vi.fn().mockReturnThis(),
-    where: vi.fn().mockReturnThis(),
-    orderBy: vi.fn().mockReturnThis(),
-    execute: vi.fn().mockResolvedValue(TEAM_ROWS),
-  };
-  const selectFrom = vi.fn((table: string) =>
-    table === "memberships" ? membershipChain : teamChain
+interface MembershipSpec {
+  teamId: string | null;
+  roleId: string;
+  name: string;
+  systemKey: string | null;
+  permissions: string[];
+}
+
+/**
+ * Mock covering listMyClubs' query flow: distinct club_ids, clubs, teams, and
+ * per-club getClubMemberships (memberships⋈roles + role_permissions).
+ */
+function buildDbMock(specs: MembershipSpec[]) {
+  const membershipJoinRows = specs.map((spec) => ({
+    id: `m-${spec.teamId ?? "club"}`,
+    user_id: USER_ID,
+    club_id: CLUB_ID,
+    team_id: spec.teamId,
+    role_id: spec.roleId,
+    role_name: spec.name,
+    role_system_key: spec.systemKey,
+  }));
+  const permissionRows = specs.flatMap((spec) =>
+    spec.permissions.map((permission) => ({ role_id: spec.roleId, permission }))
   );
+
+  const selectFrom = vi.fn((table: string) => {
+    if (table === "memberships") {
+      // Two shapes: distinct club_id list, and the innerJoin+select in
+      // getClubMemberships. A single chain serves both; execute returns the
+      // distinct ids unless innerJoin was called.
+      let joined = false;
+      const chain: Record<string, unknown> = {
+        innerJoin: vi.fn(() => {
+          joined = true;
+          return chain;
+        }),
+        select: vi.fn(() => chain),
+        distinct: vi.fn(() => chain),
+        where: vi.fn(() => chain),
+        execute: vi.fn(() =>
+          Promise.resolve(
+            joined
+              ? membershipJoinRows
+              : specs.length > 0
+                ? [{ club_id: CLUB_ID }]
+                : []
+          )
+        ),
+      };
+      return chain;
+    }
+    if (table === "role_permissions") {
+      const chain: Record<string, unknown> = {
+        select: vi.fn(() => chain),
+        where: vi.fn(() => chain),
+        execute: vi.fn(() => Promise.resolve(permissionRows)),
+      };
+      return chain;
+    }
+    if (table === "clubs") {
+      const chain: Record<string, unknown> = {
+        select: vi.fn(() => chain),
+        where: vi.fn(() => chain),
+        orderBy: vi.fn(() => chain),
+        execute: vi.fn(() =>
+          Promise.resolve([{ id: CLUB_ID, name: "FC Test" }])
+        ),
+      };
+      return chain;
+    }
+    // teams
+    const chain: Record<string, unknown> = {
+      select: vi.fn(() => chain),
+      where: vi.fn(() => chain),
+      orderBy: vi.fn(() => chain),
+      execute: vi.fn(() => Promise.resolve(TEAM_ROWS)),
+    };
+    return chain;
+  });
+
   return { db: { selectFrom } as unknown as Kysely<Database> };
 }
 
 describe("listMyClubs", () => {
-  it("includes every team with the club-wide role for a club-wide membership", async () => {
+  it("includes every team with the club-wide role and permissions", async () => {
     const { db } = buildDbMock([
-      { id: CLUB_ID, name: "FC Test", role: "admin", team_id: null },
+      {
+        teamId: null,
+        roleId: "role-admin",
+        name: "Admin",
+        systemKey: "admin",
+        permissions: ["settings.club", "members.manage"],
+      },
     ]);
     const result = await listMyClubs(db, USER_ID);
-    expect(result[0]?.role).toEqual("admin");
-    expect(result[0]?.teams).toEqual([
-      { id: TEAM_A, clubId: CLUB_ID, name: "P14", role: "admin" },
-      { id: TEAM_B, clubId: CLUB_ID, name: "P15", role: "admin" },
-    ]);
+    expect(result[0]?.role).toEqual("Admin");
+    expect(result[0]?.permissions).toContain("settings.club");
+    expect(result[0]?.teams.map((team) => team.id)).toEqual([TEAM_A, TEAM_B]);
+    expect(result[0]?.teams[0]?.permissions).toContain("members.manage");
   });
 
   it("includes only the own teams with per-team roles for team-scoped memberships", async () => {
     const { db } = buildDbMock([
-      { id: CLUB_ID, name: "FC Test", role: "player", team_id: TEAM_A },
-      { id: CLUB_ID, name: "FC Test", role: "coach", team_id: TEAM_B },
+      {
+        teamId: TEAM_A,
+        roleId: "role-coach",
+        name: "Coach",
+        systemKey: "coach",
+        permissions: ["members.manage"],
+      },
     ]);
     const result = await listMyClubs(db, USER_ID);
-    expect(result).toHaveLength(1);
     expect(result[0]?.role).toBeNull();
-    expect(result[0]?.teams).toEqual([
-      { id: TEAM_A, clubId: CLUB_ID, name: "P14", role: "player" },
-      { id: TEAM_B, clubId: CLUB_ID, name: "P15", role: "coach" },
-    ]);
-  });
-
-  it("lets the team-scoped role win over the club-wide role", async () => {
-    const { db } = buildDbMock([
-      { id: CLUB_ID, name: "FC Test", role: "admin", team_id: null },
-      { id: CLUB_ID, name: "FC Test", role: "coach", team_id: TEAM_A },
-    ]);
-    const result = await listMyClubs(db, USER_ID);
-    expect(result[0]?.teams).toEqual([
-      { id: TEAM_A, clubId: CLUB_ID, name: "P14", role: "coach" },
-      { id: TEAM_B, clubId: CLUB_ID, name: "P15", role: "admin" },
-    ]);
+    expect(result[0]?.permissions).toEqual([]);
+    expect(result[0]?.teams).toHaveLength(1);
+    expect(result[0]?.teams[0]).toMatchObject({ id: TEAM_A, role: "Coach" });
   });
 
   it("returns an empty list without memberships", async () => {
