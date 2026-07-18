@@ -26,6 +26,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { PERMISSIONS, type Permission, type Role } from "@fc-app/contracts";
+import { InvitationsSection } from "../components/InvitationsSection";
 import { ensureMe } from "../lib/auth";
 import { ensureMyClubs, myClubsQueryOptions } from "../lib/clubs";
 import {
@@ -105,6 +106,8 @@ function ClubRoles({ clubId, clubName }: { clubId: string; clubName: string }) {
           </Stack>
         )}
       </Box>
+
+      <InvitationsSection clubId={clubId} />
 
       {creating && (
         <RoleDialog

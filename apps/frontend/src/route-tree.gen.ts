@@ -14,6 +14,7 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SettingsClubRouteImport } from './routes/settings.club'
+import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
@@ -40,12 +41,18 @@ const SettingsClubRoute = SettingsClubRouteImport.update({
   path: '/settings/club',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InviteTokenRoute = InviteTokenRouteImport.update({
+  id: '/invite/$token',
+  path: '/invite/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/profile': typeof ProfileRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/settings/club': typeof SettingsClubRoute
 }
 export interface FileRoutesByTo {
@@ -53,6 +60,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/profile': typeof ProfileRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/settings/club': typeof SettingsClubRoute
 }
 export interface FileRoutesById {
@@ -61,15 +69,34 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/profile': typeof ProfileRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/settings/club': typeof SettingsClubRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/onboarding' | '/profile' | '/settings/club'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/onboarding'
+    | '/profile'
+    | '/invite/$token'
+    | '/settings/club'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/onboarding' | '/profile' | '/settings/club'
+  to:
+    | '/'
+    | '/login'
+    | '/onboarding'
+    | '/profile'
+    | '/invite/$token'
+    | '/settings/club'
   id:
-    '__root__' | '/' | '/login' | '/onboarding' | '/profile' | '/settings/club'
+    | '__root__'
+    | '/'
+    | '/login'
+    | '/onboarding'
+    | '/profile'
+    | '/invite/$token'
+    | '/settings/club'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -77,6 +104,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
   ProfileRoute: typeof ProfileRoute
+  InviteTokenRoute: typeof InviteTokenRoute
   SettingsClubRoute: typeof SettingsClubRoute
 }
 
@@ -117,6 +145,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsClubRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/invite/$token': {
+      id: '/invite/$token'
+      path: '/invite/$token'
+      fullPath: '/invite/$token'
+      preLoaderRoute: typeof InviteTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -125,6 +160,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
   ProfileRoute: ProfileRoute,
+  InviteTokenRoute: InviteTokenRoute,
   SettingsClubRoute: SettingsClubRoute,
 }
 export const routeTree = rootRouteImport

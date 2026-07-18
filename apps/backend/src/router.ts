@@ -1,5 +1,12 @@
 import { createClubHandler } from "./procedures/create-club.js";
 import { healthHandler } from "./procedures/health.js";
+import {
+  acceptInvitationHandler,
+  createInvitationHandler,
+  getInvitationHandler,
+  listInvitationsHandler,
+  revokeInvitationHandler,
+} from "./procedures/invitations.js";
 import { meHandler } from "./procedures/me.js";
 import { myClubsHandler } from "./procedures/my-clubs.js";
 import {
@@ -28,6 +35,11 @@ export const router = os.router({
   createRole: createRoleHandler,
   updateRole: updateRoleHandler,
   deleteRole: deleteRoleHandler,
+  createInvitation: createInvitationHandler,
+  listInvitations: listInvitationsHandler,
+  revokeInvitation: revokeInvitationHandler,
+  getInvitation: getInvitationHandler,
+  acceptInvitation: acceptInvitationHandler,
 });
 
 /** AppRouter type — re-exported for use in tests and future tooling. */

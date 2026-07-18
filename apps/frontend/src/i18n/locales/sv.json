@@ -69,6 +69,39 @@
       "saveError": "Kunde inte spara. Namnet kanske redan används."
     }
   },
+  "invitations": {
+    "heading": "Inbjudningar",
+    "new": "Ny inbjudan",
+    "create": "Skapa inbjudan",
+    "role": "Roll",
+    "team": "Lag",
+    "teamHelp": "Lämna tomt för hela klubben.",
+    "clubWide": "Hela klubben",
+    "email": "E-post (valfritt)",
+    "emailHelp": "Begränsa inbjudan till en viss e-postadress.",
+    "anyEmail": "Vem som helst med länken",
+    "copyLink": "Kopiera länk",
+    "copied": "Kopierad!",
+    "revoke": "Återkalla",
+    "empty": "Inga inbjudningar ännu.",
+    "loadError": "Kunde inte ladda inbjudningar.",
+    "createError": "Kunde inte skapa inbjudan. Försök igen."
+  },
+  "invite": {
+    "heading": "Inbjudan",
+    "description": "Du har blivit inbjuden till {{target}} som {{role}}.",
+    "emailRestricted": "Den här inbjudan gäller {{email}}.",
+    "accept": "Acceptera inbjudan",
+    "signInToAccept": "Logga in för att acceptera",
+    "acceptError": "Kunde inte acceptera inbjudan. Den kanske redan använts eller så är du redan medlem.",
+    "notFound": "Inbjudan hittades inte.",
+    "status": {
+      "active": "Aktiv",
+      "expired": "Utgången",
+      "revoked": "Återkallad",
+      "used": "Använd"
+    }
+  },
   "profile": {
     "language": "Språk",
     "languages": {
