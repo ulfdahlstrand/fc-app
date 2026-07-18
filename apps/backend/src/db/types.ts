@@ -54,9 +54,22 @@ export interface MembershipsTable {
   club_id: string;
   /** null = club-wide membership; set = scoped to a single team. */
   team_id: string | null;
-  /** Plain text placeholder until the configurable role system (#5). */
-  role: string;
+  role_id: string;
   created_at: Timestamp;
+}
+
+export interface RolesTable {
+  id: Generated<string>;
+  club_id: string;
+  name: string;
+  /** admin | coach | player | guardian for seeded roles; null for custom ones. */
+  system_key: string | null;
+  created_at: Timestamp;
+}
+
+export interface RolePermissionsTable {
+  role_id: string;
+  permission: string;
 }
 
 export interface Database {
@@ -66,4 +79,6 @@ export interface Database {
   clubs: ClubsTable;
   teams: TeamsTable;
   memberships: MembershipsTable;
+  roles: RolesTable;
+  role_permissions: RolePermissionsTable;
 }

@@ -9,7 +9,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import { useSyncExternalStore } from "react";
 import { useQuery } from "@tanstack/react-query";
-import type { MyClub, Team } from "@fc-app/contracts";
+import type { MyClub, MyTeam, Permission } from "@fc-app/contracts";
 import { orpc } from "../orpc-client";
 import { queryClient } from "../query-client";
 
@@ -45,7 +45,7 @@ function subscribe(listener: () => void): () => void {
 
 export interface SelectedTeam {
   club: MyClub;
-  team: Team;
+  team: MyTeam;
 }
 
 /**
@@ -72,4 +72,13 @@ export function useSelectedTeam(): SelectedTeam | null {
   const clubs = useQuery(myClubsQueryOptions);
   if (!clubs.data) return null;
   return resolveSelectedTeam(clubs.data.clubs, storedTeamId);
+}
+
+/**
+ * True when the caller holds `permission` in the selected team. Components use
+ * it to gate UI actions; the backend enforces the same permission server-side.
+ */
+export function useHasPermission(permission: Permission): boolean {
+  const selected = useSelectedTeam();
+  return selected?.team.permissions.includes(permission) ?? false;
 }

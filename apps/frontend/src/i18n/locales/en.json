@@ -29,6 +29,46 @@
   "switcher": {
     "label": "Select team"
   },
+  "nav": {
+    "clubSettings": "Club settings"
+  },
+  "common": {
+    "loading": "Loading…",
+    "edit": "Edit",
+    "delete": "Delete",
+    "save": "Save",
+    "close": "Close"
+  },
+  "permissions": {
+    "members.view": "View members",
+    "members.manage": "Manage members",
+    "activities.manage": "Manage activities",
+    "attendance.record": "Record attendance",
+    "callups.manage": "Manage call-ups",
+    "callups.respond": "Respond to call-ups",
+    "posts.manage": "Manage posts",
+    "tracking.manage": "Manage tracking lists",
+    "settings.team": "Team settings",
+    "settings.club": "Club settings"
+  },
+  "settings": {
+    "club": {
+      "heading": "Club settings",
+      "forbidden": "You do not have permission to administer any club.",
+      "roles": "Roles",
+      "newRole": "New role",
+      "editRole": "Edit role",
+      "roleName": "Role name",
+      "permissions": "Permissions",
+      "permissionsCount": "permissions",
+      "memberCount_one": "{{count}} member",
+      "memberCount_other": "{{count}} members",
+      "system": "System",
+      "view": "View",
+      "loadError": "Could not load roles.",
+      "saveError": "Could not save. The name may already be in use."
+    }
+  },
   "profile": {
     "language": "Language",
     "languages": {

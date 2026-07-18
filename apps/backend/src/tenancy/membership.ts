@@ -1,9 +1,10 @@
 import { ORPCError } from "@orpc/server";
 import type { Kysely } from "kysely";
+import type { Permission } from "@fc-app/contracts";
 import type { Database } from "../db/types.js";
 
 // ---------------------------------------------------------------------------
-// Tenant scoping (ADR-003)
+// Tenant scoping (ADR-003 + ADR-005)
 //
 // Every domain procedure resolves the caller's memberships before touching
 // tenant data — the club/team context comes from membership rows, never
@@ -14,6 +15,10 @@ import type { Database } from "../db/types.js";
 // Team A, coach in Team B). Access to a team requires the club-wide row or
 // that team's own row; for role resolution the team-scoped row wins over
 // the club-wide one.
+//
+// Each membership carries its role's permission set (ADR-005), loaded from
+// role_permissions, so procedures can gate on permissions rather than role
+// names.
 // ---------------------------------------------------------------------------
 
 export interface Membership {
@@ -21,10 +26,13 @@ export interface Membership {
   userId: string;
   clubId: string;
   teamId: string | null;
-  role: string;
+  roleId: string;
+  roleName: string;
+  roleSystemKey: string | null;
+  permissions: Permission[];
 }
 
-/** All membership rows the user holds in the club (may be empty). */
+/** All membership rows the user holds in the club (may be empty), with permissions. */
 export async function getClubMemberships(
   db: Kysely<Database>,
   userId: string,
@@ -32,17 +40,48 @@ export async function getClubMemberships(
 ): Promise<Membership[]> {
   const rows = await db
     .selectFrom("memberships")
-    .select(["id", "user_id", "club_id", "team_id", "role"])
-    .where("user_id", "=", userId)
-    .where("club_id", "=", clubId)
+    .innerJoin("roles", "roles.id", "memberships.role_id")
+    .select([
+      "memberships.id",
+      "memberships.user_id",
+      "memberships.club_id",
+      "memberships.team_id",
+      "memberships.role_id",
+      "roles.name as role_name",
+      "roles.system_key as role_system_key",
+    ])
+    .where("memberships.user_id", "=", userId)
+    .where("memberships.club_id", "=", clubId)
     .execute();
+
+  if (rows.length === 0) return [];
+
+  const permissionRows = await db
+    .selectFrom("role_permissions")
+    .select(["role_id", "permission"])
+    .where(
+      "role_id",
+      "in",
+      rows.map((row) => row.role_id)
+    )
+    .execute();
+
+  const permissionsByRole = new Map<string, Permission[]>();
+  for (const row of permissionRows) {
+    const list = permissionsByRole.get(row.role_id) ?? [];
+    list.push(row.permission as Permission);
+    permissionsByRole.set(row.role_id, list);
+  }
 
   return rows.map((row) => ({
     id: row.id,
     userId: row.user_id,
     clubId: row.club_id,
     teamId: row.team_id,
-    role: row.role,
+    roleId: row.role_id,
+    roleName: row.role_name,
+    roleSystemKey: row.role_system_key,
+    permissions: permissionsByRole.get(row.role_id) ?? [],
   }));
 }
 
@@ -59,6 +98,27 @@ export async function requireMembership(
   if (memberships.length === 0) {
     throw new ORPCError("FORBIDDEN", {
       message: "Not a member of this club",
+    });
+  }
+  return memberships;
+}
+
+/**
+ * Requires that the caller holds `permission` somewhere in the club — via
+ * the club-wide role or any team-scoped role. Returns the caller's
+ * memberships so the procedure can narrow further if needed.
+ */
+export async function requireClubPermission(
+  db: Kysely<Database>,
+  userId: string,
+  clubId: string,
+  permission: Permission
+): Promise<Membership[]> {
+  const memberships = await requireMembership(db, userId, clubId);
+  const granted = memberships.some((m) => m.permissions.includes(permission));
+  if (!granted) {
+    throw new ORPCError("FORBIDDEN", {
+      message: `Missing permission: ${permission}`,
     });
   }
   return memberships;
@@ -95,4 +155,23 @@ export async function requireTeamAccess(
   }
 
   return { teamId: team.id, clubId: team.club_id, membership };
+}
+
+/**
+ * Like requireTeamAccess, but also requires the granting membership's role
+ * to hold `permission`.
+ */
+export async function requireTeamPermission(
+  db: Kysely<Database>,
+  userId: string,
+  teamId: string,
+  permission: Permission
+): Promise<{ teamId: string; clubId: string; membership: Membership }> {
+  const access = await requireTeamAccess(db, userId, teamId);
+  if (!access.membership.permissions.includes(permission)) {
+    throw new ORPCError("FORBIDDEN", {
+      message: `Missing permission: ${permission}`,
+    });
+  }
+  return access;
 }

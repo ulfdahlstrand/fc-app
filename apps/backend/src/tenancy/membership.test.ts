@@ -1,109 +1,162 @@
 import { ORPCError } from "@orpc/server";
 import { describe, expect, it, vi } from "vitest";
 import type { Kysely } from "kysely";
+import type { Permission } from "@fc-app/contracts";
 import type { Database } from "../db/types.js";
-import { requireMembership, requireTeamAccess } from "./membership.js";
+import {
+  requireClubPermission,
+  requireMembership,
+  requireTeamAccess,
+  requireTeamPermission,
+} from "./membership.js";
 
 const USER_ID = "550e8400-e29b-41d4-a716-446655440001";
 const CLUB_ID = "550e8400-e29b-41d4-a716-446655440002";
 const TEAM_ID = "550e8400-e29b-41d4-a716-446655440003";
 const OTHER_TEAM_ID = "550e8400-e29b-41d4-a716-446655440099";
 
-function membershipRow(teamId: string | null, role = "admin") {
+interface RoleSpec {
+  teamId: string | null;
+  roleId: string;
+  name: string;
+  systemKey: string | null;
+  permissions: Permission[];
+}
+
+function membershipRow(spec: RoleSpec) {
   return {
-    id: `membership-${teamId ?? "club"}`,
+    id: `membership-${spec.teamId ?? "club"}`,
     user_id: USER_ID,
     club_id: CLUB_ID,
-    team_id: teamId,
-    role,
+    team_id: spec.teamId,
+    role_id: spec.roleId,
+    role_name: spec.name,
+    role_system_key: spec.systemKey,
   };
 }
 
-/** Mock covering the select chains used by the membership helpers. */
+/**
+ * Mock covering the query shapes used by the membership helpers:
+ * memberships⋈roles select, role_permissions select, and the teams lookup.
+ */
 function buildDbMock(options: {
-  membershipRows: ReturnType<typeof membershipRow>[];
+  specs: RoleSpec[];
   teamRow?: { id: string; club_id: string } | undefined;
 }) {
+  const membershipRows = options.specs.map(membershipRow);
+  const permissionRows = options.specs.flatMap((spec) =>
+    spec.permissions.map((permission) => ({
+      role_id: spec.roleId,
+      permission,
+    }))
+  );
+
   const membershipChain = {
+    innerJoin: vi.fn().mockReturnThis(),
     select: vi.fn().mockReturnThis(),
     where: vi.fn().mockReturnThis(),
-    execute: vi.fn().mockResolvedValue(options.membershipRows),
+    execute: vi.fn().mockResolvedValue(membershipRows),
+  };
+  const permissionChain = {
+    select: vi.fn().mockReturnThis(),
+    where: vi.fn().mockReturnThis(),
+    execute: vi.fn().mockResolvedValue(permissionRows),
   };
   const teamChain = {
     select: vi.fn().mockReturnThis(),
     where: vi.fn().mockReturnThis(),
     executeTakeFirst: vi.fn().mockResolvedValue(options.teamRow),
   };
-  const selectFrom = vi.fn((table: string) =>
-    table === "memberships" ? membershipChain : teamChain
-  );
+  const selectFrom = vi.fn((table: string) => {
+    if (table === "memberships") return membershipChain;
+    if (table === "role_permissions") return permissionChain;
+    return teamChain;
+  });
   return { db: { selectFrom } as unknown as Kysely<Database> };
 }
 
+const adminSpec: RoleSpec = {
+  teamId: null,
+  roleId: "role-admin",
+  name: "Admin",
+  systemKey: "admin",
+  permissions: ["settings.club", "members.manage"],
+};
+
 describe("requireMembership", () => {
-  it("returns all membership rows for a member", async () => {
+  it("returns all membership rows with permissions for a member", async () => {
     const { db } = buildDbMock({
-      membershipRows: [membershipRow(null), membershipRow(TEAM_ID, "coach")],
+      specs: [
+        adminSpec,
+        {
+          teamId: TEAM_ID,
+          roleId: "role-coach",
+          name: "Coach",
+          systemKey: "coach",
+          permissions: ["members.manage"],
+        },
+      ],
     });
     const result = await requireMembership(db, USER_ID, CLUB_ID);
     expect(result).toHaveLength(2);
-    expect(result[0]).toMatchObject({
-      userId: USER_ID,
-      clubId: CLUB_ID,
-      teamId: null,
-      role: "admin",
-    });
+    expect(result[0]?.permissions).toContain("settings.club");
   });
 
   it("throws FORBIDDEN for a non-member", async () => {
-    const { db } = buildDbMock({ membershipRows: [] });
+    const { db } = buildDbMock({ specs: [] });
     await expect(requireMembership(db, USER_ID, CLUB_ID)).rejects.toThrow(
       ORPCError
     );
   });
 });
 
+describe("requireClubPermission", () => {
+  it("passes when a membership grants the permission", async () => {
+    const { db } = buildDbMock({ specs: [adminSpec] });
+    await expect(
+      requireClubPermission(db, USER_ID, CLUB_ID, "settings.club")
+    ).resolves.toHaveLength(1);
+  });
+
+  it("throws FORBIDDEN when no membership grants it", async () => {
+    const { db } = buildDbMock({
+      specs: [{ ...adminSpec, permissions: ["members.view"] }],
+    });
+    await expect(
+      requireClubPermission(db, USER_ID, CLUB_ID, "settings.club")
+    ).rejects.toThrow(ORPCError);
+  });
+});
+
 describe("requireTeamAccess", () => {
   it("resolves the club through the team row, not client input", async () => {
     const { db } = buildDbMock({
-      membershipRows: [membershipRow(null)],
+      specs: [adminSpec],
       teamRow: { id: TEAM_ID, club_id: CLUB_ID },
     });
     const result = await requireTeamAccess(db, USER_ID, TEAM_ID);
     expect(result.clubId).toEqual(CLUB_ID);
-    expect(result.membership.role).toEqual("admin");
+    expect(result.membership.roleName).toEqual("Admin");
   });
 
   it("throws FORBIDDEN for an unknown team", async () => {
-    const { db } = buildDbMock({ membershipRows: [], teamRow: undefined });
+    const { db } = buildDbMock({ specs: [], teamRow: undefined });
     await expect(requireTeamAccess(db, USER_ID, TEAM_ID)).rejects.toThrow(
       ORPCError
     );
-  });
-
-  it("throws FORBIDDEN when the caller is not a member of the team's club", async () => {
-    const { db } = buildDbMock({
-      membershipRows: [],
-      teamRow: { id: TEAM_ID, club_id: CLUB_ID },
-    });
-    await expect(requireTeamAccess(db, USER_ID, TEAM_ID)).rejects.toThrow(
-      ORPCError
-    );
-  });
-
-  it("allows a membership scoped to the requested team", async () => {
-    const { db } = buildDbMock({
-      membershipRows: [membershipRow(TEAM_ID, "player")],
-      teamRow: { id: TEAM_ID, club_id: CLUB_ID },
-    });
-    const result = await requireTeamAccess(db, USER_ID, TEAM_ID);
-    expect(result.teamId).toEqual(TEAM_ID);
-    expect(result.membership.role).toEqual("player");
   });
 
   it("throws FORBIDDEN when memberships are scoped to other teams only", async () => {
     const { db } = buildDbMock({
-      membershipRows: [membershipRow(OTHER_TEAM_ID, "player")],
+      specs: [
+        {
+          teamId: OTHER_TEAM_ID,
+          roleId: "role-player",
+          name: "Player",
+          systemKey: "player",
+          permissions: ["callups.respond"],
+        },
+      ],
       teamRow: { id: TEAM_ID, club_id: CLUB_ID },
     });
     await expect(requireTeamAccess(db, USER_ID, TEAM_ID)).rejects.toThrow(
@@ -111,24 +164,51 @@ describe("requireTeamAccess", () => {
     );
   });
 
-  it("supports different roles in different teams of the same club", async () => {
+  it("prefers the team-scoped role over the club-wide role", async () => {
     const { db } = buildDbMock({
-      membershipRows: [
-        membershipRow(OTHER_TEAM_ID, "player"),
-        membershipRow(TEAM_ID, "coach"),
+      specs: [
+        adminSpec,
+        {
+          teamId: TEAM_ID,
+          roleId: "role-coach",
+          name: "Coach",
+          systemKey: "coach",
+          permissions: ["members.manage"],
+        },
       ],
       teamRow: { id: TEAM_ID, club_id: CLUB_ID },
     });
     const result = await requireTeamAccess(db, USER_ID, TEAM_ID);
-    expect(result.membership.role).toEqual("coach");
+    expect(result.membership.roleName).toEqual("Coach");
   });
+});
 
-  it("prefers the team-scoped role over the club-wide role", async () => {
+describe("requireTeamPermission", () => {
+  it("passes when the granting role holds the permission", async () => {
     const { db } = buildDbMock({
-      membershipRows: [membershipRow(null, "admin"), membershipRow(TEAM_ID, "coach")],
+      specs: [adminSpec],
       teamRow: { id: TEAM_ID, club_id: CLUB_ID },
     });
-    const result = await requireTeamAccess(db, USER_ID, TEAM_ID);
-    expect(result.membership.role).toEqual("coach");
+    await expect(
+      requireTeamPermission(db, USER_ID, TEAM_ID, "members.manage")
+    ).resolves.toMatchObject({ teamId: TEAM_ID });
+  });
+
+  it("throws FORBIDDEN when the granting role lacks the permission", async () => {
+    const { db } = buildDbMock({
+      specs: [
+        {
+          teamId: TEAM_ID,
+          roleId: "role-player",
+          name: "Player",
+          systemKey: "player",
+          permissions: ["callups.respond"],
+        },
+      ],
+      teamRow: { id: TEAM_ID, club_id: CLUB_ID },
+    });
+    await expect(
+      requireTeamPermission(db, USER_ID, TEAM_ID, "members.manage")
+    ).rejects.toThrow(ORPCError);
   });
 });

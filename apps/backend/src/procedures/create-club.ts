@@ -3,7 +3,7 @@ import type { Club, Team } from "@fc-app/contracts";
 import { getDb } from "../db/client.js";
 import type { Database } from "../db/types.js";
 import { os, requireUser } from "../orpc.js";
-import { seedTeamDefaults } from "../tenancy/seed.js";
+import { seedClubRoles, seedTeamDefaults } from "../tenancy/seed.js";
 
 /**
  * Creates a club with its first team in one transaction, makes the creator
@@ -23,6 +23,8 @@ export async function createClub(
       .returning(["id", "name"])
       .executeTakeFirstOrThrow();
 
+    const { adminRoleId } = await seedClubRoles(trx, club.id);
+
     const team = await trx
       .insertInto("teams")
       .values({ club_id: club.id, name: teamName })
@@ -35,7 +37,7 @@ export async function createClub(
         user_id: userId,
         club_id: club.id,
         team_id: null,
-        role: "admin",
+        role_id: adminRoleId,
       })
       .execute();
 

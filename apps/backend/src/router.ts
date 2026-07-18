@@ -2,6 +2,12 @@ import { createClubHandler } from "./procedures/create-club.js";
 import { healthHandler } from "./procedures/health.js";
 import { meHandler } from "./procedures/me.js";
 import { myClubsHandler } from "./procedures/my-clubs.js";
+import {
+  createRoleHandler,
+  deleteRoleHandler,
+  listRolesHandler,
+  updateRoleHandler,
+} from "./procedures/roles.js";
 import { os } from "./orpc.js";
 
 /**
@@ -18,6 +24,10 @@ export const router = os.router({
   me: meHandler,
   myClubs: myClubsHandler,
   createClub: createClubHandler,
+  listRoles: listRolesHandler,
+  createRole: createRoleHandler,
+  updateRole: updateRoleHandler,
+  deleteRole: deleteRoleHandler,
 });
 
 /** AppRouter type — re-exported for use in tests and future tooling. */
