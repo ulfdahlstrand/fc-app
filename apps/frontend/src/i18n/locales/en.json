@@ -69,6 +69,39 @@
       "saveError": "Could not save. The name may already be in use."
     }
   },
+  "invitations": {
+    "heading": "Invitations",
+    "new": "New invitation",
+    "create": "Create invitation",
+    "role": "Role",
+    "team": "Team",
+    "teamHelp": "Leave empty for the whole club.",
+    "clubWide": "Whole club",
+    "email": "Email (optional)",
+    "emailHelp": "Restrict the invitation to a specific email address.",
+    "anyEmail": "Anyone with the link",
+    "copyLink": "Copy link",
+    "copied": "Copied!",
+    "revoke": "Revoke",
+    "empty": "No invitations yet.",
+    "loadError": "Could not load invitations.",
+    "createError": "Could not create the invitation. Please try again."
+  },
+  "invite": {
+    "heading": "Invitation",
+    "description": "You have been invited to {{target}} as {{role}}.",
+    "emailRestricted": "This invitation is for {{email}}.",
+    "accept": "Accept invitation",
+    "signInToAccept": "Sign in to accept",
+    "acceptError": "Could not accept the invitation. It may already be used, or you may already be a member.",
+    "notFound": "Invitation not found.",
+    "status": {
+      "active": "Active",
+      "expired": "Expired",
+      "revoked": "Revoked",
+      "used": "Used"
+    }
+  },
   "profile": {
     "language": "Language",
     "languages": {

@@ -13,12 +13,19 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { ensureMe } from "../lib/auth";
 import { ensureMyClubs, useSelectedTeam } from "../lib/clubs";
+import { takePendingInvite } from "../lib/invitations";
 import { orpc } from "../orpc-client";
 
 export const Route = createFileRoute("/")({
   beforeLoad: async () => {
     const user = await ensureMe();
     if (!user) throw redirect({ to: "/login" });
+    // A user who signed in to accept an invite lands here — send them on to
+    // the invite before the onboarding redirect fires.
+    const pendingInvite = takePendingInvite();
+    if (pendingInvite) {
+      throw redirect({ to: "/invite/$token", params: { token: pendingInvite } });
+    }
     const clubs = await ensureMyClubs();
     if (clubs.length === 0) throw redirect({ to: "/onboarding" });
   },

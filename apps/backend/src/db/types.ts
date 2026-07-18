@@ -72,6 +72,21 @@ export interface RolePermissionsTable {
   permission: string;
 }
 
+export interface InvitationsTable {
+  id: Generated<string>;
+  club_id: string;
+  team_id: string | null;
+  role_id: string;
+  email: string | null;
+  token: string;
+  expires_at: ColumnType<Date, Date, Date>;
+  created_by: string;
+  used_at: ColumnType<Date, never, Date> | null;
+  used_by: string | null;
+  revoked_at: ColumnType<Date, never, Date> | null;
+  created_at: Timestamp;
+}
+
 export interface Database {
   users: UsersTable;
   identities: IdentitiesTable;
@@ -81,4 +96,5 @@ export interface Database {
   memberships: MembershipsTable;
   roles: RolesTable;
   role_permissions: RolePermissionsTable;
+  invitations: InvitationsTable;
 }
