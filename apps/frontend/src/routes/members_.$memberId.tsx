@@ -16,6 +16,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { GuardiansSection } from "../components/GuardiansSection";
 import { formatFieldValue } from "../components/memberFieldDisplay";
 import { MemberFieldValuesDialog } from "../components/MemberFieldValuesDialog";
 import { MemberFormDialog } from "../components/MemberFormDialog";
@@ -155,6 +156,8 @@ function MemberDetail({
           </Paper>
         </Box>
       )}
+
+      <GuardiansSection teamId={teamId} memberId={m.id} />
 
       {editing && (
         <MemberFormDialog

@@ -1,4 +1,11 @@
 import { createClubHandler } from "./procedures/create-club.js";
+import {
+  addGuardianHandler,
+  listClubUsersHandler,
+  listMemberGuardiansHandler,
+  myMembersHandler,
+  removeGuardianHandler,
+} from "./procedures/guardians.js";
 import { healthHandler } from "./procedures/health.js";
 import {
   acceptInvitationHandler,
@@ -64,6 +71,11 @@ export const router = os.router({
   updateMemberField: updateMemberFieldHandler,
   archiveMemberField: archiveMemberFieldHandler,
   setMemberFieldValues: setMemberFieldValuesHandler,
+  listMemberGuardians: listMemberGuardiansHandler,
+  addGuardian: addGuardianHandler,
+  removeGuardian: removeGuardianHandler,
+  listClubUsers: listClubUsersHandler,
+  myMembers: myMembersHandler,
 });
 
 /** AppRouter type — re-exported for use in tests and future tooling. */

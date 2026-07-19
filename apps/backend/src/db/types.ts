@@ -85,6 +85,9 @@ export interface InvitationsTable {
   used_by: string | null;
   revoked_at: ColumnType<Date, never, Date> | null;
   created_at: Timestamp;
+  /** Set for member-bound (guardian) invitations (#9). */
+  member_id: string | null;
+  relation: string | null;
 }
 
 export interface MembersTable {
@@ -118,6 +121,13 @@ export interface MemberFieldValuesTable {
   value: string;
 }
 
+export interface MemberGuardiansTable {
+  member_id: string;
+  user_id: string;
+  relation: string;
+  created_at: Timestamp;
+}
+
 export interface Database {
   users: UsersTable;
   identities: IdentitiesTable;
@@ -131,4 +141,5 @@ export interface Database {
   members: MembersTable;
   member_field_definitions: MemberFieldDefinitionsTable;
   member_field_values: MemberFieldValuesTable;
+  member_guardians: MemberGuardiansTable;
 }
