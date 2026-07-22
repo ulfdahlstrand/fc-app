@@ -2,6 +2,30 @@ import { oc } from "@orpc/contract";
 import { z } from "zod";
 
 // ---------------------------------------------------------------------------
+// Query-string-safe boolean
+//
+// oRPC's OpenAPI layer does not coerce GET query parameters against the
+// contract's Zod types — a query string can only carry text, so a plain
+// value sent as `?includeArchived=true` arrives server-side as the string
+// "true", not a boolean, and `z.boolean()` rejects it (BAD_REQUEST). This
+// accepts a real boolean (handlers called directly, e.g. in tests) as well
+// as the "true"/"false" strings the oRPC client actually puts on the wire
+// for GET requests, and normalizes both to a boolean.
+// ---------------------------------------------------------------------------
+
+export const queryBooleanSchema = z.preprocess(
+  (value) =>
+    typeof value === "string"
+      ? value === "true"
+        ? true
+        : value === "false"
+          ? false
+          : value
+      : value,
+  z.boolean()
+);
+
+// ---------------------------------------------------------------------------
 // Health procedure — Zod schemas
 // ---------------------------------------------------------------------------
 
@@ -397,7 +421,7 @@ const memberWriteFields = {
 
 export const listMembersInputSchema = z.object({
   teamId: z.string(),
-  includeArchived: z.boolean().optional(),
+  includeArchived: queryBooleanSchema.optional(),
   search: z.string().optional(),
 });
 
@@ -455,7 +479,7 @@ export const setMemberArchivedOutputSchema = z.object({
 
 export const listMemberFieldsInputSchema = z.object({
   teamId: z.string(),
-  includeArchived: z.boolean().optional(),
+  includeArchived: queryBooleanSchema.optional(),
 });
 
 export const listMemberFieldsOutputSchema = z.object({
