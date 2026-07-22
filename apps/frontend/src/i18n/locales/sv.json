@@ -31,6 +31,7 @@
   },
   "nav": {
     "members": "Medlemmar",
+    "groups": "Grupper",
     "teamSettings": "Laginställningar",
     "clubSettings": "Klubbinställningar"
   },
@@ -159,6 +160,23 @@
       "revoked": "Återkallad",
       "used": "Använd"
     }
+  },
+  "groups": {
+    "heading": "Grupper",
+    "new": "Ny grupp",
+    "name": "Gruppens namn",
+    "rename": "Byt namn",
+    "manageMembers": "Hantera medlemmar",
+    "membersOf": "Medlemmar i {{name}}",
+    "members": "Medlemmar",
+    "memberCount_one": "{{count}} medlem",
+    "memberCount_other": "{{count}} medlemmar",
+    "filterLabel": "Grupp",
+    "allMembers": "Alla medlemmar",
+    "empty": "Inga grupper ännu.",
+    "forbidden": "Du har inte behörighet att se grupper i det här laget.",
+    "loadError": "Kunde inte ladda grupper.",
+    "saveError": "Kunde inte spara. Namnet kanske redan används."
   },
   "guardians": {
     "heading": "Målsmän / konton",

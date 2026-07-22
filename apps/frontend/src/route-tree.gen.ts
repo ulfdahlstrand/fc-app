@@ -13,6 +13,7 @@ import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as MembersRouteImport } from './routes/members'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as GroupsRouteImport } from './routes/groups'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SettingsTeamRouteImport } from './routes/settings.team'
 import { Route as SettingsClubRouteImport } from './routes/settings.club'
@@ -37,6 +38,11 @@ const MembersRoute = MembersRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GroupsRoute = GroupsRouteImport.update({
+  id: '/groups',
+  path: '/groups',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -67,6 +73,7 @@ const InviteTokenRoute = InviteTokenRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/groups': typeof GroupsRoute
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
   '/onboarding': typeof OnboardingRoute
@@ -78,6 +85,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/groups': typeof GroupsRoute
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
   '/onboarding': typeof OnboardingRoute
@@ -90,6 +98,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/groups': typeof GroupsRoute
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
   '/onboarding': typeof OnboardingRoute
@@ -103,6 +112,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/groups'
     | '/login'
     | '/members'
     | '/onboarding'
@@ -114,6 +124,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/groups'
     | '/login'
     | '/members'
     | '/onboarding'
@@ -125,6 +136,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/groups'
     | '/login'
     | '/members'
     | '/onboarding'
@@ -137,6 +149,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  GroupsRoute: typeof GroupsRoute
   LoginRoute: typeof LoginRoute
   MembersRoute: typeof MembersRoute
   OnboardingRoute: typeof OnboardingRoute
@@ -175,6 +188,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/groups': {
+      id: '/groups'
+      path: '/groups'
+      fullPath: '/groups'
+      preLoaderRoute: typeof GroupsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -217,6 +237,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  GroupsRoute: GroupsRoute,
   LoginRoute: LoginRoute,
   MembersRoute: MembersRoute,
   OnboardingRoute: OnboardingRoute,

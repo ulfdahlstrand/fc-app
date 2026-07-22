@@ -11,6 +11,7 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import FormControlLabel from "@mui/material/FormControlLabel";
+import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
@@ -27,6 +28,7 @@ import { formatFieldValue } from "../components/memberFieldDisplay";
 import { MemberFormDialog } from "../components/MemberFormDialog";
 import { ensureMe } from "../lib/auth";
 import { ensureMyClubs, useHasPermission, useSelectedTeam } from "../lib/clubs";
+import { useGroups } from "../lib/groups";
 import { useMemberFields } from "../lib/member-fields";
 import { useCreateMember, useMembers } from "../lib/members";
 
@@ -61,10 +63,16 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
   const canManage = useHasPermission("members.manage");
   const [search, setSearch] = useState("");
   const [includeArchived, setIncludeArchived] = useState(false);
+  const [groupId, setGroupId] = useState("");
   const [creating, setCreating] = useState(false);
 
-  const members = useMembers(teamId, { search, includeArchived });
+  const members = useMembers(teamId, {
+    search,
+    includeArchived,
+    ...(groupId ? { groupId } : {}),
+  });
   const fields = useMemberFields(teamId);
+  const groups = useGroups(teamId);
   const createMember = useCreateMember(teamId);
   const customColumns = fields.data?.fields ?? [];
 
@@ -111,6 +119,23 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
           }
           label={t("members.showArchived")}
         />
+        {(groups.data?.groups.length ?? 0) > 0 && (
+          <TextField
+            select
+            size="small"
+            label={t("groups.filterLabel")}
+            value={groupId}
+            onChange={(event) => setGroupId(event.target.value)}
+            sx={{ minWidth: 160 }}
+          >
+            <MenuItem value="">{t("groups.allMembers")}</MenuItem>
+            {groups.data?.groups.map((group) => (
+              <MenuItem key={group.id} value={group.id}>
+                {group.name}
+              </MenuItem>
+            ))}
+          </TextField>
+        )}
       </Stack>
 
       {members.isPending ? (

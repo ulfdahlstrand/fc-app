@@ -31,6 +31,7 @@
   },
   "nav": {
     "members": "Members",
+    "groups": "Groups",
     "teamSettings": "Team settings",
     "clubSettings": "Club settings"
   },
@@ -159,6 +160,23 @@
       "revoked": "Revoked",
       "used": "Used"
     }
+  },
+  "groups": {
+    "heading": "Groups",
+    "new": "New group",
+    "name": "Group name",
+    "rename": "Rename",
+    "manageMembers": "Manage members",
+    "membersOf": "Members of {{name}}",
+    "members": "Members",
+    "memberCount_one": "{{count}} member",
+    "memberCount_other": "{{count}} members",
+    "filterLabel": "Group",
+    "allMembers": "All members",
+    "empty": "No groups yet.",
+    "forbidden": "You do not have permission to view groups in this team.",
+    "loadError": "Could not load groups.",
+    "saveError": "Could not save. The name may already be in use."
   },
   "guardians": {
     "heading": "Guardians / accounts",

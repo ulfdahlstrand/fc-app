@@ -12,6 +12,7 @@ import { queryClient } from "../query-client";
 export interface MemberListFilters {
   includeArchived?: boolean;
   search?: string;
+  groupId?: string;
 }
 
 export function membersQueryOptions(teamId: string, filters: MemberListFilters) {
@@ -24,6 +25,7 @@ export function membersQueryOptions(teamId: string, filters: MemberListFilters) 
           ? { includeArchived: filters.includeArchived }
           : {}),
         ...(filters.search ? { search: filters.search } : {}),
+        ...(filters.groupId ? { groupId: filters.groupId } : {}),
       }),
   });
 }

@@ -69,6 +69,17 @@ export const listMembersHandler = os.listMembers.handler(
       );
     }
 
+    if (input.groupId !== undefined) {
+      query = query.where(
+        "id",
+        "in",
+        db
+          .selectFrom("group_members")
+          .select("member_id")
+          .where("group_id", "=", input.groupId)
+      );
+    }
+
     const rows = await query
       .orderBy("last_name")
       .orderBy("first_name")

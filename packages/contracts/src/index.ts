@@ -423,6 +423,8 @@ export const listMembersInputSchema = z.object({
   teamId: z.string(),
   includeArchived: queryBooleanSchema.optional(),
   search: z.string().optional(),
+  /** Filter to members belonging to this group (#10). */
+  groupId: z.string().optional(),
 });
 
 export const listMembersOutputSchema = z.object({
@@ -620,6 +622,90 @@ export const myMembersOutputSchema = z.object({
 });
 
 // ---------------------------------------------------------------------------
+// Groups — Zod schemas (issue #10)
+//
+// Custom member groups ("A squad", "born 2014") reusable anywhere a "who" is
+// selected: roster filtering, call-up squad selection (#16), and post
+// targeting (#18). A member can belong to several groups; deleting a group
+// never touches its members.
+// ---------------------------------------------------------------------------
+
+export const groupSchema = z.object({
+  id: z.string(),
+  teamId: z.string(),
+  name: z.string(),
+  memberCount: z.number(),
+});
+
+export type Group = z.infer<typeof groupSchema>;
+
+export const listGroupsInputSchema = z.object({
+  teamId: z.string(),
+});
+
+export const listGroupsOutputSchema = z.object({
+  groups: z.array(groupSchema),
+});
+
+export const createGroupInputSchema = z.object({
+  teamId: z.string(),
+  name: z.string().min(1).max(100),
+});
+
+export const createGroupOutputSchema = z.object({
+  group: groupSchema,
+});
+
+export const renameGroupInputSchema = z.object({
+  teamId: z.string(),
+  groupId: z.string(),
+  name: z.string().min(1).max(100),
+});
+
+export const renameGroupOutputSchema = z.object({
+  group: groupSchema,
+});
+
+export const deleteGroupInputSchema = z.object({
+  teamId: z.string(),
+  groupId: z.string(),
+});
+
+export const deleteGroupOutputSchema = z.object({
+  deleted: z.literal(true),
+});
+
+export const listGroupMembersInputSchema = z.object({
+  teamId: z.string(),
+  groupId: z.string(),
+});
+
+export const listGroupMembersOutputSchema = z.object({
+  memberIds: z.array(z.string()),
+});
+
+/** Replaces a group's full member list (simplest UI: a multi-select). */
+export const setGroupMembersInputSchema = z.object({
+  teamId: z.string(),
+  groupId: z.string(),
+  memberIds: z.array(z.string()),
+});
+
+export const setGroupMembersOutputSchema = z.object({
+  memberIds: z.array(z.string()),
+});
+
+/** Groups a member belongs to — shown on the member detail page. */
+export const listMemberGroupsInputSchema = z.object({
+  teamId: z.string(),
+  memberId: z.string(),
+});
+
+export const listMemberGroupsOutputSchema = z.object({
+  groups: z.array(groupSchema),
+});
+
+// ---------------------------------------------------------------------------
 // Router contract
 //
 // Defines the shape of every procedure (input + output schemas) without any
@@ -742,6 +828,34 @@ export const contract = oc.router({
     .route({ method: "GET", path: "/my-members" })
     .input(myMembersInputSchema)
     .output(myMembersOutputSchema),
+  listGroups: oc
+    .route({ method: "GET", path: "/groups" })
+    .input(listGroupsInputSchema)
+    .output(listGroupsOutputSchema),
+  createGroup: oc
+    .route({ method: "POST", path: "/groups" })
+    .input(createGroupInputSchema)
+    .output(createGroupOutputSchema),
+  renameGroup: oc
+    .route({ method: "POST", path: "/groups/rename" })
+    .input(renameGroupInputSchema)
+    .output(renameGroupOutputSchema),
+  deleteGroup: oc
+    .route({ method: "POST", path: "/groups/delete" })
+    .input(deleteGroupInputSchema)
+    .output(deleteGroupOutputSchema),
+  listGroupMembers: oc
+    .route({ method: "GET", path: "/groups/members" })
+    .input(listGroupMembersInputSchema)
+    .output(listGroupMembersOutputSchema),
+  setGroupMembers: oc
+    .route({ method: "POST", path: "/groups/members" })
+    .input(setGroupMembersInputSchema)
+    .output(setGroupMembersOutputSchema),
+  listMemberGroups: oc
+    .route({ method: "GET", path: "/members/groups" })
+    .input(listMemberGroupsInputSchema)
+    .output(listMemberGroupsOutputSchema),
 });
 
 /** Inferred contract type — used by the frontend to create a typed oRPC client. */
