@@ -27,7 +27,7 @@ The technical foundation is adopted from the `project-enigma` codebase
 |-------|-----------|
 | Language | **TypeScript** (strict mode, all workspaces) |
 | Monorepo | **Turborepo** + **npm workspaces** |
-| Frontend | **React**, **Vite**, **Material UI**, **TanStack Router** (file-based), **TanStack Query**, **react-i18next** (sv/en) |
+| Frontend | **React**, **Vite**, **shadcn/ui** + **Tailwind** (ADR-007; Material UI still present during the migration), **TanStack Router** (file-based), **TanStack Query**, **react-hook-form** + Zod resolver, **react-i18next** (sv/en) |
 | Backend | **Node.js**, **oRPC** (contract-first, OpenAPI handler), **Kysely** |
 | Validation | **Zod** (shared via `@fc-app/contracts`) |
 | Database | **PostgreSQL 16**, migrations via **Kysely Migrator** (ADR-006) |
@@ -67,6 +67,10 @@ The technical foundation is adopted from the `project-enigma` codebase
   so unit tests importing handlers don't require `DATABASE_URL`.
 - **File-based routing**: routes live in `apps/frontend/src/routes/`;
   `src/route-tree.gen.ts` is generated (committed, not hand-edited).
+- **Contract-derived forms** (ADR-007): form schemas wrap the contract's write
+  fields (e.g. `memberWriteFields`) with the helpers in
+  `apps/frontend/src/lib/form.ts`, so client and server validation cannot
+  drift. `MemberFormDialog` is the reference implementation.
 - **Multi-tenancy** (ADR-003): row-level isolation — all domain tables belong
   to a club (directly or via a parent); every query filters by the caller's
   club context.

@@ -61,7 +61,26 @@
     "loadError": "Kunde inte ladda medlemmar.",
     "saveError": "Kunde inte spara. Kontrollera fälten.",
     "notFound": "Medlemmen hittades inte.",
-    "backToList": "Tillbaka till listan"
+    "backToList": "Tillbaka till listan",
+    "validation": {
+      "firstName": {
+        "too_small": "Förnamn måste anges."
+      },
+      "lastName": {
+        "too_small": "Efternamn måste anges."
+      },
+      "birthYear": {
+        "invalid_type": "Ange ett årtal mellan 1900 och 2100.",
+        "too_small": "Ange ett årtal mellan 1900 och 2100.",
+        "too_big": "Ange ett årtal mellan 1900 och 2100."
+      },
+      "email": {
+        "invalid_format": "Ange en giltig e-postadress."
+      },
+      "phone": {
+        "too_big": "Telefonnumret är för långt."
+      }
+    }
   },
   "fieldType": {
     "text": "Text",
@@ -202,5 +221,13 @@
     },
     "logout": "Logga ut",
     "myMembers": "Mina medlemmar"
+  },
+  "validation": {
+    "too_small": "Värdet är för kort.",
+    "too_big": "Värdet är för långt.",
+    "invalid_type": "Ange ett giltigt värde.",
+    "invalid_format": "Ange ett giltigt värde.",
+    "invalid_value": "Ange ett giltigt värde.",
+    "custom": "Ange ett giltigt värde."
   }
 }

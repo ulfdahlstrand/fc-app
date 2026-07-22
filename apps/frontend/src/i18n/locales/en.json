@@ -61,7 +61,26 @@
     "loadError": "Could not load members.",
     "saveError": "Could not save. Please check the fields.",
     "notFound": "Member not found.",
-    "backToList": "Back to list"
+    "backToList": "Back to list",
+    "validation": {
+      "firstName": {
+        "too_small": "First name is required."
+      },
+      "lastName": {
+        "too_small": "Last name is required."
+      },
+      "birthYear": {
+        "invalid_type": "Enter a year between 1900 and 2100.",
+        "too_small": "Enter a year between 1900 and 2100.",
+        "too_big": "Enter a year between 1900 and 2100."
+      },
+      "email": {
+        "invalid_format": "Enter a valid email address."
+      },
+      "phone": {
+        "too_big": "The phone number is too long."
+      }
+    }
   },
   "fieldType": {
     "text": "Text",
@@ -202,5 +221,13 @@
     },
     "logout": "Sign out",
     "myMembers": "My members"
+  },
+  "validation": {
+    "too_small": "This value is too short.",
+    "too_big": "This value is too long.",
+    "invalid_type": "Enter a valid value.",
+    "invalid_format": "Enter a valid value.",
+    "invalid_value": "Enter a valid value.",
+    "custom": "Enter a valid value."
   }
 }
