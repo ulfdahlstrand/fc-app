@@ -160,12 +160,29 @@
       "used": "Använd"
     }
   },
+  "guardians": {
+    "heading": "Målsmän / konton",
+    "link": "Koppla konto",
+    "linkTitle": "Koppla ett konto till medlemmen",
+    "unlink": "Koppla bort",
+    "user": "Användare",
+    "relationLabel": "Relation",
+    "empty": "Inga kopplade konton ännu.",
+    "noUsers": "Inga fler klubbanvändare att koppla.",
+    "loadError": "Kunde inte ladda kopplade konton.",
+    "linkError": "Kunde inte koppla kontot. Försök igen.",
+    "relation": {
+      "guardian": "Målsman",
+      "self": "Egen"
+    }
+  },
   "profile": {
     "language": "Språk",
     "languages": {
       "sv": "Svenska",
       "en": "Engelska"
     },
-    "logout": "Logga ut"
+    "logout": "Logga ut",
+    "myMembers": "Mina medlemmar"
   }
 }

@@ -97,6 +97,21 @@ export const createInvitationHandler = os.createInvitation.handler(
       }
     }
 
+    // Member-bound (guardian) invitation (#9): the member must belong to a
+    // team in this club.
+    if (input.memberId != null) {
+      const member = await db
+        .selectFrom("members")
+        .innerJoin("teams", "teams.id", "members.team_id")
+        .select("members.id")
+        .where("members.id", "=", input.memberId)
+        .where("teams.club_id", "=", input.clubId)
+        .executeTakeFirst();
+      if (!member) {
+        throw new ORPCError("NOT_FOUND", { message: "Member not found" });
+      }
+    }
+
     const token = randomBytes(24).toString("base64url");
     const expiresAt = new Date(
       Date.now() +
@@ -113,6 +128,8 @@ export const createInvitationHandler = os.createInvitation.handler(
         token,
         expires_at: expiresAt,
         created_by: user.id,
+        member_id: input.memberId ?? null,
+        relation: input.memberId != null ? (input.relation ?? "guardian") : null,
       })
       .returning("id")
       .executeTakeFirstOrThrow();
@@ -244,9 +261,10 @@ export const acceptInvitationHandler = os.acceptInvitation.handler(
         });
       }
 
-      // Creating the membership may collide with an existing one for the same
-      // (user, club, team) scope — that means the user is already a member.
-      try {
+      if (invitation.member_id != null) {
+        // Guardian invitation: the point is the member link. The user may
+        // already be a club member, so don't fail on a duplicate membership —
+        // just ensure it exists, then create the link.
         await trx
           .insertInto("memberships")
           .values({
@@ -255,11 +273,41 @@ export const acceptInvitationHandler = os.acceptInvitation.handler(
             team_id: invitation.team_id,
             role_id: invitation.role_id,
           })
+          .onConflict((oc) =>
+            oc.columns(["user_id", "club_id", "team_id"]).doNothing()
+          )
           .execute();
-      } catch {
-        throw new ORPCError("CONFLICT", {
-          message: "You are already a member of this club or team",
-        });
+
+        await trx
+          .insertInto("member_guardians")
+          .values({
+            member_id: invitation.member_id,
+            user_id: user.id,
+            relation: invitation.relation ?? "guardian",
+          })
+          .onConflict((oc) =>
+            oc
+              .columns(["member_id", "user_id"])
+              .doUpdateSet({ relation: invitation.relation ?? "guardian" })
+          )
+          .execute();
+      } else {
+        // Plain invitation: a duplicate membership means "already a member".
+        try {
+          await trx
+            .insertInto("memberships")
+            .values({
+              user_id: user.id,
+              club_id: invitation.club_id,
+              team_id: invitation.team_id,
+              role_id: invitation.role_id,
+            })
+            .execute();
+        } catch {
+          throw new ORPCError("CONFLICT", {
+            message: "You are already a member of this club or team",
+          });
+        }
       }
 
       await trx

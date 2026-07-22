@@ -4,6 +4,7 @@
  */
 import Avatar from "@mui/material/Avatar";
 import Button from "@mui/material/Button";
+import Chip from "@mui/material/Chip";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import ToggleButton from "@mui/material/ToggleButton";
@@ -14,6 +15,8 @@ import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import i18n, { supportedLanguages } from "../i18n/i18n";
 import { ensureMe, logout, meQueryOptions } from "../lib/auth";
+import { selectTeam } from "../lib/clubs";
+import { useMyMembers } from "../lib/guardians";
 
 export const Route = createFileRoute("/profile")({
   beforeLoad: async () => {
@@ -79,6 +82,59 @@ function ProfilePage() {
           </Button>
         </Stack>
       </Paper>
+
+      <MyMembers />
     </Stack>
+  );
+}
+
+function MyMembers() {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const myMembers = useMyMembers();
+
+  const members = myMembers.data?.members ?? [];
+  if (members.length === 0) return null;
+
+  return (
+    <Paper sx={{ p: 4, maxWidth: 480, width: "100%", mt: 3 }}>
+      <Stack spacing={2}>
+        <Typography variant="h6">{t("profile.myMembers")}</Typography>
+        {members.map((member) => (
+          <Paper
+            key={member.memberId}
+            variant="outlined"
+            sx={{ p: 2, cursor: "pointer" }}
+            onClick={() => {
+              selectTeam(member.teamId);
+              void navigate({
+                to: "/members/$memberId",
+                params: { memberId: member.memberId },
+              });
+            }}
+          >
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+              gap={1}
+            >
+              <Stack>
+                <Typography fontWeight={500}>
+                  {member.firstName} {member.lastName}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {member.clubName} — {member.teamName}
+                </Typography>
+              </Stack>
+              <Chip
+                size="small"
+                label={t(`guardians.relation.${member.relation}`)}
+              />
+            </Stack>
+          </Paper>
+        ))}
+      </Stack>
+    </Paper>
   );
 }
