@@ -159,3 +159,45 @@ via `npm run migrate -w apps/backend`. In Docker Compose, a one-shot
 - One migration format (TypeScript, type-checked) and one runner everywhere.
 - Migrations are append-only; schema types in `src/db/types.ts` are updated
   by hand alongside each migration.
+
+---
+
+## ADR-007 — 2026-07-22 — UI-lager: byt Material UI mot shadcn/ui + Tailwind; type-safe formulär med react-hook-form
+
+**Status:** Accepted (deviation från ADR-001)
+
+**Context:**
+ADR-001 antog project-enigmas stack rakt av, inklusive **Material UI** (MUI) +
+Emotion. Två skäl driver ett byte:
+1. **Ägd komponentkod.** shadcn/ui kopieras in i repot (`src/components/ui/`)
+   i stället för att konsumeras som ett svartlåde-bibliotek — komponenterna kan
+   ändras fritt och har ingen tung runtime-CSS-in-JS.
+2. **Type-safety hela vägen i formulär.** oRPC, Zod, TanStack Query och
+   TanStack Router finns redan, men formulär är idag handrullade med `useState`
+   och manuell validering. Vi vill härleda formulärvalidering ur samma Zod-
+   scheman som API-kontraktet (`@fc-app/contracts`) via **react-hook-form** +
+   `zodResolver`, så att klient- och servervalidering aldrig driftar isär.
+
+**Decision:**
+- Ersätt **MUI + Emotion** med **shadcn/ui** (Tailwind v4 + Radix-primitiver).
+  Tailwind konfigureras via `@tailwindcss/vite`; design-tokens uttrycks som
+  CSS-variabler. Bas-komponenter bor under `apps/frontend/src/components/ui/`.
+- Inför **react-hook-form** + `@hookform/resolvers` (`zodResolver`).
+  Formulärscheman härleds ur kontraktets input-scheman i stället för att
+  dupliceras.
+- Behåll oRPC, Zod och TanStack Router/Query (redan på plats). Query-lagret
+  kan senare byta till `@orpc/tanstack-query` för typade utils (eget ärende).
+- **Migreringen görs stegvis med samexistens:** Tailwind + shadcn läggs in
+  bredvid MUI och skärmar migreras en och en. MUI/Emotion tas bort först när
+  inga imports återstår. Se epic **#29** och delärenden **#30–#38**.
+
+**Consequences:**
+- ADR-001 står kvar (append-only); denna ADR är det dokumenterade avsteget.
+- Under samexistensfasen kan mindre visuella krockar mellan Tailwinds preflight
+  och MUI:s `CssBaseline` förekomma; de upphör när MUI tas bort i slutstädningen.
+- En ESLint-regel (`no-restricted-imports`) som blockerar `@mui/*` och
+  `@emotion/*` införs när sista skärmen är migrerad (#37), så beroendet inte
+  smyger tillbaka.
+- Nya beroenden: `tailwindcss`/`@tailwindcss/vite`, `class-variance-authority`,
+  `clsx`, `tailwind-merge`, `lucide-react`, relevanta `@radix-ui/*`,
+  `react-hook-form`, `@hookform/resolvers`.
