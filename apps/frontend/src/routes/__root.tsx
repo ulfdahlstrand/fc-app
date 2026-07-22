@@ -48,6 +48,11 @@ function RootLayout() {
                   {t("nav.members")}
                 </Button>
               )}
+              {canViewMembers && (
+                <Button color="inherit" component={Link} to="/groups">
+                  {t("nav.groups")}
+                </Button>
+              )}
               {canManageTeam && (
                 <Button color="inherit" component={Link} to="/settings/team">
                   {t("nav.teamSettings")}

@@ -128,6 +128,18 @@ export interface MemberGuardiansTable {
   created_at: Timestamp;
 }
 
+export interface GroupsTable {
+  id: Generated<string>;
+  team_id: string;
+  name: string;
+  created_at: Timestamp;
+}
+
+export interface GroupMembersTable {
+  group_id: string;
+  member_id: string;
+}
+
 export interface Database {
   users: UsersTable;
   identities: IdentitiesTable;
@@ -142,4 +154,6 @@ export interface Database {
   member_field_definitions: MemberFieldDefinitionsTable;
   member_field_values: MemberFieldValuesTable;
   member_guardians: MemberGuardiansTable;
+  groups: GroupsTable;
+  group_members: GroupMembersTable;
 }

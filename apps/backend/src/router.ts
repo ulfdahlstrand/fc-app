@@ -8,6 +8,15 @@ import {
 } from "./procedures/guardians.js";
 import { healthHandler } from "./procedures/health.js";
 import {
+  createGroupHandler,
+  deleteGroupHandler,
+  listGroupMembersHandler,
+  listGroupsHandler,
+  listMemberGroupsHandler,
+  renameGroupHandler,
+  setGroupMembersHandler,
+} from "./procedures/groups.js";
+import {
   acceptInvitationHandler,
   createInvitationHandler,
   getInvitationHandler,
@@ -76,6 +85,13 @@ export const router = os.router({
   removeGuardian: removeGuardianHandler,
   listClubUsers: listClubUsersHandler,
   myMembers: myMembersHandler,
+  listGroups: listGroupsHandler,
+  createGroup: createGroupHandler,
+  renameGroup: renameGroupHandler,
+  deleteGroup: deleteGroupHandler,
+  listGroupMembers: listGroupMembersHandler,
+  setGroupMembers: setGroupMembersHandler,
+  listMemberGroups: listMemberGroupsHandler,
 });
 
 /** AppRouter type — re-exported for use in tests and future tooling. */

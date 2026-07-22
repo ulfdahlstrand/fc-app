@@ -22,6 +22,7 @@ import { MemberFieldValuesDialog } from "../components/MemberFieldValuesDialog";
 import { MemberFormDialog } from "../components/MemberFormDialog";
 import { ensureMe } from "../lib/auth";
 import { ensureMyClubs, useHasPermission, useSelectedTeam } from "../lib/clubs";
+import { useMemberGroups } from "../lib/groups";
 import { useMemberFields, useSetMemberFieldValues } from "../lib/member-fields";
 import { useMember, useSetMemberArchived, useUpdateMember } from "../lib/members";
 
@@ -62,6 +63,7 @@ function MemberDetail({
   const canManage = useHasPermission("members.manage");
   const member = useMember(teamId, memberId);
   const fields = useMemberFields(teamId);
+  const memberGroups = useMemberGroups(teamId, memberId);
   const updateMember = useUpdateMember(teamId);
   const setArchived = useSetMemberArchived(teamId);
   const setFieldValues = useSetMemberFieldValues(teamId);
@@ -154,6 +156,19 @@ function MemberDetail({
               ))}
             </Stack>
           </Paper>
+        </Box>
+      )}
+
+      {(memberGroups.data?.groups.length ?? 0) > 0 && (
+        <Box>
+          <Typography variant="h6" sx={{ mb: 1 }}>
+            {t("groups.heading")}
+          </Typography>
+          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+            {memberGroups.data?.groups.map((group) => (
+              <Chip key={group.id} label={group.name} />
+            ))}
+          </Stack>
         </Box>
       )}
 
