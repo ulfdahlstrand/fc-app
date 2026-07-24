@@ -6,8 +6,11 @@
  * queries.
  */
 import { queryOptions, useMutation, useQuery } from "@tanstack/react-query";
+import { memberWriteFields } from "@fc-app/contracts";
+import { z } from "zod";
 import { orpc } from "../orpc-client";
 import { queryClient } from "../query-client";
+import { optionalNumber, optionalText, requiredText } from "./form";
 
 export interface MemberListFilters {
   includeArchived?: boolean;
@@ -49,13 +52,24 @@ async function invalidateMembers(teamId: string): Promise<void> {
   await queryClient.invalidateQueries({ queryKey: ["members", teamId] });
 }
 
-export interface MemberWriteInput {
-  firstName: string;
-  lastName: string;
-  birthYear: number | null;
-  email: string | null;
-  phone: string | null;
-}
+/**
+ * Form schema for creating/editing a member, derived from the contract's write
+ * fields (ADR-007) — the length, range and email rules live there, not here.
+ * See `lib/form.ts` for the pattern.
+ */
+export const memberFormSchema = z.object({
+  firstName: requiredText(memberWriteFields.firstName),
+  lastName: requiredText(memberWriteFields.lastName),
+  birthYear: optionalNumber(memberWriteFields.birthYear),
+  email: optionalText(memberWriteFields.email),
+  phone: optionalText(memberWriteFields.phone),
+});
+
+/** What the inputs hold while editing (all strings). */
+export type MemberFormValues = z.input<typeof memberFormSchema>;
+
+/** What the API accepts, after parsing. */
+export type MemberWriteInput = z.output<typeof memberFormSchema>;
 
 export function useCreateMember(teamId: string) {
   return useMutation({

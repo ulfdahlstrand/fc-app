@@ -1,20 +1,48 @@
 /**
- * Create/edit dialog for a member (issue #7). Shared by the roster list (new
- * member) and the detail page (edit). Validation mirrors the contract:
- * first/last name required, birth year optional within range.
+ * Create/edit dialog for a member (issue #7).
+ *
+ * Reference implementation of the form pattern from ADR-007: react-hook-form
+ * with a Zod schema derived from the API contract (`memberFormSchema`), shadcn
+ * dialog/form primitives, and translated validation messages. New forms should
+ * follow this shape — see `lib/form.ts`.
  */
-import { useState } from "react";
-import Alert from "@mui/material/Alert";
-import Button from "@mui/material/Button";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
-import Stack from "@mui/material/Stack";
-import TextField from "@mui/material/TextField";
+import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import type { Member } from "@fc-app/contracts";
-import type { MemberWriteInput } from "../lib/members";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { useZodResolver } from "@/lib/form";
+import {
+  memberFormSchema,
+  type MemberFormValues,
+  type MemberWriteInput,
+} from "@/lib/members";
+
+function defaultValues(member?: Member): MemberFormValues {
+  return {
+    firstName: member?.firstName ?? "",
+    lastName: member?.lastName ?? "",
+    birthYear: member?.birthYear != null ? String(member.birthYear) : "",
+    email: member?.email ?? "",
+    phone: member?.phone ?? "",
+  };
+}
 
 export function MemberFormDialog({
   member,
@@ -30,84 +58,114 @@ export function MemberFormDialog({
   onClose: () => void;
 }) {
   const { t } = useTranslation();
-  const [firstName, setFirstName] = useState(member?.firstName ?? "");
-  const [lastName, setLastName] = useState(member?.lastName ?? "");
-  const [birthYear, setBirthYear] = useState(
-    member?.birthYear != null ? String(member.birthYear) : ""
-  );
-  const [email, setEmail] = useState(member?.email ?? "");
-  const [phone, setPhone] = useState(member?.phone ?? "");
-
-  const yearNum = birthYear.trim() === "" ? null : Number(birthYear);
-  const yearInvalid =
-    yearNum !== null &&
-    (!Number.isInteger(yearNum) || yearNum < 1900 || yearNum > 2100);
-
-  const canSave =
-    firstName.trim() !== "" && lastName.trim() !== "" && !yearInvalid;
-
-  const handleSave = () => {
-    onSave({
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
-      birthYear: yearNum,
-      email: email.trim() === "" ? null : email.trim(),
-      phone: phone.trim() === "" ? null : phone.trim(),
-    });
-  };
+  const form = useForm<MemberFormValues, unknown, MemberWriteInput>({
+    resolver: useZodResolver(memberFormSchema, "members.validation"),
+    defaultValues: defaultValues(member),
+  });
 
   return (
-    <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>
-        {member ? t("members.editTitle") : t("members.newTitle")}
-      </DialogTitle>
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
-        <Stack spacing={2} sx={{ mt: 1 }}>
-          {error && <Alert severity="error">{t("members.saveError")}</Alert>}
-          <TextField
-            label={t("members.firstName")}
-            value={firstName}
-            onChange={(event) => setFirstName(event.target.value)}
-            required
-            slotProps={{ htmlInput: { maxLength: 100 } }}
-          />
-          <TextField
-            label={t("members.lastName")}
-            value={lastName}
-            onChange={(event) => setLastName(event.target.value)}
-            required
-            slotProps={{ htmlInput: { maxLength: 100 } }}
-          />
-          <TextField
-            label={t("members.birthYear")}
-            value={birthYear}
-            onChange={(event) => setBirthYear(event.target.value)}
-            error={yearInvalid}
-            slotProps={{ htmlInput: { inputMode: "numeric" } }}
-          />
-          <TextField
-            type="email"
-            label={t("members.email")}
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-          />
-          <TextField
-            label={t("members.phone")}
-            value={phone}
-            onChange={(event) => setPhone(event.target.value)}
-          />
-        </Stack>
+        <DialogHeader>
+          <DialogTitle>
+            {member ? t("members.editTitle") : t("members.newTitle")}
+          </DialogTitle>
+        </DialogHeader>
+
+        <Form {...form}>
+          <form
+            id="member-form"
+            className="grid gap-4"
+            onSubmit={form.handleSubmit(onSave)}
+            noValidate
+          >
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{t("members.saveError")}</AlertDescription>
+              </Alert>
+            )}
+
+            <FormField
+              control={form.control}
+              name="firstName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("members.firstName")}</FormLabel>
+                  <FormControl>
+                    <Input maxLength={100} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="lastName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("members.lastName")}</FormLabel>
+                  <FormControl>
+                    <Input maxLength={100} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="birthYear"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("members.birthYear")}</FormLabel>
+                  <FormControl>
+                    <Input inputMode="numeric" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("members.email")}</FormLabel>
+                  <FormControl>
+                    <Input type="email" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("members.phone")}</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </form>
+        </Form>
+
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onClose}>
+            {t("common.close")}
+          </Button>
+          <Button type="submit" form="member-form" disabled={saving}>
+            {t("common.save")}
+          </Button>
+        </DialogFooter>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>{t("common.close")}</Button>
-        <Button
-          variant="contained"
-          onClick={handleSave}
-          disabled={!canSave || saving}
-        >
-          {t("common.save")}
-        </Button>
-      </DialogActions>
     </Dialog>
   );
 }

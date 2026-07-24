@@ -410,8 +410,12 @@ export function validateMemberFieldValue(
 const MIN_BIRTH_YEAR = 1900;
 const MAX_BIRTH_YEAR = 2100;
 
-/** Fields accepted when creating or updating a member. */
-const memberWriteFields = {
+/**
+ * Fields accepted when creating or updating a member. Exported so the frontend
+ * can derive its form validation from the same rules the API enforces (ADR-007)
+ * instead of restating them.
+ */
+export const memberWriteFields = {
   firstName: z.string().min(1).max(100),
   lastName: z.string().min(1).max(100),
   birthYear: z.number().int().min(MIN_BIRTH_YEAR).max(MAX_BIRTH_YEAR).nullable(),
