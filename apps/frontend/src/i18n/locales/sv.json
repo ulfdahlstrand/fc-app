@@ -15,7 +15,8 @@
     "heading": "Logga in",
     "description": "Logga in för att administrera ditt lag.",
     "google": "Logga in med Google",
-    "error": "Inloggningen misslyckades. Försök igen."
+    "error": "Inloggningen misslyckades. Försök igen.",
+    "devLogin": "Dev-inloggning (utan Google)"
   },
   "onboarding": {
     "heading": "Skapa din klubb",

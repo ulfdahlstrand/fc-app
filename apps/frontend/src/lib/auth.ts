@@ -19,6 +19,16 @@ export function getGoogleSignInUrl(): string {
   return `${getApiUrl()}/auth/google`;
 }
 
+/** Dev-only: whether the OAuth-bypass sign-in button should be shown. */
+export function isDevLoginEnabled(): boolean {
+  return import.meta.env["VITE_ENABLE_DEV_LOGIN"] === "true";
+}
+
+/** Dev-only URL that signs in without Google (backend must also enable it). */
+export function getDevSignInUrl(): string {
+  return `${getApiUrl()}/auth/dev-login`;
+}
+
 export const meQueryOptions = queryOptions({
   queryKey: ["me"],
   queryFn: () => orpc.me({}),

@@ -1,4 +1,5 @@
 import { createServer } from "node:http";
+import type { IncomingMessage, ServerResponse } from "node:http";
 import { OpenAPIGenerator } from "@orpc/openapi";
 import { OpenAPIHandler } from "@orpc/openapi/node";
 import { ORPCError, onError } from "@orpc/server";
@@ -23,6 +24,33 @@ const spec = await generator.generate(contract, {
 });
 const specJson = JSON.stringify(spec);
 
+type PlainHandler = (
+  req: IncomingMessage,
+  res: ServerResponse
+) => Promise<void>;
+
+/**
+ * Loads the dev-only sign-in handler, or null when it must not exist.
+ *
+ * Double-gated: disabled outright in production, and otherwise only active when
+ * ENABLE_DEV_LOGIN=true. The module lives in a `*.dev.ts` file that the
+ * production build excludes (tsconfig.build.json); the specifier is a widened
+ * string so the build never tries to resolve the excluded module.
+ */
+async function loadDevLogin(): Promise<PlainHandler | null> {
+  if (process.env["NODE_ENV"] === "production") return null;
+  if (process.env["ENABLE_DEV_LOGIN"] !== "true") return null;
+
+  const specifier: string = "./auth/dev-login.dev.js";
+  const mod = (await import(specifier)) as { handleDevLogin: PlainHandler };
+  console.warn(
+    "[backend] DEV login endpoint enabled at GET /auth/dev-login — never enable in production"
+  );
+  return mod.handleDevLogin;
+}
+
+const devLogin = await loadDevLogin();
+
 const handler = new OpenAPIHandler(router, {
   plugins: [
     // credentials: the SPA sends the session cookie cross-origin (5173 → 3001),
@@ -43,6 +71,15 @@ const server = createServer(async (req, res) => {
     if (req.method === "GET" && req.url === "/openapi.json") {
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(specJson);
+      return;
+    }
+
+    if (
+      devLogin &&
+      req.method === "GET" &&
+      new URL(req.url ?? "/", "http://internal").pathname === "/auth/dev-login"
+    ) {
+      await devLogin(req, res);
       return;
     }
 
