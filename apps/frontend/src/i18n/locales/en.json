@@ -15,7 +15,8 @@
     "heading": "Sign in",
     "description": "Sign in to manage your team.",
     "google": "Sign in with Google",
-    "error": "Sign-in failed. Please try again."
+    "error": "Sign-in failed. Please try again.",
+    "devLogin": "Dev sign-in (no Google)"
   },
   "onboarding": {
     "heading": "Create your club",

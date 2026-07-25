@@ -12,7 +12,12 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { ensureMe, getGoogleSignInUrl } from "../lib/auth";
+import {
+  ensureMe,
+  getDevSignInUrl,
+  getGoogleSignInUrl,
+  isDevLoginEnabled,
+} from "../lib/auth";
 
 export interface LoginSearch {
   error?: string;
@@ -60,6 +65,17 @@ function LoginPage() {
           >
             {t("login.google")}
           </Button>
+          {isDevLoginEnabled() && (
+            <Button
+              variant="outlined"
+              color="warning"
+              size="small"
+              fullWidth
+              href={getDevSignInUrl()}
+            >
+              {t("login.devLogin")}
+            </Button>
+          )}
         </Stack>
       </Paper>
     </Stack>

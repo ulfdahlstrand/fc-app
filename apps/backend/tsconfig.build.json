@@ -1,0 +1,5 @@
+{
+  "//": "Production build config. Extends the base tsconfig but excludes dev- and test-only files so `npm run build` never emits them into dist/. Type-checking (tsconfig.json) still covers these files.",
+  "extends": "./tsconfig.json",
+  "exclude": ["node_modules", "dist", "src/**/*.dev.ts", "src/**/*.test.ts"]
+}
