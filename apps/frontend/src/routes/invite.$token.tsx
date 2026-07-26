@@ -7,20 +7,18 @@
  * visitors with an active invitation get an Accept button that joins them and
  * selects the new team.
  */
-import Alert from "@mui/material/Alert";
-import Button from "@mui/material/Button";
-import CircularProgress from "@mui/material/CircularProgress";
-import Paper from "@mui/material/Paper";
-import Stack from "@mui/material/Stack";
-import Typography from "@mui/material/Typography";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { ensureMe, getGoogleSignInUrl, meQueryOptions } from "../lib/auth";
-import { selectTeam } from "../lib/clubs";
-import { setPendingInvite } from "../lib/invitations";
-import { orpc } from "../orpc-client";
-import { queryClient } from "../query-client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ensureMe, getGoogleSignInUrl, meQueryOptions } from "@/lib/auth";
+import { selectTeam } from "@/lib/clubs";
+import { setPendingInvite } from "@/lib/invitations";
+import { orpc } from "@/orpc-client";
+import { queryClient } from "@/query-client";
 
 export const Route = createFileRoute("/invite/$token")({
   loader: async () => {
@@ -59,19 +57,20 @@ function InvitePage() {
   };
 
   return (
-    <Stack alignItems="center" sx={{ mt: 6 }}>
-      <Paper sx={{ p: 4, maxWidth: 480, width: "100%" }}>
-        <Stack spacing={3}>
-          <Typography variant="h5" component="h1">
-            {t("invite.heading")}
-          </Typography>
-
+    <div className="mt-12 flex justify-center">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle className="text-xl">{t("invite.heading")}</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
           {invitation.isPending ? (
-            <Stack alignItems="center" sx={{ py: 2 }}>
-              <CircularProgress />
-            </Stack>
+            <div className="flex justify-center py-2">
+              <Loader2 className="text-muted-foreground size-6 animate-spin" />
+            </div>
           ) : invitation.isError ? (
-            <Alert severity="error">{t("invite.notFound")}</Alert>
+            <Alert variant="destructive">
+              <AlertDescription>{t("invite.notFound")}</AlertDescription>
+            </Alert>
           ) : (
             <InviteBody
               status={invitation.data.invitation.status}
@@ -86,9 +85,9 @@ function InvitePage() {
               onSignIn={handleSignIn}
             />
           )}
-        </Stack>
-      </Paper>
-    </Stack>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
@@ -111,33 +110,38 @@ function InviteBody(props: {
     : props.clubName;
 
   if (props.status !== "active") {
-    return <Alert severity="warning">{t(`invite.status.${props.status}`)}</Alert>;
+    return (
+      <Alert>
+        <AlertDescription>
+          {t(`invite.status.${props.status}`)}
+        </AlertDescription>
+      </Alert>
+    );
   }
 
   return (
     <>
-      <Typography>
+      <p className="text-sm">
         {t("invite.description", { target, role: props.roleName })}
-      </Typography>
+      </p>
       {props.restrictedEmail && (
-        <Alert severity="info">
-          {t("invite.emailRestricted", { email: props.restrictedEmail })}
+        <Alert>
+          <AlertDescription>
+            {t("invite.emailRestricted", { email: props.restrictedEmail })}
+          </AlertDescription>
         </Alert>
       )}
       {props.acceptError && (
-        <Alert severity="error">{t("invite.acceptError")}</Alert>
+        <Alert variant="destructive">
+          <AlertDescription>{t("invite.acceptError")}</AlertDescription>
+        </Alert>
       )}
       {props.signedIn ? (
-        <Button
-          variant="contained"
-          size="large"
-          onClick={props.onAccept}
-          disabled={props.accepting}
-        >
+        <Button size="lg" onClick={props.onAccept} disabled={props.accepting}>
           {t("invite.accept")}
         </Button>
       ) : (
-        <Button variant="contained" size="large" onClick={props.onSignIn}>
+        <Button size="lg" onClick={props.onSignIn}>
           {t("invite.signInToAccept")}
         </Button>
       )}

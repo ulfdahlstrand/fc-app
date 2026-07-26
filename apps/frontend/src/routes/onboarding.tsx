@@ -2,20 +2,35 @@
  * Onboarding route — shown after first sign-in when the user has no club
  * membership. Creates a club with its first team; the creator becomes Admin.
  */
-import Button from "@mui/material/Button";
-import Paper from "@mui/material/Paper";
-import Stack from "@mui/material/Stack";
-import TextField from "@mui/material/TextField";
-import Typography from "@mui/material/Typography";
-import Alert from "@mui/material/Alert";
 import { useMutation } from "@tanstack/react-query";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { ensureMe } from "../lib/auth";
-import { ensureMyClubs, myClubsQueryOptions, selectTeam } from "../lib/clubs";
-import { orpc } from "../orpc-client";
-import { queryClient } from "../query-client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { ensureMe } from "@/lib/auth";
+import {
+  ensureMyClubs,
+  myClubsQueryOptions,
+  onboardingFormSchema,
+  type OnboardingFormValues,
+  type OnboardingInput,
+  selectTeam,
+} from "@/lib/clubs";
+import { useZodResolver } from "@/lib/form";
+import { orpc } from "@/orpc-client";
+import { queryClient } from "@/query-client";
 
 export const Route = createFileRoute("/onboarding")({
   beforeLoad: async () => {
@@ -30,11 +45,13 @@ export const Route = createFileRoute("/onboarding")({
 function OnboardingPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [clubName, setClubName] = useState("");
-  const [teamName, setTeamName] = useState("");
+  const form = useForm<OnboardingFormValues, unknown, OnboardingInput>({
+    resolver: useZodResolver(onboardingFormSchema, "onboarding.validation"),
+    defaultValues: { clubName: "", teamName: "" },
+  });
 
   const createClub = useMutation({
-    mutationFn: () => orpc.createClub({ clubName, teamName }),
+    mutationFn: (input: OnboardingInput) => orpc.createClub(input),
     onSuccess: async ({ team }) => {
       selectTeam(team.id);
       // fetchQuery, not invalidateQueries: the myClubs query is inactive on
@@ -46,50 +63,69 @@ function OnboardingPage() {
   });
 
   return (
-    <Stack alignItems="center" sx={{ mt: 6 }}>
-      <Paper sx={{ p: 4, maxWidth: 480, width: "100%" }}>
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            createClub.mutate();
-          }}
-        >
-          <Stack spacing={3}>
-            <Typography variant="h5" component="h1">
-              {t("onboarding.heading")}
-            </Typography>
-            <Typography color="text.secondary">
-              {t("onboarding.description")}
-            </Typography>
-            {createClub.isError && (
-              <Alert severity="error">{t("onboarding.error")}</Alert>
-            )}
-            <TextField
-              label={t("onboarding.clubName")}
-              value={clubName}
-              onChange={(event) => setClubName(event.target.value)}
-              required
-              slotProps={{ htmlInput: { maxLength: 100 } }}
-            />
-            <TextField
-              label={t("onboarding.teamName")}
-              value={teamName}
-              onChange={(event) => setTeamName(event.target.value)}
-              required
-              helperText={t("onboarding.teamNameHelp")}
-              slotProps={{ htmlInput: { maxLength: 100 } }}
-            />
-            <Button
-              type="submit"
-              variant="contained"
-              size="large"
-              disabled={createClub.isPending}
+    <div className="mt-12 flex justify-center">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle className="text-xl">{t("onboarding.heading")}</CardTitle>
+          <p className="text-muted-foreground text-sm">
+            {t("onboarding.description")}
+          </p>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form
+              className="grid gap-4"
+              onSubmit={form.handleSubmit((input) => createClub.mutate(input))}
+              noValidate
             >
-              {t("onboarding.submit")}
-            </Button>
-          </Stack>
-        </form>
-      </Paper>
-    </Stack>
+              {createClub.isError && (
+                <Alert variant="destructive">
+                  <AlertDescription>{t("onboarding.error")}</AlertDescription>
+                </Alert>
+              )}
+
+              <FormField
+                control={form.control}
+                name="clubName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("onboarding.clubName")}</FormLabel>
+                    <FormControl>
+                      <Input maxLength={100} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="teamName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("onboarding.teamName")}</FormLabel>
+                    <FormControl>
+                      <Input maxLength={100} {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      {t("onboarding.teamNameHelp")}
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <Button
+                type="submit"
+                size="lg"
+                disabled={createClub.isPending}
+              >
+                {t("onboarding.submit")}
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

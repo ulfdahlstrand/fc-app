@@ -9,14 +9,36 @@
 import { queryOptions } from "@tanstack/react-query";
 import { useSyncExternalStore } from "react";
 import { useQuery } from "@tanstack/react-query";
-import type { MyClub, MyTeam, Permission } from "@fc-app/contracts";
+import {
+  createClubInputSchema,
+  type MyClub,
+  type MyTeam,
+  type Permission,
+} from "@fc-app/contracts";
+import { z } from "zod";
 import { orpc } from "../orpc-client";
 import { queryClient } from "../query-client";
+import { requiredText } from "./form";
 
 export const myClubsQueryOptions = queryOptions({
   queryKey: ["myClubs"],
   queryFn: () => orpc.myClubs({}),
 });
+
+/**
+ * Form schema for onboarding (create first club + team), derived from the
+ * contract's `createClub` input (ADR-007). See `lib/form.ts` for the pattern.
+ */
+export const onboardingFormSchema = z.object({
+  clubName: requiredText(createClubInputSchema.shape.clubName),
+  teamName: requiredText(createClubInputSchema.shape.teamName),
+});
+
+/** What the inputs hold while editing (all strings). */
+export type OnboardingFormValues = z.input<typeof onboardingFormSchema>;
+
+/** What the API accepts, after parsing. */
+export type OnboardingInput = z.output<typeof onboardingFormSchema>;
 
 /** Fetches (or reuses) the caller's clubs — for route beforeLoad guards. */
 export async function ensureMyClubs(): Promise<MyClub[]> {
