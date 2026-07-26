@@ -25,7 +25,15 @@
     "teamName": "Lagets namn",
     "teamNameHelp": "T.ex. P14, F12 eller Herrlag",
     "submit": "Skapa klubb",
-    "error": "Kunde inte skapa klubben. Försök igen."
+    "error": "Kunde inte skapa klubben. Försök igen.",
+    "validation": {
+      "clubName": {
+        "too_small": "Klubbens namn krävs."
+      },
+      "teamName": {
+        "too_small": "Lagets namn krävs."
+      }
+    }
   },
   "switcher": {
     "label": "Välj lag"

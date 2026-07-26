@@ -25,7 +25,15 @@
     "teamName": "Team name",
     "teamNameHelp": "E.g. U14, Girls 12, or Men's team",
     "submit": "Create club",
-    "error": "Could not create the club. Please try again."
+    "error": "Could not create the club. Please try again.",
+    "validation": {
+      "clubName": {
+        "too_small": "Club name is required."
+      },
+      "teamName": {
+        "too_small": "Team name is required."
+      }
+    }
   },
   "switcher": {
     "label": "Select team"
