@@ -5,12 +5,10 @@
  * Placeholder home page until the dashboard (#20). Shows the selected team
  * and verifies the stack with a typed `health` call.
  */
-import Alert from "@mui/material/Alert";
-import Stack from "@mui/material/Stack";
-import Typography from "@mui/material/Typography";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ensureMe } from "../lib/auth";
 import { ensureMyClubs, useSelectedTeam } from "../lib/clubs";
 import { takePendingInvite } from "../lib/invitations";
@@ -42,21 +40,29 @@ function HomePage() {
   });
 
   return (
-    <Stack spacing={2}>
-      <Typography variant="h4" component="h1">
-        {selected ? selected.team.name : t("home.heading")}
-      </Typography>
-      {selected && (
-        <Typography color="text.secondary">{selected.club.name}</Typography>
-      )}
-      <Typography>{t("home.description")}</Typography>
+    <div className="flex flex-col gap-4">
+      <div>
+        <h1 className="text-3xl font-semibold tracking-tight">
+          {selected ? selected.team.name : t("home.heading")}
+        </h1>
+        {selected && (
+          <p className="text-muted-foreground">{selected.club.name}</p>
+        )}
+      </div>
+      <p>{t("home.description")}</p>
       {health.isPending ? (
-        <Alert severity="info">{t("health.checking")}</Alert>
+        <Alert>
+          <AlertDescription>{t("health.checking")}</AlertDescription>
+        </Alert>
       ) : health.isError ? (
-        <Alert severity="warning">{t("health.error")}</Alert>
+        <Alert variant="destructive">
+          <AlertDescription>{t("health.error")}</AlertDescription>
+        </Alert>
       ) : (
-        <Alert severity="success">{t("health.ok")}</Alert>
+        <Alert>
+          <AlertDescription>{t("health.ok")}</AlertDescription>
+        </Alert>
       )}
-    </Stack>
+    </div>
   );
 }

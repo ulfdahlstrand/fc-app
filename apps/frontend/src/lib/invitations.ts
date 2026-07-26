@@ -6,9 +6,31 @@
  * acceptInvitation joins the caller to the club/team.
  */
 import { queryOptions, useMutation, useQuery } from "@tanstack/react-query";
-import type { Permission } from "@fc-app/contracts";
+import { createInvitationInputSchema, type Permission } from "@fc-app/contracts";
+import { z } from "zod";
 import { orpc } from "../orpc-client";
 import { queryClient } from "../query-client";
+import { optionalText } from "./form";
+
+/**
+ * Form schema for creating an invitation, derived from the contract's input
+ * (ADR-007). `roleId` comes from a required `<Select>` rather than free text,
+ * so it's validated with a plain non-empty check instead of the contract's
+ * bare `z.string()` (an id reference has no length rule to restate); `teamId`
+ * and `email` are optional selects/inputs, each `""` mapped to `null`. See
+ * `lib/form.ts`.
+ */
+export const invitationFormSchema = z.object({
+  roleId: z.string().trim().min(1),
+  teamId: optionalText(createInvitationInputSchema.shape.teamId.unwrap()),
+  email: optionalText(createInvitationInputSchema.shape.email.unwrap()),
+});
+
+/** What the inputs hold while editing (all strings). */
+export type InvitationFormValues = z.input<typeof invitationFormSchema>;
+
+/** What the API accepts, after parsing. */
+export type InvitationFormOutput = z.output<typeof invitationFormSchema>;
 
 export function invitationsQueryOptions(clubId: string) {
   return queryOptions({

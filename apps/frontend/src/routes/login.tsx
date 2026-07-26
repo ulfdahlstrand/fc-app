@@ -5,13 +5,11 @@
  * after the OAuth dance the backend sets the session cookie and redirects
  * back to the app root. A failed attempt redirects here with ?error=auth_failed.
  */
-import Alert from "@mui/material/Alert";
-import Button from "@mui/material/Button";
-import Paper from "@mui/material/Paper";
-import Stack from "@mui/material/Stack";
-import Typography from "@mui/material/Typography";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   ensureMe,
   getDevSignInUrl,
@@ -43,41 +41,28 @@ function LoginPage() {
   const { error } = Route.useSearch();
 
   return (
-    <Stack alignItems="center" sx={{ mt: 8 }}>
-      <Paper sx={{ p: 4, maxWidth: 400, width: "100%" }}>
-        <Stack spacing={3} alignItems="center">
-          <Typography variant="h5" component="h1">
-            {t("login.heading")}
-          </Typography>
-          <Typography color="text.secondary" align="center">
+    <div className="mt-16 flex flex-col items-center">
+      <Card className="w-full max-w-sm">
+        <CardContent className="flex flex-col items-center gap-6">
+          <h1 className="text-xl font-semibold">{t("login.heading")}</h1>
+          <p className="text-center text-muted-foreground">
             {t("login.description")}
-          </Typography>
+          </p>
           {error !== undefined && (
-            <Alert severity="error" sx={{ width: "100%" }}>
-              {t("login.error")}
+            <Alert variant="destructive" className="w-full">
+              <AlertDescription>{t("login.error")}</AlertDescription>
             </Alert>
           )}
-          <Button
-            variant="contained"
-            size="large"
-            fullWidth
-            href={getGoogleSignInUrl()}
-          >
-            {t("login.google")}
+          <Button asChild size="lg" className="w-full">
+            <a href={getGoogleSignInUrl()}>{t("login.google")}</a>
           </Button>
           {isDevLoginEnabled() && (
-            <Button
-              variant="outlined"
-              color="warning"
-              size="small"
-              fullWidth
-              href={getDevSignInUrl()}
-            >
-              {t("login.devLogin")}
+            <Button asChild variant="outline" size="sm" className="w-full">
+              <a href={getDevSignInUrl()}>{t("login.devLogin")}</a>
             </Button>
           )}
-        </Stack>
-      </Paper>
-    </Stack>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

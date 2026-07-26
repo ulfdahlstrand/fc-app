@@ -25,7 +25,15 @@
     "teamName": "Lagets namn",
     "teamNameHelp": "T.ex. P14, F12 eller Herrlag",
     "submit": "Skapa klubb",
-    "error": "Kunde inte skapa klubben. Försök igen."
+    "error": "Kunde inte skapa klubben. Försök igen.",
+    "validation": {
+      "clubName": {
+        "too_small": "Klubbens namn krävs."
+      },
+      "teamName": {
+        "too_small": "Lagets namn krävs."
+      }
+    }
   },
   "switcher": {
     "label": "Välj lag"
@@ -126,7 +134,12 @@
       "system": "System",
       "view": "Visa",
       "loadError": "Kunde inte ladda roller.",
-      "saveError": "Kunde inte spara. Namnet kanske redan används."
+      "saveError": "Kunde inte spara. Namnet kanske redan används.",
+      "validation": {
+        "name": {
+          "too_small": "Rollens namn krävs."
+        }
+      }
     },
     "team": {
       "heading": "Laginställningar",
@@ -145,7 +158,12 @@
       "restore": "Återställ",
       "empty": "Inga egna fält ännu.",
       "loadError": "Kunde inte ladda fält.",
-      "saveError": "Kunde inte spara. Kontrollera fälten."
+      "saveError": "Kunde inte spara. Kontrollera fälten.",
+      "validation": {
+        "name": {
+          "too_small": "Fältnamnet krävs."
+        }
+      }
     }
   },
   "invitations": {
@@ -164,7 +182,15 @@
     "revoke": "Återkalla",
     "empty": "Inga inbjudningar ännu.",
     "loadError": "Kunde inte ladda inbjudningar.",
-    "createError": "Kunde inte skapa inbjudan. Försök igen."
+    "createError": "Kunde inte skapa inbjudan. Försök igen.",
+    "validation": {
+      "roleId": {
+        "too_small": "Välj en roll."
+      },
+      "email": {
+        "invalid_format": "Ange en giltig e-postadress."
+      }
+    }
   },
   "invite": {
     "heading": "Inbjudan",
@@ -196,7 +222,12 @@
     "empty": "Inga grupper ännu.",
     "forbidden": "Du har inte behörighet att se grupper i det här laget.",
     "loadError": "Kunde inte ladda grupper.",
-    "saveError": "Kunde inte spara. Namnet kanske redan används."
+    "saveError": "Kunde inte spara. Namnet kanske redan används.",
+    "validation": {
+      "name": {
+        "too_small": "Gruppens namn krävs."
+      }
+    }
   },
   "guardians": {
     "heading": "Målsmän / konton",

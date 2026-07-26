@@ -2,17 +2,12 @@
  * Profile route — the signed-in user's own account: identity from the OAuth
  * provider, language preference, and sign-out.
  */
-import Avatar from "@mui/material/Avatar";
-import Button from "@mui/material/Button";
-import Chip from "@mui/material/Chip";
-import Paper from "@mui/material/Paper";
-import Stack from "@mui/material/Stack";
-import ToggleButton from "@mui/material/ToggleButton";
-import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
-import Typography from "@mui/material/Typography";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import i18n, { supportedLanguages } from "../i18n/i18n";
 import { ensureMe, logout, meQueryOptions } from "../lib/auth";
 import { selectTeam } from "../lib/clubs";
@@ -42,49 +37,68 @@ function ProfilePage() {
   };
 
   return (
-    <Stack alignItems="center">
-      <Paper sx={{ p: 4, maxWidth: 480, width: "100%" }}>
-        <Stack spacing={3}>
-          <Stack direction="row" spacing={2} alignItems="center">
-            <Avatar
-              {...(user.imageUrl ? { src: user.imageUrl } : {})}
-              alt={user.name}
-              sx={{ width: 56, height: 56 }}
-            />
-            <Stack>
-              <Typography variant="h6">{user.name}</Typography>
-              <Typography color="text.secondary">{user.email}</Typography>
-            </Stack>
-          </Stack>
+    <div className="flex flex-col items-center gap-4">
+      <Card className="w-full max-w-md">
+        <CardContent className="flex flex-col gap-6">
+          <div className="flex items-center gap-4">
+            <UserAvatar name={user.name} imageUrl={user.imageUrl} />
+            <div>
+              <p className="text-lg font-semibold">{user.name}</p>
+              <p className="text-muted-foreground">{user.email}</p>
+            </div>
+          </div>
 
-          <Stack spacing={1}>
-            <Typography variant="subtitle2">
-              {t("profile.language")}
-            </Typography>
-            <ToggleButtonGroup
-              exclusive
-              size="small"
-              value={i18n.resolvedLanguage}
-              onChange={(_event, language: string | null) => {
-                if (language) void i18n.changeLanguage(language);
-              }}
-            >
+          <div className="flex flex-col gap-2">
+            <p className="text-sm font-medium">{t("profile.language")}</p>
+            <div className="inline-flex w-fit gap-1 rounded-md border p-1">
               {supportedLanguages.map((language) => (
-                <ToggleButton key={language} value={language}>
+                <Button
+                  key={language}
+                  type="button"
+                  size="sm"
+                  variant={
+                    i18n.resolvedLanguage === language ? "default" : "ghost"
+                  }
+                  onClick={() => void i18n.changeLanguage(language)}
+                >
                   {t(`profile.languages.${language}`)}
-                </ToggleButton>
+                </Button>
               ))}
-            </ToggleButtonGroup>
-          </Stack>
+            </div>
+          </div>
 
-          <Button variant="outlined" color="error" onClick={handleLogout}>
+          <Button variant="outline" onClick={handleLogout}>
             {t("profile.logout")}
           </Button>
-        </Stack>
-      </Paper>
+        </CardContent>
+      </Card>
 
       <MyMembers />
-    </Stack>
+    </div>
+  );
+}
+
+function UserAvatar({
+  name,
+  imageUrl,
+}: {
+  name: string;
+  imageUrl: string | null;
+}) {
+  if (imageUrl) {
+    return (
+      <img
+        src={imageUrl}
+        alt={name}
+        className="size-14 shrink-0 rounded-full object-cover"
+      />
+    );
+  }
+
+  return (
+    <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-muted text-lg font-medium text-muted-foreground">
+      {name.charAt(0).toUpperCase()}
+    </div>
   );
 }
 
@@ -97,14 +111,14 @@ function MyMembers() {
   if (members.length === 0) return null;
 
   return (
-    <Paper sx={{ p: 4, maxWidth: 480, width: "100%", mt: 3 }}>
-      <Stack spacing={2}>
-        <Typography variant="h6">{t("profile.myMembers")}</Typography>
+    <Card className="w-full max-w-md">
+      <CardContent className="flex flex-col gap-3">
+        <h2 className="text-lg font-semibold">{t("profile.myMembers")}</h2>
         {members.map((member) => (
-          <Paper
+          <button
             key={member.memberId}
-            variant="outlined"
-            sx={{ p: 2, cursor: "pointer" }}
+            type="button"
+            className="flex items-center justify-between gap-2 rounded-lg border p-3 text-left transition-colors hover:bg-accent"
             onClick={() => {
               selectTeam(member.teamId);
               void navigate({
@@ -113,28 +127,20 @@ function MyMembers() {
               });
             }}
           >
-            <Stack
-              direction="row"
-              justifyContent="space-between"
-              alignItems="center"
-              gap={1}
-            >
-              <Stack>
-                <Typography fontWeight={500}>
-                  {member.firstName} {member.lastName}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {member.clubName} — {member.teamName}
-                </Typography>
-              </Stack>
-              <Chip
-                size="small"
-                label={t(`guardians.relation.${member.relation}`)}
-              />
-            </Stack>
-          </Paper>
+            <div>
+              <p className="font-medium">
+                {member.firstName} {member.lastName}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {member.clubName} — {member.teamName}
+              </p>
+            </div>
+            <Badge variant="secondary">
+              {t(`guardians.relation.${member.relation}`)}
+            </Badge>
+          </button>
         ))}
-      </Stack>
-    </Paper>
+      </CardContent>
+    </Card>
   );
 }

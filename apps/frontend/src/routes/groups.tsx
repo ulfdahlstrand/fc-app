@@ -6,30 +6,42 @@
  * managing membership.
  */
 import { useState } from "react";
-import Alert from "@mui/material/Alert";
-import Autocomplete from "@mui/material/Autocomplete";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
-import Paper from "@mui/material/Paper";
-import Stack from "@mui/material/Stack";
-import TextField, { type TextFieldProps } from "@mui/material/TextField";
-import Typography from "@mui/material/Typography";
+import { useForm } from "react-hook-form";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import type { Group } from "@fc-app/contracts";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { ensureMe } from "../lib/auth";
 import { ensureMyClubs, useHasPermission, useSelectedTeam } from "../lib/clubs";
+import { useZodResolver } from "../lib/form";
 import {
+  groupFormSchema,
   useCreateGroup,
   useDeleteGroup,
   useGroupMembers,
   useGroups,
   useRenameGroup,
   useSetGroupMembers,
+  type GroupFormValues,
+  type GroupNameInput,
 } from "../lib/groups";
 import { useMembers } from "../lib/members";
 
@@ -49,10 +61,18 @@ function GroupsPage() {
   const canView = useHasPermission("members.view");
 
   if (!selected) {
-    return <Alert severity="info">{t("members.noTeam")}</Alert>;
+    return (
+      <Alert>
+        <AlertDescription>{t("members.noTeam")}</AlertDescription>
+      </Alert>
+    );
   }
   if (!canView) {
-    return <Alert severity="error">{t("groups.forbidden")}</Alert>;
+    return (
+      <Alert variant="destructive">
+        <AlertDescription>{t("groups.forbidden")}</AlertDescription>
+      </Alert>
+    );
   }
 
   return <GroupsList teamId={selected.team.id} teamName={selected.team.name} />;
@@ -62,89 +82,76 @@ function GroupsList({ teamId, teamName }: { teamId: string; teamName: string }) 
   const { t } = useTranslation();
   const canManage = useHasPermission("members.manage");
   const groups = useGroups(teamId);
-  const renameGroup = useRenameGroup(teamId);
   const deleteGroup = useDeleteGroup(teamId);
   const [creating, setCreating] = useState(false);
   const [managingMembers, setManagingMembers] = useState<Group | null>(null);
   const [renaming, setRenaming] = useState<Group | null>(null);
-  const [renameValue, setRenameValue] = useState("");
 
   return (
-    <Stack spacing={3}>
-      <Stack
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        flexWrap="wrap"
-        gap={1}
-      >
-        <Box>
-          <Typography variant="h4" component="h1">
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">
             {t("groups.heading")}
-          </Typography>
-          <Typography color="text.secondary">{teamName}</Typography>
-        </Box>
+          </h1>
+          <p className="text-muted-foreground">{teamName}</p>
+        </div>
         {canManage && (
-          <Button variant="contained" onClick={() => setCreating(true)}>
-            {t("groups.new")}
-          </Button>
+          <Button onClick={() => setCreating(true)}>{t("groups.new")}</Button>
         )}
-      </Stack>
+      </div>
 
       {groups.isPending ? (
-        <Typography color="text.secondary">{t("common.loading")}</Typography>
+        <p className="text-muted-foreground">{t("common.loading")}</p>
       ) : groups.isError ? (
-        <Alert severity="error">{t("groups.loadError")}</Alert>
+        <Alert variant="destructive">
+          <AlertDescription>{t("groups.loadError")}</AlertDescription>
+        </Alert>
       ) : groups.data.groups.length === 0 ? (
-        <Typography color="text.secondary">{t("groups.empty")}</Typography>
+        <p className="text-muted-foreground">{t("groups.empty")}</p>
       ) : (
-        <Stack spacing={1}>
+        <div className="flex flex-col gap-2">
           {groups.data.groups.map((group) => (
-            <Paper key={group.id} variant="outlined" sx={{ p: 2 }}>
-              <Stack
-                direction="row"
-                justifyContent="space-between"
-                alignItems="center"
-                flexWrap="wrap"
-                gap={1}
-              >
-                <Box>
-                  <Typography fontWeight={500}>{group.name}</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {t("groups.memberCount", { count: group.memberCount })}
-                  </Typography>
-                </Box>
-                {canManage && (
-                  <Stack direction="row" spacing={1}>
-                    <Button
-                      size="small"
-                      onClick={() => setManagingMembers(group)}
-                    >
-                      {t("groups.manageMembers")}
-                    </Button>
-                    <Button
-                      size="small"
-                      onClick={() => {
-                        setRenaming(group);
-                        setRenameValue(group.name);
-                      }}
-                    >
-                      {t("common.edit")}
-                    </Button>
-                    <Button
-                      size="small"
-                      color="error"
-                      disabled={deleteGroup.isPending}
-                      onClick={() => deleteGroup.mutate(group.id)}
-                    >
-                      {t("common.delete")}
-                    </Button>
-                  </Stack>
-                )}
-              </Stack>
-            </Paper>
+            <div
+              key={group.id}
+              className="flex flex-wrap items-center justify-between gap-2 rounded-md border p-3"
+            >
+              <div>
+                <p className="font-medium">{group.name}</p>
+                <p className="text-sm text-muted-foreground">
+                  {t("groups.memberCount", { count: group.memberCount })}
+                </p>
+              </div>
+              {canManage && (
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setManagingMembers(group)}
+                  >
+                    {t("groups.manageMembers")}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setRenaming(group)}
+                  >
+                    {t("common.edit")}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-destructive hover:text-destructive"
+                    disabled={deleteGroup.isPending}
+                    onClick={() => deleteGroup.mutate(group.id)}
+                  >
+                    {t("common.delete")}
+                  </Button>
+                </div>
+              )}
+            </div>
           ))}
-        </Stack>
+        </div>
       )}
 
       {creating && (
@@ -152,41 +159,11 @@ function GroupsList({ teamId, teamName }: { teamId: string; teamName: string }) 
       )}
 
       {renaming && (
-        <Dialog open onClose={() => setRenaming(null)} maxWidth="sm" fullWidth>
-          <DialogTitle>{t("groups.rename")}</DialogTitle>
-          <DialogContent>
-            <Stack spacing={2} sx={{ mt: 1 }}>
-              {renameGroup.isError && (
-                <Alert severity="error">{t("groups.saveError")}</Alert>
-              )}
-              <TextField
-                label={t("groups.name")}
-                value={renameValue}
-                onChange={(event) => setRenameValue(event.target.value)}
-                required
-                slotProps={{ htmlInput: { maxLength: 100 } }}
-              />
-            </Stack>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setRenaming(null)}>
-              {t("common.close")}
-            </Button>
-            <Button
-              variant="contained"
-              disabled={renameValue.trim() === "" || renameGroup.isPending}
-              onClick={async () => {
-                await renameGroup.mutateAsync({
-                  groupId: renaming.id,
-                  name: renameValue.trim(),
-                });
-                setRenaming(null);
-              }}
-            >
-              {t("common.save")}
-            </Button>
-          </DialogActions>
-        </Dialog>
+        <RenameGroupDialog
+          teamId={teamId}
+          group={renaming}
+          onClose={() => setRenaming(null)}
+        />
       )}
 
       {managingMembers && (
@@ -196,7 +173,7 @@ function GroupsList({ teamId, teamName }: { teamId: string; teamName: string }) 
           onClose={() => setManagingMembers(null)}
         />
       )}
-    </Stack>
+    </div>
   );
 }
 
@@ -209,38 +186,138 @@ function CreateGroupDialog({
 }) {
   const { t } = useTranslation();
   const createGroup = useCreateGroup(teamId);
-  const [name, setName] = useState("");
+  const form = useForm<GroupFormValues, unknown, GroupNameInput>({
+    resolver: useZodResolver(groupFormSchema, "groups.validation"),
+    defaultValues: { name: "" },
+  });
 
   return (
-    <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>{t("groups.new")}</DialogTitle>
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
-        <Stack spacing={2} sx={{ mt: 1 }}>
-          {createGroup.isError && (
-            <Alert severity="error">{t("groups.saveError")}</Alert>
-          )}
-          <TextField
-            label={t("groups.name")}
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            required
-            slotProps={{ htmlInput: { maxLength: 100 } }}
-          />
-        </Stack>
+        <DialogHeader>
+          <DialogTitle>{t("groups.new")}</DialogTitle>
+        </DialogHeader>
+
+        <Form {...form}>
+          <form
+            id="create-group-form"
+            className="grid gap-4"
+            onSubmit={form.handleSubmit(async (input) => {
+              await createGroup.mutateAsync(input.name);
+              onClose();
+            })}
+            noValidate
+          >
+            {createGroup.isError && (
+              <Alert variant="destructive">
+                <AlertDescription>{t("groups.saveError")}</AlertDescription>
+              </Alert>
+            )}
+
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("groups.name")}</FormLabel>
+                  <FormControl>
+                    <Input maxLength={100} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </form>
+        </Form>
+
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onClose}>
+            {t("common.close")}
+          </Button>
+          <Button
+            type="submit"
+            form="create-group-form"
+            disabled={createGroup.isPending}
+          >
+            {t("common.save")}
+          </Button>
+        </DialogFooter>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>{t("common.close")}</Button>
-        <Button
-          variant="contained"
-          disabled={name.trim() === "" || createGroup.isPending}
-          onClick={async () => {
-            await createGroup.mutateAsync(name.trim());
-            onClose();
-          }}
-        >
-          {t("common.save")}
-        </Button>
-      </DialogActions>
+    </Dialog>
+  );
+}
+
+function RenameGroupDialog({
+  teamId,
+  group,
+  onClose,
+}: {
+  teamId: string;
+  group: Group;
+  onClose: () => void;
+}) {
+  const { t } = useTranslation();
+  const renameGroup = useRenameGroup(teamId);
+  const form = useForm<GroupFormValues, unknown, GroupNameInput>({
+    resolver: useZodResolver(groupFormSchema, "groups.validation"),
+    defaultValues: { name: group.name },
+  });
+
+  return (
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t("groups.rename")}</DialogTitle>
+        </DialogHeader>
+
+        <Form {...form}>
+          <form
+            id="rename-group-form"
+            className="grid gap-4"
+            onSubmit={form.handleSubmit(async (input) => {
+              await renameGroup.mutateAsync({
+                groupId: group.id,
+                name: input.name,
+              });
+              onClose();
+            })}
+            noValidate
+          >
+            {renameGroup.isError && (
+              <Alert variant="destructive">
+                <AlertDescription>{t("groups.saveError")}</AlertDescription>
+              </Alert>
+            )}
+
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("groups.name")}</FormLabel>
+                  <FormControl>
+                    <Input maxLength={100} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </form>
+        </Form>
+
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onClose}>
+            {t("common.close")}
+          </Button>
+          <Button
+            type="submit"
+            form="rename-group-form"
+            disabled={renameGroup.isPending}
+          >
+            {t("common.save")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
     </Dialog>
   );
 }
@@ -263,61 +340,70 @@ function ManageGroupMembersDialog({
   const ready = allMembers.data && groupMembers.data;
   const currentIds = selectedIds ?? groupMembers.data?.memberIds ?? [];
   const options = allMembers.data?.members ?? [];
-  const selectedOptions = options.filter((member) =>
-    currentIds.includes(member.id)
-  );
+
+  const toggle = (memberId: string) => {
+    setSelectedIds((current) => {
+      const base = current ?? groupMembers.data?.memberIds ?? [];
+      return base.includes(memberId)
+        ? base.filter((id) => id !== memberId)
+        : [...base, memberId];
+    });
+  };
 
   return (
-    <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>
-        {t("groups.membersOf", { name: group.name })}
-      </DialogTitle>
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
-        <Stack spacing={2} sx={{ mt: 1 }}>
+        <DialogHeader>
+          <DialogTitle>{t("groups.membersOf", { name: group.name })}</DialogTitle>
+        </DialogHeader>
+
+        <div className="flex flex-col gap-4">
           {setGroupMembers.isError && (
-            <Alert severity="error">{t("groups.saveError")}</Alert>
+            <Alert variant="destructive">
+              <AlertDescription>{t("groups.saveError")}</AlertDescription>
+            </Alert>
           )}
           {!ready ? (
-            <Typography color="text.secondary">
-              {t("common.loading")}
-            </Typography>
+            <p className="text-muted-foreground">{t("common.loading")}</p>
           ) : (
-            <Autocomplete
-              multiple
-              options={options}
-              value={selectedOptions}
-              getOptionLabel={(member) =>
-                `${member.lastName}, ${member.firstName}`
-              }
-              isOptionEqualToValue={(a, b) => a.id === b.id}
-              onChange={(_event, value) =>
-                setSelectedIds(value.map((member) => member.id))
-              }
-              renderInput={(params) => (
-                // MUI's AutocompleteRenderInputParams has optional fields
-                // (e.g. InputLabelProps.className) typed as `X | undefined`,
-                // which exactOptionalPropertyTypes rejects when spread into
-                // TextFieldProps — a known upstream typing friction, not a
-                // real prop mismatch.
-                <TextField {...(params as TextFieldProps)} label={t("groups.members")} />
-              )}
-            />
+            <div className="flex max-h-72 flex-col gap-2 overflow-y-auto rounded-md border p-3">
+              {options.map((member) => {
+                const id = `group-member-${member.id}`;
+                return (
+                  <label
+                    key={member.id}
+                    htmlFor={id}
+                    className="flex items-center gap-2 text-sm"
+                  >
+                    <Checkbox
+                      id={id}
+                      checked={currentIds.includes(member.id)}
+                      onCheckedChange={() => toggle(member.id)}
+                    />
+                    {member.lastName}, {member.firstName}
+                  </label>
+                );
+              })}
+            </div>
           )}
-        </Stack>
+        </div>
+
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onClose}>
+            {t("common.close")}
+          </Button>
+          <Button
+            type="button"
+            disabled={!ready || setGroupMembers.isPending}
+            onClick={async () => {
+              await setGroupMembers.mutateAsync(currentIds);
+              onClose();
+            }}
+          >
+            {t("common.save")}
+          </Button>
+        </DialogFooter>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>{t("common.close")}</Button>
-        <Button
-          variant="contained"
-          disabled={!ready || setGroupMembers.isPending}
-          onClick={async () => {
-            await setGroupMembers.mutateAsync(currentIds);
-            onClose();
-          }}
-        >
-          {t("common.save")}
-        </Button>
-      </DialogActions>
     </Dialog>
   );
 }

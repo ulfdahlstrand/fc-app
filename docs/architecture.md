@@ -27,7 +27,7 @@ The technical foundation is adopted from the `project-enigma` codebase
 |-------|-----------|
 | Language | **TypeScript** (strict mode, all workspaces) |
 | Monorepo | **Turborepo** + **npm workspaces** |
-| Frontend | **React**, **Vite**, **shadcn/ui** + **Tailwind** (ADR-007; Material UI still present during the migration), **TanStack Router** (file-based), **TanStack Query**, **react-hook-form** + Zod resolver, **react-i18next** (sv/en) |
+| Frontend | **React**, **Vite**, **shadcn/ui** + **Tailwind** (ADR-007), **TanStack Router** (file-based), **TanStack Query**, **react-hook-form** + Zod resolver, **react-i18next** (sv/en) |
 | Backend | **Node.js**, **oRPC** (contract-first, OpenAPI handler), **Kysely** |
 | Validation | **Zod** (shared via `@fc-app/contracts`) |
 | Database | **PostgreSQL 16**, migrations via **Kysely Migrator** (ADR-006) |

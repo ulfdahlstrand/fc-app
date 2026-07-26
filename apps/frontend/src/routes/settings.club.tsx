@@ -7,33 +7,43 @@
  * shown read-only (it always holds every permission).
  */
 import { useState } from "react";
-import Alert from "@mui/material/Alert";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import Checkbox from "@mui/material/Checkbox";
-import Chip from "@mui/material/Chip";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import FormGroup from "@mui/material/FormGroup";
-import Paper from "@mui/material/Paper";
-import Stack from "@mui/material/Stack";
-import TextField from "@mui/material/TextField";
-import Typography from "@mui/material/Typography";
+import { useForm } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { PERMISSIONS, type Permission, type Role } from "@fc-app/contracts";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { InvitationsSection } from "../components/InvitationsSection";
 import { ensureMe } from "../lib/auth";
 import { ensureMyClubs, myClubsQueryOptions } from "../lib/clubs";
+import { useZodResolver } from "../lib/form";
 import {
+  roleFormSchema,
   useCreateRole,
   useDeleteRole,
   useRoles,
   useUpdateRole,
+  type RoleFormValues,
+  type RoleNameInput,
 } from "../lib/roles";
 
 export const Route = createFileRoute("/settings/club")({
@@ -55,7 +65,11 @@ function ClubSettingsPage() {
   );
 
   if (!club) {
-    return <Alert severity="error">{t("settings.club.forbidden")}</Alert>;
+    return (
+      <Alert variant="destructive">
+        <AlertDescription>{t("settings.club.forbidden")}</AlertDescription>
+      </Alert>
+    );
   }
 
   return <ClubRoles clubId={club.id} clubName={club.name} />;
@@ -68,33 +82,30 @@ function ClubRoles({ clubId, clubName }: { clubId: string; clubName: string }) {
   const [creating, setCreating] = useState(false);
 
   return (
-    <Stack spacing={3}>
-      <Box>
-        <Typography variant="h4" component="h1">
+    <div className="flex flex-col gap-6">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">
           {t("settings.club.heading")}
-        </Typography>
-        <Typography color="text.secondary">{clubName}</Typography>
-      </Box>
+        </h1>
+        <p className="text-muted-foreground">{clubName}</p>
+      </div>
 
-      <Box>
-        <Stack
-          direction="row"
-          justifyContent="space-between"
-          alignItems="center"
-          sx={{ mb: 1 }}
-        >
-          <Typography variant="h6">{t("settings.club.roles")}</Typography>
-          <Button variant="contained" onClick={() => setCreating(true)}>
+      <div>
+        <div className="mb-2 flex items-center justify-between">
+          <h2 className="text-lg font-semibold">{t("settings.club.roles")}</h2>
+          <Button onClick={() => setCreating(true)}>
             {t("settings.club.newRole")}
           </Button>
-        </Stack>
+        </div>
 
         {roles.isPending ? (
-          <Typography color="text.secondary">{t("common.loading")}</Typography>
+          <p className="text-muted-foreground">{t("common.loading")}</p>
         ) : roles.isError ? (
-          <Alert severity="error">{t("settings.club.loadError")}</Alert>
+          <Alert variant="destructive">
+            <AlertDescription>{t("settings.club.loadError")}</AlertDescription>
+          </Alert>
         ) : (
-          <Stack spacing={1}>
+          <div className="flex flex-col gap-2">
             {roles.data.roles.map((role) => (
               <RoleRow
                 key={role.id}
@@ -103,17 +114,14 @@ function ClubRoles({ clubId, clubName }: { clubId: string; clubName: string }) {
                 onEdit={() => setEditing(role)}
               />
             ))}
-          </Stack>
+          </div>
         )}
-      </Box>
+      </div>
 
       <InvitationsSection clubId={clubId} />
 
       {creating && (
-        <RoleDialog
-          clubId={clubId}
-          onClose={() => setCreating(false)}
-        />
+        <RoleDialog clubId={clubId} onClose={() => setCreating(false)} />
       )}
       {editing && (
         <RoleDialog
@@ -122,7 +130,7 @@ function ClubRoles({ clubId, clubName }: { clubId: string; clubName: string }) {
           onClose={() => setEditing(null)}
         />
       )}
-    </Stack>
+    </div>
   );
 }
 
@@ -141,44 +149,36 @@ function RoleRow({
   const isSystem = role.systemKey !== null;
 
   return (
-    <Paper variant="outlined" sx={{ p: 2 }}>
-      <Stack
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-      >
-        <Box>
-          <Stack direction="row" spacing={1} alignItems="center">
-            <Typography fontWeight={500}>{role.name}</Typography>
-            {isSystem && (
-              <Chip size="small" label={t("settings.club.system")} />
-            )}
-            <Typography variant="body2" color="text.secondary">
-              {t("settings.club.memberCount", { count: role.memberCount })}
-            </Typography>
-          </Stack>
-          <Typography variant="body2" color="text.secondary">
-            {role.permissions.length}{" "}
-            {t("settings.club.permissionsCount")}
-          </Typography>
-        </Box>
-        <Stack direction="row" spacing={1}>
-          <Button size="small" onClick={onEdit} disabled={isAdmin}>
-            {isAdmin ? t("settings.club.view") : t("common.edit")}
+    <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border p-3">
+      <div>
+        <div className="flex items-center gap-2">
+          <p className="font-medium">{role.name}</p>
+          {isSystem && <Badge variant="secondary">{t("settings.club.system")}</Badge>}
+          <p className="text-sm text-muted-foreground">
+            {t("settings.club.memberCount", { count: role.memberCount })}
+          </p>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          {role.permissions.length} {t("settings.club.permissionsCount")}
+        </p>
+      </div>
+      <div className="flex gap-2">
+        <Button size="sm" variant="outline" onClick={onEdit} disabled={isAdmin}>
+          {isAdmin ? t("settings.club.view") : t("common.edit")}
+        </Button>
+        {!isSystem && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-destructive hover:text-destructive"
+            disabled={role.memberCount > 0 || deleteRole.isPending}
+            onClick={() => deleteRole.mutate(role.id)}
+          >
+            {t("common.delete")}
           </Button>
-          {!isSystem && (
-            <Button
-              size="small"
-              color="error"
-              disabled={role.memberCount > 0 || deleteRole.isPending}
-              onClick={() => deleteRole.mutate(role.id)}
-            >
-              {t("common.delete")}
-            </Button>
-          )}
-        </Stack>
-      </Stack>
-    </Paper>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -196,7 +196,10 @@ function RoleDialog({
   const updateRole = useUpdateRole(clubId);
   const readOnly = role?.systemKey === "admin";
 
-  const [name, setName] = useState(role?.name ?? "");
+  const form = useForm<RoleFormValues, unknown, RoleNameInput>({
+    resolver: useZodResolver(roleFormSchema, "settings.club.validation"),
+    defaultValues: { name: role?.name ?? "" },
+  });
   const [permissions, setPermissions] = useState<Permission[]>(
     role?.permissions ?? []
   );
@@ -210,69 +213,100 @@ function RoleDialog({
   };
 
   const pending = createRole.isPending || updateRole.isPending;
-  const error = createRole.error ?? updateRole.error;
+  const error = createRole.isError || updateRole.isError;
 
-  const handleSave = async () => {
+  const handleSave = form.handleSubmit(async (data) => {
     if (role) {
-      await updateRole.mutateAsync({ roleId: role.id, name, permissions });
+      await updateRole.mutateAsync({
+        roleId: role.id,
+        name: data.name,
+        permissions,
+      });
     } else {
-      await createRole.mutateAsync({ name, permissions });
+      await createRole.mutateAsync({ name: data.name, permissions });
     }
     onClose();
-  };
+  });
 
   return (
-    <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>
-        {role
-          ? readOnly
-            ? role.name
-            : t("settings.club.editRole")
-          : t("settings.club.newRole")}
-      </DialogTitle>
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
-        <Stack spacing={2} sx={{ mt: 1 }}>
-          {error && <Alert severity="error">{t("settings.club.saveError")}</Alert>}
-          <TextField
-            label={t("settings.club.roleName")}
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            disabled={readOnly}
-            required
-            slotProps={{ htmlInput: { maxLength: 50 } }}
-          />
-          <Typography variant="subtitle2">
-            {t("settings.club.permissions")}
-          </Typography>
-          <FormGroup>
-            {PERMISSIONS.map((permission) => (
-              <FormControlLabel
-                key={permission}
-                control={
-                  <Checkbox
-                    checked={permissions.includes(permission)}
-                    onChange={() => toggle(permission)}
-                    disabled={readOnly}
-                  />
-                }
-                label={t(`permissions.${permission}`)}
-              />
-            ))}
-          </FormGroup>
-        </Stack>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>{t("common.close")}</Button>
-        {!readOnly && (
-          <Button
-            variant="contained"
-            onClick={handleSave}
-            disabled={pending || name.trim().length === 0}
+        <DialogHeader>
+          <DialogTitle>
+            {role
+              ? readOnly
+                ? role.name
+                : t("settings.club.editRole")
+              : t("settings.club.newRole")}
+          </DialogTitle>
+        </DialogHeader>
+
+        <Form {...form}>
+          <form
+            id="role-form"
+            className="flex flex-col gap-4"
+            onSubmit={handleSave}
+            noValidate
           >
-            {t("common.save")}
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{t("settings.club.saveError")}</AlertDescription>
+              </Alert>
+            )}
+
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("settings.club.roleName")}</FormLabel>
+                  <FormControl>
+                    <Input maxLength={50} disabled={readOnly} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid gap-2">
+              <p className="text-sm font-medium">
+                {t("settings.club.permissions")}
+              </p>
+              <div className="grid gap-2">
+                {PERMISSIONS.map((permission) => {
+                  const id = `role-permission-${permission}`;
+                  return (
+                    <label
+                      key={permission}
+                      htmlFor={id}
+                      className="flex items-center gap-2 text-sm"
+                    >
+                      <Checkbox
+                        id={id}
+                        checked={permissions.includes(permission)}
+                        onCheckedChange={() => toggle(permission)}
+                        disabled={readOnly}
+                      />
+                      {t(`permissions.${permission}`)}
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          </form>
+        </Form>
+
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onClose}>
+            {t("common.close")}
           </Button>
-        )}
-      </DialogActions>
+          {!readOnly && (
+            <Button type="submit" form="role-form" disabled={pending}>
+              {t("common.save")}
+            </Button>
+          )}
+        </DialogFooter>
+      </DialogContent>
     </Dialog>
   );
 }

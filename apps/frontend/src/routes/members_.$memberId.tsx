@@ -6,16 +6,13 @@
  * archive/unarchive.
  */
 import { useState } from "react";
-import Alert from "@mui/material/Alert";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import Chip from "@mui/material/Chip";
-import Divider from "@mui/material/Divider";
-import Paper from "@mui/material/Paper";
-import Stack from "@mui/material/Stack";
-import Typography from "@mui/material/Typography";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import { GuardiansSection } from "../components/GuardiansSection";
 import { formatFieldValue } from "../components/memberFieldDisplay";
 import { MemberFieldValuesDialog } from "../components/MemberFieldValuesDialog";
@@ -43,10 +40,18 @@ function MemberDetailPage() {
   const canView = useHasPermission("members.view");
 
   if (!selected) {
-    return <Alert severity="info">{t("members.noTeam")}</Alert>;
+    return (
+      <Alert>
+        <AlertDescription>{t("members.noTeam")}</AlertDescription>
+      </Alert>
+    );
   }
   if (!canView) {
-    return <Alert severity="error">{t("members.forbidden")}</Alert>;
+    return (
+      <Alert variant="destructive">
+        <AlertDescription>{t("members.forbidden")}</AlertDescription>
+      </Alert>
+    );
   }
 
   return <MemberDetail teamId={selected.team.id} memberId={memberId} />;
@@ -71,42 +76,43 @@ function MemberDetail({
   const [editingFields, setEditingFields] = useState(false);
 
   if (member.isPending) {
-    return <Typography color="text.secondary">{t("common.loading")}</Typography>;
+    return <p className="text-muted-foreground">{t("common.loading")}</p>;
   }
   if (member.isError) {
-    return <Alert severity="error">{t("members.notFound")}</Alert>;
+    return (
+      <Alert variant="destructive">
+        <AlertDescription>{t("members.notFound")}</AlertDescription>
+      </Alert>
+    );
   }
 
   const m = member.data.member;
   const activeFields = fields.data?.fields ?? [];
 
   return (
-    <Stack spacing={3}>
-      <Button component={Link} to="/members" sx={{ alignSelf: "flex-start" }}>
-        ← {t("members.backToList")}
+    <div className="flex flex-col gap-6">
+      <Button variant="ghost" size="sm" asChild className="self-start">
+        <Link to="/members">← {t("members.backToList")}</Link>
       </Button>
 
-      <Stack
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        flexWrap="wrap"
-        gap={1}
-      >
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Typography variant="h4" component="h1">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-semibold tracking-tight">
             {m.firstName} {m.lastName}
-          </Typography>
-          {m.archived && <Chip label={t("members.archived")} />}
-        </Stack>
+          </h1>
+          {m.archived && <Badge variant="secondary">{t("members.archived")}</Badge>}
+        </div>
         {canManage && (
-          <Stack direction="row" spacing={1}>
-            <Button variant="outlined" onClick={() => setEditing(true)}>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setEditing(true)}>
               {t("common.edit")}
             </Button>
             <Button
-              variant="outlined"
-              color={m.archived ? "primary" : "warning"}
+              variant="outline"
+              className={cn(
+                !m.archived &&
+                  "border-amber-300 text-amber-600 hover:bg-amber-50 hover:text-amber-700 dark:border-amber-900 dark:text-amber-400 dark:hover:bg-amber-950",
+              )}
               disabled={setArchived.isPending}
               onClick={() =>
                 setArchived.mutate({ memberId: m.id, archived: !m.archived })
@@ -114,62 +120,57 @@ function MemberDetail({
             >
               {m.archived ? t("members.unarchive") : t("members.archive_action")}
             </Button>
-          </Stack>
+          </div>
         )}
-      </Stack>
+      </div>
 
-      <Paper variant="outlined" sx={{ p: 3 }}>
-        <Stack spacing={2}>
+      <Card>
+        <CardContent className="flex flex-col gap-4">
           <Field label={t("members.birthYear")} value={m.birthYear} />
-          <Divider />
+          <div className="border-t" />
           <Field label={t("members.email")} value={m.email} />
-          <Divider />
+          <div className="border-t" />
           <Field label={t("members.phone")} value={m.phone} />
-        </Stack>
-      </Paper>
+        </CardContent>
+      </Card>
 
       {activeFields.length > 0 && (
-        <Box>
-          <Stack
-            direction="row"
-            justifyContent="space-between"
-            alignItems="center"
-            sx={{ mb: 1 }}
-          >
-            <Typography variant="h6">{t("members.customFields")}</Typography>
+        <div>
+          <div className="mb-2 flex items-center justify-between">
+            <h2 className="text-lg font-semibold">{t("members.customFields")}</h2>
             {canManage && (
-              <Button size="small" onClick={() => setEditingFields(true)}>
+              <Button size="sm" variant="outline" onClick={() => setEditingFields(true)}>
                 {t("members.editFields")}
               </Button>
             )}
-          </Stack>
-          <Paper variant="outlined" sx={{ p: 3 }}>
-            <Stack spacing={2}>
+          </div>
+          <Card>
+            <CardContent className="flex flex-col gap-4">
               {activeFields.map((field, index) => (
-                <Box key={field.id}>
-                  {index > 0 && <Divider sx={{ mb: 2 }} />}
+                <div key={field.id}>
+                  {index > 0 && <div className="mb-4 border-t" />}
                   <Field
                     label={field.name}
                     value={formatFieldValue(field, m.customFields[field.id], t)}
                   />
-                </Box>
+                </div>
               ))}
-            </Stack>
-          </Paper>
-        </Box>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {(memberGroups.data?.groups.length ?? 0) > 0 && (
-        <Box>
-          <Typography variant="h6" sx={{ mb: 1 }}>
-            {t("groups.heading")}
-          </Typography>
-          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+        <div>
+          <h2 className="mb-2 text-lg font-semibold">{t("groups.heading")}</h2>
+          <div className="flex flex-wrap gap-2">
             {memberGroups.data?.groups.map((group) => (
-              <Chip key={group.id} label={group.name} />
+              <Badge key={group.id} variant="secondary">
+                {group.name}
+              </Badge>
             ))}
-          </Stack>
-        </Box>
+          </div>
+        </div>
       )}
 
       <GuardiansSection teamId={teamId} memberId={m.id} />
@@ -200,7 +201,7 @@ function MemberDetail({
           onClose={() => setEditingFields(false)}
         />
       )}
-    </Stack>
+    </div>
   );
 }
 
@@ -212,11 +213,9 @@ function Field({
   value: string | number | null;
 }) {
   return (
-    <Box>
-      <Typography variant="caption" color="text.secondary">
-        {label}
-      </Typography>
-      <Typography>{value ?? "—"}</Typography>
-    </Box>
+    <div>
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p>{value ?? "—"}</p>
+    </div>
   );
 }
