@@ -79,6 +79,14 @@
     "yes": "Yes",
     "no": "No"
   },
+  "validation": {
+    "required": "Required field",
+    "email": "Invalid email address",
+    "maxLength": "At most {{max}} characters",
+    "min": "Must be at least {{min}}",
+    "max": "Must be at most {{max}}",
+    "invalid": "Invalid value"
+  },
   "permissions": {
     "members.view": "View members",
     "members.manage": "Manage members",

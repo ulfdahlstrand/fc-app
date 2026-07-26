@@ -79,6 +79,14 @@
     "yes": "Ja",
     "no": "Nej"
   },
+  "validation": {
+    "required": "Obligatoriskt fält",
+    "email": "Ogiltig e-postadress",
+    "maxLength": "Högst {{max}} tecken",
+    "min": "Måste vara minst {{min}}",
+    "max": "Får vara högst {{max}}",
+    "invalid": "Ogiltigt värde"
+  },
   "permissions": {
     "members.view": "Se medlemmar",
     "members.manage": "Hantera medlemmar",
