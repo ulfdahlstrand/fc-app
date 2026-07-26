@@ -134,7 +134,12 @@
       "system": "System",
       "view": "View",
       "loadError": "Could not load roles.",
-      "saveError": "Could not save. The name may already be in use."
+      "saveError": "Could not save. The name may already be in use.",
+      "validation": {
+        "name": {
+          "too_small": "Role name is required."
+        }
+      }
     },
     "team": {
       "heading": "Team settings",
@@ -153,7 +158,12 @@
       "restore": "Restore",
       "empty": "No custom fields yet.",
       "loadError": "Could not load fields.",
-      "saveError": "Could not save. Please check the fields."
+      "saveError": "Could not save. Please check the fields.",
+      "validation": {
+        "name": {
+          "too_small": "Field name is required."
+        }
+      }
     }
   },
   "invitations": {
@@ -172,7 +182,15 @@
     "revoke": "Revoke",
     "empty": "No invitations yet.",
     "loadError": "Could not load invitations.",
-    "createError": "Could not create the invitation. Please try again."
+    "createError": "Could not create the invitation. Please try again.",
+    "validation": {
+      "roleId": {
+        "too_small": "Please select a role."
+      },
+      "email": {
+        "invalid_format": "Enter a valid email address."
+      }
+    }
   },
   "invite": {
     "heading": "Invitation",
@@ -204,7 +222,12 @@
     "empty": "No groups yet.",
     "forbidden": "You do not have permission to view groups in this team.",
     "loadError": "Could not load groups.",
-    "saveError": "Could not save. The name may already be in use."
+    "saveError": "Could not save. The name may already be in use.",
+    "validation": {
+      "name": {
+        "too_small": "Group name is required."
+      }
+    }
   },
   "guardians": {
     "heading": "Guardians / accounts",

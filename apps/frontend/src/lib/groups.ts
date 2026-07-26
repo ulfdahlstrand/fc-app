@@ -2,8 +2,26 @@
  * Group data hooks (issue #10). All queries are team-scoped.
  */
 import { queryOptions, useMutation, useQuery } from "@tanstack/react-query";
+import { createGroupInputSchema } from "@fc-app/contracts";
+import { z } from "zod";
 import { orpc } from "../orpc-client";
 import { queryClient } from "../query-client";
+import { requiredText } from "./form";
+
+/**
+ * Form schema for creating/renaming a group, derived from the contract's
+ * create-group input (ADR-007) — the length rules live there, not here. Both
+ * create and rename share the same "name" shape. See `lib/form.ts`.
+ */
+export const groupFormSchema = z.object({
+  name: requiredText(createGroupInputSchema.shape.name),
+});
+
+/** What the inputs hold while editing (all strings). */
+export type GroupFormValues = z.input<typeof groupFormSchema>;
+
+/** What the API accepts, after parsing. */
+export type GroupNameInput = z.output<typeof groupFormSchema>;
 
 export function groupsQueryOptions(teamId: string) {
   return queryOptions({
