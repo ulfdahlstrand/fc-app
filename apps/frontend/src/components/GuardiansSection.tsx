@@ -4,28 +4,34 @@
  * user (as guardian or self) or unlink one.
  */
 import { useState } from "react";
-import Alert from "@mui/material/Alert";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import Chip from "@mui/material/Chip";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
-import MenuItem from "@mui/material/MenuItem";
-import Paper from "@mui/material/Paper";
-import Stack from "@mui/material/Stack";
-import TextField from "@mui/material/TextField";
-import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
 import type { GuardianRelation } from "@fc-app/contracts";
-import { useHasPermission } from "../lib/clubs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useHasPermission } from "@/lib/clubs";
 import {
   useAddGuardian,
   useClubUsers,
   useMemberGuardians,
   useRemoveGuardian,
-} from "../lib/guardians";
+} from "@/lib/guardians";
 
 export function GuardiansSection({
   teamId,
@@ -41,64 +47,55 @@ export function GuardiansSection({
   const [linking, setLinking] = useState(false);
 
   return (
-    <Box>
-      <Stack
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        sx={{ mb: 1 }}
-      >
-        <Typography variant="h6">{t("guardians.heading")}</Typography>
+    <div>
+      <div className="mb-2 flex items-center justify-between">
+        <h2 className="text-lg font-semibold">{t("guardians.heading")}</h2>
         {canManage && (
-          <Button size="small" onClick={() => setLinking(true)}>
+          <Button variant="ghost" size="sm" onClick={() => setLinking(true)}>
             {t("guardians.link")}
           </Button>
         )}
-      </Stack>
+      </div>
 
       {guardians.isPending ? (
-        <Typography color="text.secondary">{t("common.loading")}</Typography>
+        <p className="text-muted-foreground">{t("common.loading")}</p>
       ) : guardians.isError ? (
-        <Alert severity="error">{t("guardians.loadError")}</Alert>
+        <Alert variant="destructive">
+          <AlertDescription>{t("guardians.loadError")}</AlertDescription>
+        </Alert>
       ) : guardians.data.guardians.length === 0 ? (
-        <Typography color="text.secondary">{t("guardians.empty")}</Typography>
+        <p className="text-muted-foreground">{t("guardians.empty")}</p>
       ) : (
-        <Stack spacing={1}>
+        <div className="flex flex-col gap-2">
           {guardians.data.guardians.map((guardian) => (
-            <Paper key={guardian.userId} variant="outlined" sx={{ p: 2 }}>
-              <Stack
-                direction="row"
-                justifyContent="space-between"
-                alignItems="center"
-                flexWrap="wrap"
-                gap={1}
-              >
-                <Box>
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    <Typography fontWeight={500}>{guardian.name}</Typography>
-                    <Chip
-                      size="small"
-                      label={t(`guardians.relation.${guardian.relation}`)}
-                    />
-                  </Stack>
-                  <Typography variant="body2" color="text.secondary">
+            <Card key={guardian.userId} className="py-4">
+              <CardContent className="flex flex-wrap items-center justify-between gap-2 px-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{guardian.name}</span>
+                    <Badge variant="secondary">
+                      {t(`guardians.relation.${guardian.relation}`)}
+                    </Badge>
+                  </div>
+                  <p className="text-muted-foreground text-sm">
                     {guardian.email}
-                  </Typography>
-                </Box>
+                  </p>
+                </div>
                 {canManage && (
                   <Button
-                    size="small"
-                    color="error"
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive"
                     disabled={removeGuardian.isPending}
                     onClick={() => removeGuardian.mutate(guardian.userId)}
                   >
                     {t("guardians.unlink")}
                   </Button>
                 )}
-              </Stack>
-            </Paper>
+              </CardContent>
+            </Card>
           ))}
-        </Stack>
+        </div>
       )}
 
       {linking && (
@@ -111,7 +108,7 @@ export function GuardiansSection({
           onClose={() => setLinking(false)}
         />
       )}
-    </Box>
+    </div>
   );
 }
 
@@ -142,59 +139,78 @@ function LinkGuardianDialog({
   };
 
   return (
-    <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>{t("guardians.linkTitle")}</DialogTitle>
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
-        <Stack spacing={2} sx={{ mt: 1 }}>
+        <DialogHeader>
+          <DialogTitle>{t("guardians.linkTitle")}</DialogTitle>
+        </DialogHeader>
+
+        <div className="grid gap-4">
           {addGuardian.isError && (
-            <Alert severity="error">{t("guardians.linkError")}</Alert>
+            <Alert variant="destructive">
+              <AlertDescription>{t("guardians.linkError")}</AlertDescription>
+            </Alert>
           )}
           {available.length === 0 ? (
-            <Alert severity="info">{t("guardians.noUsers")}</Alert>
+            <Alert>
+              <AlertDescription>{t("guardians.noUsers")}</AlertDescription>
+            </Alert>
           ) : (
             <>
-              <TextField
-                select
-                label={t("guardians.user")}
-                value={userId}
-                onChange={(event) => setUserId(event.target.value)}
-                required
-              >
-                {available.map((user) => (
-                  <MenuItem key={user.id} value={user.id}>
-                    {user.name} ({user.email})
-                  </MenuItem>
-                ))}
-              </TextField>
-              <TextField
-                select
-                label={t("guardians.relationLabel")}
-                value={relation}
-                onChange={(event) =>
-                  setRelation(event.target.value as GuardianRelation)
-                }
-              >
-                <MenuItem value="guardian">
-                  {t("guardians.relation.guardian")}
-                </MenuItem>
-                <MenuItem value="self">
-                  {t("guardians.relation.self")}
-                </MenuItem>
-              </TextField>
+              <div className="grid gap-1.5">
+                <Label htmlFor="guardian-user">{t("guardians.user")}</Label>
+                <Select value={userId} onValueChange={setUserId}>
+                  <SelectTrigger id="guardian-user" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {available.map((user) => (
+                      <SelectItem key={user.id} value={user.id}>
+                        {user.name} ({user.email})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="guardian-relation">
+                  {t("guardians.relationLabel")}
+                </Label>
+                <Select
+                  value={relation}
+                  onValueChange={(value) =>
+                    setRelation(value as GuardianRelation)
+                  }
+                >
+                  <SelectTrigger id="guardian-relation" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="guardian">
+                      {t("guardians.relation.guardian")}
+                    </SelectItem>
+                    <SelectItem value="self">
+                      {t("guardians.relation.self")}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </>
           )}
-        </Stack>
+        </div>
+
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onClose}>
+            {t("common.close")}
+          </Button>
+          <Button
+            onClick={handleLink}
+            disabled={userId === "" || addGuardian.isPending}
+          >
+            {t("guardians.link")}
+          </Button>
+        </DialogFooter>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>{t("common.close")}</Button>
-        <Button
-          variant="contained"
-          onClick={handleLink}
-          disabled={userId === "" || addGuardian.isPending}
-        >
-          {t("guardians.link")}
-        </Button>
-      </DialogActions>
     </Dialog>
   );
 }

@@ -5,24 +5,25 @@
  * Requires members.view; members.manage unlocks create/rename/delete and
  * managing membership.
  */
-import { useState } from "react";
-import Alert from "@mui/material/Alert";
-import Autocomplete from "@mui/material/Autocomplete";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
-import Paper from "@mui/material/Paper";
-import Stack from "@mui/material/Stack";
-import TextField, { type TextFieldProps } from "@mui/material/TextField";
-import Typography from "@mui/material/Typography";
+import { useMemo, useState } from "react";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import type { Group } from "@fc-app/contracts";
-import { ensureMe } from "../lib/auth";
-import { ensureMyClubs, useHasPermission, useSelectedTeam } from "../lib/clubs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ensureMe } from "@/lib/auth";
+import { ensureMyClubs, useHasPermission, useSelectedTeam } from "@/lib/clubs";
 import {
   useCreateGroup,
   useDeleteGroup,
@@ -30,8 +31,8 @@ import {
   useGroups,
   useRenameGroup,
   useSetGroupMembers,
-} from "../lib/groups";
-import { useMembers } from "../lib/members";
+} from "@/lib/groups";
+import { useMembers } from "@/lib/members";
 
 export const Route = createFileRoute("/groups")({
   beforeLoad: async () => {
@@ -49,10 +50,18 @@ function GroupsPage() {
   const canView = useHasPermission("members.view");
 
   if (!selected) {
-    return <Alert severity="info">{t("members.noTeam")}</Alert>;
+    return (
+      <Alert>
+        <AlertDescription>{t("members.noTeam")}</AlertDescription>
+      </Alert>
+    );
   }
   if (!canView) {
-    return <Alert severity="error">{t("groups.forbidden")}</Alert>;
+    return (
+      <Alert variant="destructive">
+        <AlertDescription>{t("groups.forbidden")}</AlertDescription>
+      </Alert>
+    );
   }
 
   return <GroupsList teamId={selected.team.id} teamName={selected.team.name} />;
@@ -70,60 +79,50 @@ function GroupsList({ teamId, teamName }: { teamId: string; teamName: string }) 
   const [renameValue, setRenameValue] = useState("");
 
   return (
-    <Stack spacing={3}>
-      <Stack
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        flexWrap="wrap"
-        gap={1}
-      >
-        <Box>
-          <Typography variant="h4" component="h1">
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">
             {t("groups.heading")}
-          </Typography>
-          <Typography color="text.secondary">{teamName}</Typography>
-        </Box>
+          </h1>
+          <p className="text-muted-foreground">{teamName}</p>
+        </div>
         {canManage && (
-          <Button variant="contained" onClick={() => setCreating(true)}>
-            {t("groups.new")}
-          </Button>
+          <Button onClick={() => setCreating(true)}>{t("groups.new")}</Button>
         )}
-      </Stack>
+      </div>
 
       {groups.isPending ? (
-        <Typography color="text.secondary">{t("common.loading")}</Typography>
+        <p className="text-muted-foreground">{t("common.loading")}</p>
       ) : groups.isError ? (
-        <Alert severity="error">{t("groups.loadError")}</Alert>
+        <Alert variant="destructive">
+          <AlertDescription>{t("groups.loadError")}</AlertDescription>
+        </Alert>
       ) : groups.data.groups.length === 0 ? (
-        <Typography color="text.secondary">{t("groups.empty")}</Typography>
+        <p className="text-muted-foreground">{t("groups.empty")}</p>
       ) : (
-        <Stack spacing={1}>
+        <div className="flex flex-col gap-2">
           {groups.data.groups.map((group) => (
-            <Paper key={group.id} variant="outlined" sx={{ p: 2 }}>
-              <Stack
-                direction="row"
-                justifyContent="space-between"
-                alignItems="center"
-                flexWrap="wrap"
-                gap={1}
-              >
-                <Box>
-                  <Typography fontWeight={500}>{group.name}</Typography>
-                  <Typography variant="body2" color="text.secondary">
+            <Card key={group.id} className="py-4">
+              <CardContent className="flex flex-wrap items-center justify-between gap-2 px-4">
+                <div>
+                  <p className="font-medium">{group.name}</p>
+                  <p className="text-muted-foreground text-sm">
                     {t("groups.memberCount", { count: group.memberCount })}
-                  </Typography>
-                </Box>
+                  </p>
+                </div>
                 {canManage && (
-                  <Stack direction="row" spacing={1}>
+                  <div className="flex gap-2">
                     <Button
-                      size="small"
+                      variant="ghost"
+                      size="sm"
                       onClick={() => setManagingMembers(group)}
                     >
                       {t("groups.manageMembers")}
                     </Button>
                     <Button
-                      size="small"
+                      variant="ghost"
+                      size="sm"
                       onClick={() => {
                         setRenaming(group);
                         setRenameValue(group.name);
@@ -132,19 +131,20 @@ function GroupsList({ teamId, teamName }: { teamId: string; teamName: string }) 
                       {t("common.edit")}
                     </Button>
                     <Button
-                      size="small"
-                      color="error"
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive"
                       disabled={deleteGroup.isPending}
                       onClick={() => deleteGroup.mutate(group.id)}
                     >
                       {t("common.delete")}
                     </Button>
-                  </Stack>
+                  </div>
                 )}
-              </Stack>
-            </Paper>
+              </CardContent>
+            </Card>
           ))}
-        </Stack>
+        </div>
       )}
 
       {creating && (
@@ -152,40 +152,52 @@ function GroupsList({ teamId, teamName }: { teamId: string; teamName: string }) 
       )}
 
       {renaming && (
-        <Dialog open onClose={() => setRenaming(null)} maxWidth="sm" fullWidth>
-          <DialogTitle>{t("groups.rename")}</DialogTitle>
+        <Dialog
+          open
+          onOpenChange={(open) => !open && setRenaming(null)}
+        >
           <DialogContent>
-            <Stack spacing={2} sx={{ mt: 1 }}>
+            <DialogHeader>
+              <DialogTitle>{t("groups.rename")}</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4">
               {renameGroup.isError && (
-                <Alert severity="error">{t("groups.saveError")}</Alert>
+                <Alert variant="destructive">
+                  <AlertDescription>{t("groups.saveError")}</AlertDescription>
+                </Alert>
               )}
-              <TextField
-                label={t("groups.name")}
-                value={renameValue}
-                onChange={(event) => setRenameValue(event.target.value)}
-                required
-                slotProps={{ htmlInput: { maxLength: 100 } }}
-              />
-            </Stack>
+              <div className="grid gap-1.5">
+                <Label htmlFor="group-rename">{t("groups.name")}</Label>
+                <Input
+                  id="group-rename"
+                  value={renameValue}
+                  onChange={(event) => setRenameValue(event.target.value)}
+                  maxLength={100}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setRenaming(null)}
+              >
+                {t("common.close")}
+              </Button>
+              <Button
+                disabled={renameValue.trim() === "" || renameGroup.isPending}
+                onClick={async () => {
+                  await renameGroup.mutateAsync({
+                    groupId: renaming.id,
+                    name: renameValue.trim(),
+                  });
+                  setRenaming(null);
+                }}
+              >
+                {t("common.save")}
+              </Button>
+            </DialogFooter>
           </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setRenaming(null)}>
-              {t("common.close")}
-            </Button>
-            <Button
-              variant="contained"
-              disabled={renameValue.trim() === "" || renameGroup.isPending}
-              onClick={async () => {
-                await renameGroup.mutateAsync({
-                  groupId: renaming.id,
-                  name: renameValue.trim(),
-                });
-                setRenaming(null);
-              }}
-            >
-              {t("common.save")}
-            </Button>
-          </DialogActions>
         </Dialog>
       )}
 
@@ -196,7 +208,7 @@ function GroupsList({ teamId, teamName }: { teamId: string; teamName: string }) 
           onClose={() => setManagingMembers(null)}
         />
       )}
-    </Stack>
+    </div>
   );
 }
 
@@ -212,35 +224,42 @@ function CreateGroupDialog({
   const [name, setName] = useState("");
 
   return (
-    <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>{t("groups.new")}</DialogTitle>
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
-        <Stack spacing={2} sx={{ mt: 1 }}>
+        <DialogHeader>
+          <DialogTitle>{t("groups.new")}</DialogTitle>
+        </DialogHeader>
+        <div className="grid gap-4">
           {createGroup.isError && (
-            <Alert severity="error">{t("groups.saveError")}</Alert>
+            <Alert variant="destructive">
+              <AlertDescription>{t("groups.saveError")}</AlertDescription>
+            </Alert>
           )}
-          <TextField
-            label={t("groups.name")}
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            required
-            slotProps={{ htmlInput: { maxLength: 100 } }}
-          />
-        </Stack>
+          <div className="grid gap-1.5">
+            <Label htmlFor="group-name">{t("groups.name")}</Label>
+            <Input
+              id="group-name"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              maxLength={100}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onClose}>
+            {t("common.close")}
+          </Button>
+          <Button
+            disabled={name.trim() === "" || createGroup.isPending}
+            onClick={async () => {
+              await createGroup.mutateAsync(name.trim());
+              onClose();
+            }}
+          >
+            {t("common.save")}
+          </Button>
+        </DialogFooter>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>{t("common.close")}</Button>
-        <Button
-          variant="contained"
-          disabled={name.trim() === "" || createGroup.isPending}
-          onClick={async () => {
-            await createGroup.mutateAsync(name.trim());
-            onClose();
-          }}
-        >
-          {t("common.save")}
-        </Button>
-      </DialogActions>
     </Dialog>
   );
 }
@@ -259,65 +278,97 @@ function ManageGroupMembersDialog({
   const groupMembers = useGroupMembers(teamId, group.id);
   const setGroupMembers = useSetGroupMembers(teamId, group.id);
   const [selectedIds, setSelectedIds] = useState<string[] | null>(null);
+  const [search, setSearch] = useState("");
 
   const ready = allMembers.data && groupMembers.data;
   const currentIds = selectedIds ?? groupMembers.data?.memberIds ?? [];
   const options = allMembers.data?.members ?? [];
-  const selectedOptions = options.filter((member) =>
-    currentIds.includes(member.id)
-  );
+
+  const filtered = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (query === "") return options;
+    return options.filter((member) =>
+      `${member.lastName}, ${member.firstName}`.toLowerCase().includes(query)
+    );
+  }, [options, search]);
+
+  const toggle = (memberId: string) => {
+    setSelectedIds((current) => {
+      const base = current ?? groupMembers.data?.memberIds ?? [];
+      return base.includes(memberId)
+        ? base.filter((id) => id !== memberId)
+        : [...base, memberId];
+    });
+  };
 
   return (
-    <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>
-        {t("groups.membersOf", { name: group.name })}
-      </DialogTitle>
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
-        <Stack spacing={2} sx={{ mt: 1 }}>
+        <DialogHeader>
+          <DialogTitle>
+            {t("groups.membersOf", { name: group.name })}
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="grid gap-4">
           {setGroupMembers.isError && (
-            <Alert severity="error">{t("groups.saveError")}</Alert>
+            <Alert variant="destructive">
+              <AlertDescription>{t("groups.saveError")}</AlertDescription>
+            </Alert>
           )}
           {!ready ? (
-            <Typography color="text.secondary">
-              {t("common.loading")}
-            </Typography>
+            <p className="text-muted-foreground">{t("common.loading")}</p>
           ) : (
-            <Autocomplete
-              multiple
-              options={options}
-              value={selectedOptions}
-              getOptionLabel={(member) =>
-                `${member.lastName}, ${member.firstName}`
-              }
-              isOptionEqualToValue={(a, b) => a.id === b.id}
-              onChange={(_event, value) =>
-                setSelectedIds(value.map((member) => member.id))
-              }
-              renderInput={(params) => (
-                // MUI's AutocompleteRenderInputParams has optional fields
-                // (e.g. InputLabelProps.className) typed as `X | undefined`,
-                // which exactOptionalPropertyTypes rejects when spread into
-                // TextFieldProps — a known upstream typing friction, not a
-                // real prop mismatch.
-                <TextField {...(params as TextFieldProps)} label={t("groups.members")} />
-              )}
-            />
+            <>
+              <Input
+                placeholder={t("groups.members")}
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+              />
+              <div className="max-h-72 overflow-y-auto rounded-md border">
+                {filtered.length === 0 ? (
+                  <p className="text-muted-foreground p-3 text-sm">
+                    {t("members.empty")}
+                  </p>
+                ) : (
+                  filtered.map((member) => {
+                    const id = `group-member-${member.id}`;
+                    return (
+                      <Label
+                        key={member.id}
+                        htmlFor={id}
+                        className="hover:bg-accent gap-2 border-b px-3 py-2 font-normal last:border-0"
+                      >
+                        <Checkbox
+                          id={id}
+                          checked={currentIds.includes(member.id)}
+                          onCheckedChange={() => toggle(member.id)}
+                        />
+                        {member.lastName}, {member.firstName}
+                      </Label>
+                    );
+                  })
+                )}
+              </div>
+            </>
           )}
-        </Stack>
+        </div>
+
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onClose}>
+            {t("common.close")}
+          </Button>
+          <Button
+            disabled={!ready || setGroupMembers.isPending}
+            onClick={async () => {
+              await setGroupMembers.mutateAsync(currentIds);
+              onClose();
+            }}
+          >
+            {t("common.save")}
+          </Button>
+        </DialogFooter>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>{t("common.close")}</Button>
-        <Button
-          variant="contained"
-          disabled={!ready || setGroupMembers.isPending}
-          onClick={async () => {
-            await setGroupMembers.mutateAsync(currentIds);
-            onClose();
-          }}
-        >
-          {t("common.save")}
-        </Button>
-      </DialogActions>
     </Dialog>
   );
 }

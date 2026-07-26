@@ -6,40 +6,49 @@
  * and revoke active ones.
  */
 import { useState } from "react";
-import Alert from "@mui/material/Alert";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import Chip from "@mui/material/Chip";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
-import MenuItem from "@mui/material/MenuItem";
-import Paper from "@mui/material/Paper";
-import Stack from "@mui/material/Stack";
-import TextField from "@mui/material/TextField";
-import Typography from "@mui/material/Typography";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import type { Invitation, InvitationStatus, MyClub } from "@fc-app/contracts";
-import { myClubsQueryOptions } from "../lib/clubs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { myClubsQueryOptions } from "@/lib/clubs";
 import {
   invitationLink,
   useCreateInvitation,
   useInvitations,
   useRevokeInvitation,
-} from "../lib/invitations";
-import { useRoles } from "../lib/roles";
+} from "@/lib/invitations";
+import { useRoles } from "@/lib/roles";
 
-const STATUS_COLOR: Record<
-  InvitationStatus,
-  "success" | "default" | "warning" | "error"
-> = {
-  active: "success",
-  used: "default",
-  expired: "warning",
-  revoked: "error",
+type BadgeVariant = "default" | "secondary" | "destructive" | "outline";
+
+const STATUS_VARIANT: Record<InvitationStatus, BadgeVariant> = {
+  active: "default",
+  used: "secondary",
+  expired: "outline",
+  revoked: "destructive",
 };
+
+/** Radix Select forbids an empty-string value, so the "club-wide" option uses this sentinel. */
+const CLUB_WIDE = "__club_wide__";
 
 export function InvitationsSection({ clubId }: { clubId: string }) {
   const { t } = useTranslation();
@@ -55,77 +64,65 @@ export function InvitationsSection({ clubId }: { clubId: string }) {
   };
 
   return (
-    <Box>
-      <Stack
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        sx={{ mb: 1 }}
-      >
-        <Typography variant="h6">{t("invitations.heading")}</Typography>
-        <Button variant="contained" onClick={() => setCreating(true)}>
-          {t("invitations.new")}
-        </Button>
-      </Stack>
+    <div>
+      <div className="mb-2 flex items-center justify-between">
+        <h2 className="text-lg font-semibold">{t("invitations.heading")}</h2>
+        <Button onClick={() => setCreating(true)}>{t("invitations.new")}</Button>
+      </div>
 
       {invitations.isPending ? (
-        <Typography color="text.secondary">{t("common.loading")}</Typography>
+        <p className="text-muted-foreground">{t("common.loading")}</p>
       ) : invitations.isError ? (
-        <Alert severity="error">{t("invitations.loadError")}</Alert>
+        <Alert variant="destructive">
+          <AlertDescription>{t("invitations.loadError")}</AlertDescription>
+        </Alert>
       ) : invitations.data.invitations.length === 0 ? (
-        <Typography color="text.secondary">{t("invitations.empty")}</Typography>
+        <p className="text-muted-foreground">{t("invitations.empty")}</p>
       ) : (
-        <Stack spacing={1}>
+        <div className="flex flex-col gap-2">
           {invitations.data.invitations.map((invitation) => (
-            <Paper key={invitation.id} variant="outlined" sx={{ p: 2 }}>
-              <Stack
-                direction="row"
-                justifyContent="space-between"
-                alignItems="center"
-                flexWrap="wrap"
-                gap={1}
-              >
-                <Box>
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    <Typography fontWeight={500}>
-                      {invitation.roleName}
-                    </Typography>
+            <Card key={invitation.id} className="py-4">
+              <CardContent className="flex flex-wrap items-center justify-between gap-2 px-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{invitation.roleName}</span>
                     {invitation.teamName && (
-                      <Chip size="small" label={invitation.teamName} />
+                      <Badge variant="secondary">{invitation.teamName}</Badge>
                     )}
-                    <Chip
-                      size="small"
-                      color={STATUS_COLOR[invitation.status]}
-                      label={t(`invite.status.${invitation.status}`)}
-                    />
-                  </Stack>
-                  <Typography variant="body2" color="text.secondary">
+                    <Badge variant={STATUS_VARIANT[invitation.status]}>
+                      {t(`invite.status.${invitation.status}`)}
+                    </Badge>
+                  </div>
+                  <p className="text-muted-foreground text-sm">
                     {invitation.email ?? t("invitations.anyEmail")}
-                  </Typography>
-                </Box>
-                <Stack direction="row" spacing={1}>
-                  {invitation.status === "active" && (
-                    <>
-                      <Button size="small" onClick={() => copyLink(invitation)}>
-                        {copiedId === invitation.id
-                          ? t("invitations.copied")
-                          : t("invitations.copyLink")}
-                      </Button>
-                      <Button
-                        size="small"
-                        color="error"
-                        disabled={revoke.isPending}
-                        onClick={() => revoke.mutate(invitation.id)}
-                      >
-                        {t("invitations.revoke")}
-                      </Button>
-                    </>
-                  )}
-                </Stack>
-              </Stack>
-            </Paper>
+                  </p>
+                </div>
+                {invitation.status === "active" && (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => copyLink(invitation)}
+                    >
+                      {copiedId === invitation.id
+                        ? t("invitations.copied")
+                        : t("invitations.copyLink")}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive"
+                      disabled={revoke.isPending}
+                      onClick={() => revoke.mutate(invitation.id)}
+                    >
+                      {t("invitations.revoke")}
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           ))}
-        </Stack>
+        </div>
       )}
 
       {creating && (
@@ -134,7 +131,7 @@ export function InvitationsSection({ clubId }: { clubId: string }) {
           onClose={() => setCreating(false)}
         />
       )}
-    </Box>
+    </div>
   );
 }
 
@@ -168,59 +165,87 @@ function CreateInvitationDialog({
   };
 
   return (
-    <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>{t("invitations.new")}</DialogTitle>
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
-        <Stack spacing={2} sx={{ mt: 1 }}>
+        <DialogHeader>
+          <DialogTitle>{t("invitations.new")}</DialogTitle>
+        </DialogHeader>
+
+        <div className="grid gap-4">
           {createInvitation.isError && (
-            <Alert severity="error">{t("invitations.createError")}</Alert>
+            <Alert variant="destructive">
+              <AlertDescription>
+                {t("invitations.createError")}
+              </AlertDescription>
+            </Alert>
           )}
-          <TextField
-            select
-            label={t("invitations.role")}
-            value={roleId}
-            onChange={(event) => setRoleId(event.target.value)}
-            required
+          <div className="grid gap-1.5">
+            <Label htmlFor="invite-role">{t("invitations.role")}</Label>
+            <Select value={roleId} onValueChange={setRoleId}>
+              <SelectTrigger id="invite-role" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {(roles.data?.roles ?? []).map((role) => (
+                  <SelectItem key={role.id} value={role.id}>
+                    {role.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="invite-team">{t("invitations.team")}</Label>
+            <Select
+              value={teamId || CLUB_WIDE}
+              onValueChange={(value) =>
+                setTeamId(value === CLUB_WIDE ? "" : value)
+              }
+            >
+              <SelectTrigger id="invite-team" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={CLUB_WIDE}>
+                  {t("invitations.clubWide")}
+                </SelectItem>
+                {(club?.teams ?? []).map((team) => (
+                  <SelectItem key={team.id} value={team.id}>
+                    {team.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-muted-foreground text-sm">
+              {t("invitations.teamHelp")}
+            </p>
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="invite-email">{t("invitations.email")}</Label>
+            <Input
+              id="invite-email"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+            />
+            <p className="text-muted-foreground text-sm">
+              {t("invitations.emailHelp")}
+            </p>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onClose}>
+            {t("common.close")}
+          </Button>
+          <Button
+            onClick={handleCreate}
+            disabled={roleId === "" || createInvitation.isPending}
           >
-            {(roles.data?.roles ?? []).map((role) => (
-              <MenuItem key={role.id} value={role.id}>
-                {role.name}
-              </MenuItem>
-            ))}
-          </TextField>
-          <TextField
-            select
-            label={t("invitations.team")}
-            value={teamId}
-            onChange={(event) => setTeamId(event.target.value)}
-            helperText={t("invitations.teamHelp")}
-          >
-            <MenuItem value="">{t("invitations.clubWide")}</MenuItem>
-            {(club?.teams ?? []).map((team) => (
-              <MenuItem key={team.id} value={team.id}>
-                {team.name}
-              </MenuItem>
-            ))}
-          </TextField>
-          <TextField
-            type="email"
-            label={t("invitations.email")}
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            helperText={t("invitations.emailHelp")}
-          />
-        </Stack>
+            {t("invitations.create")}
+          </Button>
+        </DialogFooter>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>{t("common.close")}</Button>
-        <Button
-          variant="contained"
-          onClick={handleCreate}
-          disabled={roleId === "" || createInvitation.isPending}
-        >
-          {t("invitations.create")}
-        </Button>
-      </DialogActions>
     </Dialog>
   );
 }

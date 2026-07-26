@@ -7,21 +7,6 @@
  * detail but not deleted.
  */
 import { useState } from "react";
-import Alert from "@mui/material/Alert";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import Chip from "@mui/material/Chip";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import MenuItem from "@mui/material/MenuItem";
-import Paper from "@mui/material/Paper";
-import Stack from "@mui/material/Stack";
-import Switch from "@mui/material/Switch";
-import TextField from "@mui/material/TextField";
-import Typography from "@mui/material/Typography";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import {
@@ -29,14 +14,36 @@ import {
   type MemberFieldDefinition,
   type MemberFieldType,
 } from "@fc-app/contracts";
-import { ensureMe } from "../lib/auth";
-import { ensureMyClubs, useHasPermission, useSelectedTeam } from "../lib/clubs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { ensureMe } from "@/lib/auth";
+import { ensureMyClubs, useHasPermission, useSelectedTeam } from "@/lib/clubs";
 import {
   useArchiveMemberField,
   useCreateMemberField,
   useMemberFields,
   useUpdateMemberField,
-} from "../lib/member-fields";
+} from "@/lib/member-fields";
 
 export const Route = createFileRoute("/settings/team")({
   beforeLoad: async () => {
@@ -54,10 +61,18 @@ function TeamSettingsPage() {
   const canManage = useHasPermission("settings.team");
 
   if (!selected) {
-    return <Alert severity="info">{t("members.noTeam")}</Alert>;
+    return (
+      <Alert>
+        <AlertDescription>{t("members.noTeam")}</AlertDescription>
+      </Alert>
+    );
   }
   if (!canManage) {
-    return <Alert severity="error">{t("settings.team.forbidden")}</Alert>;
+    return (
+      <Alert variant="destructive">
+        <AlertDescription>{t("settings.team.forbidden")}</AlertDescription>
+      </Alert>
+    );
   }
 
   return <MemberFields teamId={selected.team.id} teamName={selected.team.name} />;
@@ -77,80 +92,67 @@ function MemberFields({
   const [creating, setCreating] = useState(false);
 
   return (
-    <Stack spacing={3}>
-      <Box>
-        <Typography variant="h4" component="h1">
+    <div className="flex flex-col gap-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">
           {t("settings.team.heading")}
-        </Typography>
-        <Typography color="text.secondary">{teamName}</Typography>
-      </Box>
+        </h1>
+        <p className="text-muted-foreground">{teamName}</p>
+      </div>
 
-      <Box>
-        <Stack
-          direction="row"
-          justifyContent="space-between"
-          alignItems="center"
-          sx={{ mb: 1 }}
-        >
-          <Typography variant="h6">{t("settings.team.fields")}</Typography>
-          <Button variant="contained" onClick={() => setCreating(true)}>
+      <div>
+        <div className="mb-2 flex items-center justify-between">
+          <h2 className="text-lg font-semibold">{t("settings.team.fields")}</h2>
+          <Button onClick={() => setCreating(true)}>
             {t("settings.team.newField")}
           </Button>
-        </Stack>
+        </div>
 
         {fields.isPending ? (
-          <Typography color="text.secondary">{t("common.loading")}</Typography>
+          <p className="text-muted-foreground">{t("common.loading")}</p>
         ) : fields.isError ? (
-          <Alert severity="error">{t("settings.team.loadError")}</Alert>
+          <Alert variant="destructive">
+            <AlertDescription>{t("settings.team.loadError")}</AlertDescription>
+          </Alert>
         ) : fields.data.fields.length === 0 ? (
-          <Typography color="text.secondary">
-            {t("settings.team.empty")}
-          </Typography>
+          <p className="text-muted-foreground">{t("settings.team.empty")}</p>
         ) : (
-          <Stack spacing={1}>
+          <div className="flex flex-col gap-2">
             {fields.data.fields.map((field) => (
-              <Paper key={field.id} variant="outlined" sx={{ p: 2 }}>
-                <Stack
-                  direction="row"
-                  justifyContent="space-between"
-                  alignItems="center"
-                  flexWrap="wrap"
-                  gap={1}
-                >
-                  <Box>
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <Typography fontWeight={500}>{field.name}</Typography>
-                      <Chip
-                        size="small"
-                        label={t(`fieldType.${field.fieldType}`)}
-                      />
+              <Card key={field.id} className="py-4">
+                <CardContent className="flex flex-wrap items-center justify-between gap-2 px-4">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{field.name}</span>
+                      <Badge variant="secondary">
+                        {t(`fieldType.${field.fieldType}`)}
+                      </Badge>
                       {field.required && (
-                        <Chip
-                          size="small"
-                          color="primary"
-                          label={t("settings.team.required")}
-                        />
+                        <Badge>{t("settings.team.required")}</Badge>
                       )}
                       {field.archived && (
-                        <Chip
-                          size="small"
-                          label={t("settings.team.archived")}
-                        />
+                        <Badge variant="outline">
+                          {t("settings.team.archived")}
+                        </Badge>
                       )}
-                    </Stack>
+                    </div>
                     {field.fieldType === "select" && (
-                      <Typography variant="body2" color="text.secondary">
+                      <p className="text-muted-foreground text-sm">
                         {field.options.join(", ")}
-                      </Typography>
+                      </p>
                     )}
-                  </Box>
-                  <Stack direction="row" spacing={1}>
-                    <Button size="small" onClick={() => setEditing(field)}>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setEditing(field)}
+                    >
                       {t("common.edit")}
                     </Button>
                     <Button
-                      size="small"
-                      color={field.archived ? "primary" : "warning"}
+                      variant="ghost"
+                      size="sm"
                       disabled={archiveField.isPending}
                       onClick={() =>
                         archiveField.mutate({
@@ -163,13 +165,13 @@ function MemberFields({
                         ? t("settings.team.restore")
                         : t("settings.team.archive")}
                     </Button>
-                  </Stack>
-                </Stack>
-              </Paper>
+                  </div>
+                </CardContent>
+              </Card>
             ))}
-          </Stack>
+          </div>
         )}
-      </Box>
+      </div>
 
       {creating && (
         <FieldDialog teamId={teamId} onClose={() => setCreating(false)} />
@@ -181,7 +183,7 @@ function MemberFields({
           onClose={() => setEditing(null)}
         />
       )}
-    </Stack>
+    </div>
   );
 }
 
@@ -216,8 +218,7 @@ function FieldDialog({
     .filter((line) => line !== "");
 
   const needsOptions = fieldType === "select";
-  const canSave =
-    name.trim() !== "" && (!needsOptions || options.length > 0);
+  const canSave = name.trim() !== "" && (!needsOptions || options.length > 0);
 
   const pending = createField.isPending || updateField.isPending;
   const error = createField.isError || updateField.isError;
@@ -242,68 +243,85 @@ function FieldDialog({
   };
 
   return (
-    <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>
-        {isEdit ? t("settings.team.editField") : t("settings.team.newField")}
-      </DialogTitle>
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
-        <Stack spacing={2} sx={{ mt: 1 }}>
-          {error && <Alert severity="error">{t("settings.team.saveError")}</Alert>}
-          <TextField
-            label={t("settings.team.fieldName")}
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            required
-            slotProps={{ htmlInput: { maxLength: 100 } }}
-          />
-          <TextField
-            select
-            label={t("settings.team.fieldType")}
-            value={fieldType}
-            onChange={(event) =>
-              setFieldType(event.target.value as MemberFieldType)
-            }
-            // Type is fixed after creation — changing it would invalidate
-            // existing values.
-            disabled={isEdit}
-          >
-            {FIELD_TYPES.map((type) => (
-              <MenuItem key={type} value={type}>
-                {t(`fieldType.${type}`)}
-              </MenuItem>
-            ))}
-          </TextField>
-          {needsOptions && (
-            <TextField
-              label={t("settings.team.options")}
-              value={optionsText}
-              onChange={(event) => setOptionsText(event.target.value)}
-              multiline
-              minRows={3}
-              helperText={t("settings.team.optionsHelp")}
-            />
+        <DialogHeader>
+          <DialogTitle>
+            {isEdit ? t("settings.team.editField") : t("settings.team.newField")}
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="grid gap-4">
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>
+                {t("settings.team.saveError")}
+              </AlertDescription>
+            </Alert>
           )}
-          <FormControlLabel
-            control={
-              <Switch
-                checked={required}
-                onChange={(event) => setRequired(event.target.checked)}
+          <div className="grid gap-1.5">
+            <Label htmlFor="field-name">{t("settings.team.fieldName")}</Label>
+            <Input
+              id="field-name"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              maxLength={100}
+            />
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="field-type">{t("settings.team.fieldType")}</Label>
+            <Select
+              value={fieldType}
+              onValueChange={(value) => setFieldType(value as MemberFieldType)}
+              // Type is fixed after creation — changing it would invalidate
+              // existing values.
+              disabled={isEdit}
+            >
+              <SelectTrigger id="field-type" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {FIELD_TYPES.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {t(`fieldType.${type}`)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {needsOptions && (
+            <div className="grid gap-1.5">
+              <Label htmlFor="field-options">{t("settings.team.options")}</Label>
+              <Textarea
+                id="field-options"
+                value={optionsText}
+                onChange={(event) => setOptionsText(event.target.value)}
+                rows={3}
               />
-            }
-            label={t("settings.team.requiredLabel")}
-          />
-        </Stack>
+              <p className="text-muted-foreground text-sm">
+                {t("settings.team.optionsHelp")}
+              </p>
+            </div>
+          )}
+          <Label htmlFor="field-required" className="gap-2">
+            <Switch
+              id="field-required"
+              checked={required}
+              onCheckedChange={setRequired}
+            />
+            {t("settings.team.requiredLabel")}
+          </Label>
+        </div>
+
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onClose}>
+            {t("common.close")}
+          </Button>
+          <Button onClick={handleSave} disabled={!canSave || pending}>
+            {t("common.save")}
+          </Button>
+        </DialogFooter>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>{t("common.close")}</Button>
-        <Button
-          variant="contained"
-          onClick={handleSave}
-          disabled={!canSave || pending}
-        >
-          {t("common.save")}
-        </Button>
-      </DialogActions>
     </Dialog>
   );
 }
