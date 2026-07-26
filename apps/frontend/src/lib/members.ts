@@ -5,12 +5,13 @@
  * teams fetches the right roster. Mutations invalidate the team's member
  * queries.
  */
-import { queryOptions, useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { memberWriteFields } from "@fc-app/contracts";
 import { z } from "zod";
 import { orpc } from "../orpc-client";
 import { queryClient } from "../query-client";
 import { optionalNumber, optionalText, requiredText } from "./form";
+import { orpcQuery } from "./orpc-query";
 
 export interface MemberListFilters {
   includeArchived?: boolean;
@@ -19,17 +20,16 @@ export interface MemberListFilters {
 }
 
 export function membersQueryOptions(teamId: string, filters: MemberListFilters) {
-  return queryOptions({
-    queryKey: ["members", teamId, filters],
-    queryFn: () =>
-      orpc.listMembers({
-        teamId,
-        ...(filters.includeArchived !== undefined
-          ? { includeArchived: filters.includeArchived }
-          : {}),
-        ...(filters.search ? { search: filters.search } : {}),
-        ...(filters.groupId ? { groupId: filters.groupId } : {}),
-      }),
+  // Only send the filters that are set — the API rejects unexpected/blank ones.
+  return orpcQuery.listMembers.queryOptions({
+    input: {
+      teamId,
+      ...(filters.includeArchived !== undefined
+        ? { includeArchived: filters.includeArchived }
+        : {}),
+      ...(filters.search ? { search: filters.search } : {}),
+      ...(filters.groupId ? { groupId: filters.groupId } : {}),
+    },
   });
 }
 
@@ -38,10 +38,7 @@ export function useMembers(teamId: string, filters: MemberListFilters) {
 }
 
 export function memberQueryOptions(teamId: string, memberId: string) {
-  return queryOptions({
-    queryKey: ["member", teamId, memberId],
-    queryFn: () => orpc.getMember({ teamId, memberId }),
-  });
+  return orpcQuery.getMember.queryOptions({ input: { teamId, memberId } });
 }
 
 export function useMember(teamId: string, memberId: string) {
@@ -49,7 +46,9 @@ export function useMember(teamId: string, memberId: string) {
 }
 
 async function invalidateMembers(teamId: string): Promise<void> {
-  await queryClient.invalidateQueries({ queryKey: ["members", teamId] });
+  await queryClient.invalidateQueries({
+    queryKey: orpcQuery.listMembers.key({ input: { teamId } }),
+  });
 }
 
 /**
@@ -86,7 +85,9 @@ export function useUpdateMember(teamId: string) {
     onSuccess: async (data) => {
       await invalidateMembers(teamId);
       await queryClient.invalidateQueries({
-        queryKey: ["member", teamId, data.member.id],
+        queryKey: orpcQuery.getMember.key({
+          input: { teamId, memberId: data.member.id },
+        }),
       });
     },
   });
@@ -99,7 +100,9 @@ export function useSetMemberArchived(teamId: string) {
     onSuccess: async (data) => {
       await invalidateMembers(teamId);
       await queryClient.invalidateQueries({
-        queryKey: ["member", teamId, data.member.id],
+        queryKey: orpcQuery.getMember.key({
+          input: { teamId, memberId: data.member.id },
+        }),
       });
     },
   });

@@ -6,20 +6,16 @@
  * store backed by localStorage so any component can subscribe via
  * useSelectedTeam() and the choice survives reloads.
  */
-import { queryOptions } from "@tanstack/react-query";
 import { useSyncExternalStore } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createClubInputSchema } from "@fc-app/contracts";
 import type { MyClub, MyTeam, Permission } from "@fc-app/contracts";
 import { z } from "zod";
-import { orpc } from "../orpc-client";
 import { queryClient } from "../query-client";
 import { requiredText } from "./form";
+import { orpcQuery } from "./orpc-query";
 
-export const myClubsQueryOptions = queryOptions({
-  queryKey: ["myClubs"],
-  queryFn: () => orpc.myClubs({}),
-});
+export const myClubsQueryOptions = orpcQuery.myClubs.queryOptions({ input: {} });
 
 /**
  * Form schema for onboarding's "create your club" form, derived from the

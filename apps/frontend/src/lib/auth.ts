@@ -5,10 +5,9 @@
  * cached under the ["me"] query key. Route guards call ensureMe() in
  * beforeLoad; components subscribe with useQuery(meQueryOptions).
  */
-import { queryOptions } from "@tanstack/react-query";
 import type { User } from "@fc-app/contracts";
-import { orpc } from "../orpc-client";
 import { queryClient } from "../query-client";
+import { orpcQuery } from "./orpc-query";
 
 export function getApiUrl(): string {
   return import.meta.env["VITE_API_URL"] ?? "";
@@ -29,10 +28,7 @@ export function getDevSignInUrl(): string {
   return `${getApiUrl()}/auth/dev-login`;
 }
 
-export const meQueryOptions = queryOptions({
-  queryKey: ["me"],
-  queryFn: () => orpc.me({}),
-});
+export const meQueryOptions = orpcQuery.me.queryOptions({ input: {} });
 
 /** Fetches (or reuses) the current user — for route beforeLoad guards. */
 export async function ensureMe(): Promise<User | null> {
@@ -46,5 +42,5 @@ export async function logout(): Promise<void> {
     method: "POST",
     credentials: "include",
   });
-  await queryClient.invalidateQueries({ queryKey: ["me"] });
+  await queryClient.invalidateQueries({ queryKey: orpcQuery.me.key() });
 }

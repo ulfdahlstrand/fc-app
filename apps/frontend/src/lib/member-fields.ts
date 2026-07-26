@@ -5,7 +5,7 @@
  * roster/detail); managing them requires settings.team. Field values are
  * written per member with members.manage.
  */
-import { queryOptions, useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   createMemberFieldInputSchema,
   memberFieldTypeSchema,
@@ -15,6 +15,7 @@ import { z } from "zod";
 import { orpc } from "../orpc-client";
 import { queryClient } from "../query-client";
 import { requiredText } from "./form";
+import { orpcQuery } from "./orpc-query";
 
 /**
  * Form schema for creating/editing a member field's scalar inputs, derived
@@ -41,9 +42,8 @@ export function memberFieldsQueryOptions(
   teamId: string,
   includeArchived = false
 ) {
-  return queryOptions({
-    queryKey: ["memberFields", teamId, includeArchived],
-    queryFn: () => orpc.listMemberFields({ teamId, includeArchived }),
+  return orpcQuery.listMemberFields.queryOptions({
+    input: { teamId, includeArchived },
   });
 }
 
@@ -53,10 +53,16 @@ export function useMemberFields(teamId: string, includeArchived = false) {
 
 async function invalidateFields(teamId: string): Promise<void> {
   await Promise.all([
-    queryClient.invalidateQueries({ queryKey: ["memberFields", teamId] }),
+    queryClient.invalidateQueries({
+      queryKey: orpcQuery.listMemberFields.key({ input: { teamId } }),
+    }),
     // Values render alongside members, so refresh those too.
-    queryClient.invalidateQueries({ queryKey: ["members", teamId] }),
-    queryClient.invalidateQueries({ queryKey: ["member", teamId] }),
+    queryClient.invalidateQueries({
+      queryKey: orpcQuery.listMembers.key({ input: { teamId } }),
+    }),
+    queryClient.invalidateQueries({
+      queryKey: orpcQuery.getMember.key({ input: { teamId } }),
+    }),
   ]);
 }
 
@@ -100,9 +106,13 @@ export function useSetMemberFieldValues(teamId: string) {
       values: Record<string, string | null>;
     }) => orpc.setMemberFieldValues({ teamId, ...input }),
     onSuccess: async (data) => {
-      await queryClient.invalidateQueries({ queryKey: ["members", teamId] });
       await queryClient.invalidateQueries({
-        queryKey: ["member", teamId, data.member.id],
+        queryKey: orpcQuery.listMembers.key({ input: { teamId } }),
+      });
+      await queryClient.invalidateQueries({
+        queryKey: orpcQuery.getMember.key({
+          input: { teamId, memberId: data.member.id },
+        }),
       });
     },
   });
