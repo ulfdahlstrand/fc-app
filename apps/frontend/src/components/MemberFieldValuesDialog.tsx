@@ -3,25 +3,41 @@
  * per active field definition, typed by field: text/number/date inputs, a
  * yes/no switch for boolean, and a select for select fields. Client-side
  * validation mirrors the contract; the backend re-validates.
+ *
+ * Fields are dynamic (defined per-team), so this uses controlled local state
+ * rather than react-hook-form/Zod — there's no static schema to derive a form
+ * type from. Validation and save behavior are unchanged from the pre-shadcn
+ * version.
  */
 import { useState } from "react";
-import Alert from "@mui/material/Alert";
-import Button from "@mui/material/Button";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import MenuItem from "@mui/material/MenuItem";
-import Stack from "@mui/material/Stack";
-import Switch from "@mui/material/Switch";
-import TextField from "@mui/material/TextField";
 import { useTranslation } from "react-i18next";
 import {
   validateMemberFieldValue,
   type Member,
   type MemberFieldDefinition,
 } from "@fc-app/contracts";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+
+/** Sentinel select value for "no value" — Radix disallows an empty-string item value. */
+const NO_VALUE = "__none__";
 
 export function MemberFieldValuesDialog({
   fields,
@@ -67,13 +83,22 @@ export function MemberFieldValuesDialog({
   };
 
   return (
-    <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>{t("members.editFields")}</DialogTitle>
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
-        <Stack spacing={2} sx={{ mt: 1 }}>
-          {error && <Alert severity="error">{t("members.saveError")}</Alert>}
+        <DialogHeader>
+          <DialogTitle>{t("members.editFields")}</DialogTitle>
+        </DialogHeader>
+
+        <div className="flex flex-col gap-4">
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{t("members.saveError")}</AlertDescription>
+            </Alert>
+          )}
           {fields.length === 0 && (
-            <Alert severity="info">{t("members.noFields")}</Alert>
+            <Alert>
+              <AlertDescription>{t("members.noFields")}</AlertDescription>
+            </Alert>
           )}
           {fields.map((field) => (
             <FieldInput
@@ -83,18 +108,21 @@ export function MemberFieldValuesDialog({
               onChange={(value) => setValue(field.id, value)}
             />
           ))}
-        </Stack>
+        </div>
+
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onClose}>
+            {t("common.close")}
+          </Button>
+          <Button
+            type="button"
+            onClick={handleSave}
+            disabled={invalid || saving}
+          >
+            {t("common.save")}
+          </Button>
+        </DialogFooter>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>{t("common.close")}</Button>
-        <Button
-          variant="contained"
-          onClick={handleSave}
-          disabled={invalid || saving}
-        >
-          {t("common.save")}
-        </Button>
-      </DialogActions>
     </Dialog>
   );
 }
@@ -109,51 +137,55 @@ function FieldInput({
   onChange: (value: string) => void;
 }) {
   const label = field.required ? `${field.name} *` : field.name;
+  const id = `member-field-${field.id}`;
 
   if (field.fieldType === "boolean") {
     return (
-      <FormControlLabel
-        control={
-          <Switch
-            checked={value === "true"}
-            onChange={(event) => onChange(event.target.checked ? "true" : "false")}
-          />
-        }
-        label={label}
-      />
+      <div className="flex items-center gap-2">
+        <Switch
+          id={id}
+          checked={value === "true"}
+          onCheckedChange={(checked) => onChange(checked ? "true" : "false")}
+        />
+        <Label htmlFor={id}>{label}</Label>
+      </div>
     );
   }
 
   if (field.fieldType === "select") {
     return (
-      <TextField
-        select
-        label={label}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-      >
-        <MenuItem value="">—</MenuItem>
-        {field.options.map((option) => (
-          <MenuItem key={option} value={option}>
-            {option}
-          </MenuItem>
-        ))}
-      </TextField>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor={id}>{label}</Label>
+        <Select
+          value={value === "" ? NO_VALUE : value}
+          onValueChange={(next) => onChange(next === NO_VALUE ? "" : next)}
+        >
+          <SelectTrigger id={id}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={NO_VALUE}>—</SelectItem>
+            {field.options.map((option) => (
+              <SelectItem key={option} value={option}>
+                {option}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
     );
   }
 
   return (
-    <TextField
-      label={label}
-      type={field.fieldType === "date" ? "date" : "text"}
-      value={value}
-      onChange={(event) => onChange(event.target.value)}
-      {...(field.fieldType === "number"
-        ? { slotProps: { htmlInput: { inputMode: "decimal" } } }
-        : {})}
-      {...(field.fieldType === "date"
-        ? { slotProps: { inputLabel: { shrink: true } } }
-        : {})}
-    />
+    <div className="flex flex-col gap-1.5">
+      <Label htmlFor={id}>{label}</Label>
+      <Input
+        id={id}
+        type={field.fieldType === "date" ? "date" : field.fieldType === "number" ? "number" : "text"}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        {...(field.fieldType === "number" ? { inputMode: "decimal" as const } : {})}
+      />
+    </div>
   );
 }
