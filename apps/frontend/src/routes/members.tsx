@@ -6,31 +6,39 @@
  * detail page.
  */
 import { useState } from "react";
-import Alert from "@mui/material/Alert";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import Chip from "@mui/material/Chip";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import MenuItem from "@mui/material/MenuItem";
-import Paper from "@mui/material/Paper";
-import Stack from "@mui/material/Stack";
-import Switch from "@mui/material/Switch";
-import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableCell from "@mui/material/TableCell";
-import TableHead from "@mui/material/TableHead";
-import TableRow from "@mui/material/TableRow";
-import TextField from "@mui/material/TextField";
-import Typography from "@mui/material/Typography";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { formatFieldValue } from "../components/memberFieldDisplay";
-import { MemberFormDialog } from "../components/MemberFormDialog";
-import { ensureMe } from "../lib/auth";
-import { ensureMyClubs, useHasPermission, useSelectedTeam } from "../lib/clubs";
-import { useGroups } from "../lib/groups";
-import { useMemberFields } from "../lib/member-fields";
-import { useCreateMember, useMembers } from "../lib/members";
+import { formatFieldValue } from "@/components/memberFieldDisplay";
+import { MemberFormDialog } from "@/components/MemberFormDialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { ensureMe } from "@/lib/auth";
+import { ensureMyClubs, useHasPermission, useSelectedTeam } from "@/lib/clubs";
+import { useGroups } from "@/lib/groups";
+import { useMemberFields } from "@/lib/member-fields";
+import { useCreateMember, useMembers } from "@/lib/members";
+
+/** Radix Select forbids an empty-string value, so the "all groups" option uses this sentinel. */
+const ALL_GROUPS = "__all__";
 
 export const Route = createFileRoute("/members")({
   beforeLoad: async () => {
@@ -48,10 +56,18 @@ function MembersPage() {
   const canView = useHasPermission("members.view");
 
   if (!selected) {
-    return <Alert severity="info">{t("members.noTeam")}</Alert>;
+    return (
+      <Alert>
+        <AlertDescription>{t("members.noTeam")}</AlertDescription>
+      </Alert>
+    );
   }
   if (!canView) {
-    return <Alert severity="error">{t("members.forbidden")}</Alert>;
+    return (
+      <Alert variant="destructive">
+        <AlertDescription>{t("members.forbidden")}</AlertDescription>
+      </Alert>
+    );
   }
 
   return <Roster teamId={selected.team.id} teamName={selected.team.name} />;
@@ -77,92 +93,88 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
   const customColumns = fields.data?.fields ?? [];
 
   return (
-    <Stack spacing={3}>
-      <Stack
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        flexWrap="wrap"
-        gap={1}
-      >
-        <Box>
-          <Typography variant="h4" component="h1">
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">
             {t("members.heading")}
-          </Typography>
-          <Typography color="text.secondary">{teamName}</Typography>
-        </Box>
+          </h1>
+          <p className="text-muted-foreground">{teamName}</p>
+        </div>
         {canManage && (
-          <Button variant="contained" onClick={() => setCreating(true)}>
-            {t("members.add")}
-          </Button>
+          <Button onClick={() => setCreating(true)}>{t("members.add")}</Button>
         )}
-      </Stack>
+      </div>
 
-      <Stack
-        direction="row"
-        spacing={2}
-        alignItems="center"
-        flexWrap="wrap"
-      >
-        <TextField
-          size="small"
-          label={t("members.search")}
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-        />
-        <FormControlLabel
-          control={
-            <Switch
-              checked={includeArchived}
-              onChange={(event) => setIncludeArchived(event.target.checked)}
-            />
-          }
-          label={t("members.showArchived")}
-        />
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="grid gap-1.5">
+          <Label htmlFor="member-search">{t("members.search")}</Label>
+          <Input
+            id="member-search"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
+        </div>
+        <Label className="mt-5 gap-2">
+          <Switch
+            checked={includeArchived}
+            onCheckedChange={setIncludeArchived}
+          />
+          {t("members.showArchived")}
+        </Label>
         {(groups.data?.groups.length ?? 0) > 0 && (
-          <TextField
-            select
-            size="small"
-            label={t("groups.filterLabel")}
-            value={groupId}
-            onChange={(event) => setGroupId(event.target.value)}
-            sx={{ minWidth: 160 }}
-          >
-            <MenuItem value="">{t("groups.allMembers")}</MenuItem>
-            {groups.data?.groups.map((group) => (
-              <MenuItem key={group.id} value={group.id}>
-                {group.name}
-              </MenuItem>
-            ))}
-          </TextField>
+          <div className="grid gap-1.5">
+            <Label>{t("groups.filterLabel")}</Label>
+            <Select
+              value={groupId || ALL_GROUPS}
+              onValueChange={(value) =>
+                setGroupId(value === ALL_GROUPS ? "" : value)
+              }
+            >
+              <SelectTrigger className="min-w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL_GROUPS}>
+                  {t("groups.allMembers")}
+                </SelectItem>
+                {groups.data?.groups.map((group) => (
+                  <SelectItem key={group.id} value={group.id}>
+                    {group.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         )}
-      </Stack>
+      </div>
 
       {members.isPending ? (
-        <Typography color="text.secondary">{t("common.loading")}</Typography>
+        <p className="text-muted-foreground">{t("common.loading")}</p>
       ) : members.isError ? (
-        <Alert severity="error">{t("members.loadError")}</Alert>
+        <Alert variant="destructive">
+          <AlertDescription>{t("members.loadError")}</AlertDescription>
+        </Alert>
       ) : members.data.members.length === 0 ? (
-        <Typography color="text.secondary">{t("members.empty")}</Typography>
+        <p className="text-muted-foreground">{t("members.empty")}</p>
       ) : (
-        <Paper variant="outlined">
+        <div className="rounded-lg border">
           <Table>
-            <TableHead>
+            <TableHeader>
               <TableRow>
-                <TableCell>{t("members.name")}</TableCell>
-                <TableCell>{t("members.birthYear")}</TableCell>
-                <TableCell>{t("members.contact")}</TableCell>
+                <TableHead>{t("members.name")}</TableHead>
+                <TableHead>{t("members.birthYear")}</TableHead>
+                <TableHead>{t("members.contact")}</TableHead>
                 {customColumns.map((field) => (
-                  <TableCell key={field.id}>{field.name}</TableCell>
+                  <TableHead key={field.id}>{field.name}</TableHead>
                 ))}
               </TableRow>
-            </TableHead>
+            </TableHeader>
             <TableBody>
               {members.data.members.map((member) => (
                 <TableRow
                   key={member.id}
-                  hover
-                  sx={{ cursor: "pointer" }}
+                  className="cursor-pointer"
                   onClick={() =>
                     navigate({
                       to: "/members/$memberId",
@@ -173,11 +185,9 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
                   <TableCell>
                     {member.lastName}, {member.firstName}
                     {member.archived && (
-                      <Chip
-                        size="small"
-                        label={t("members.archived")}
-                        sx={{ ml: 1 }}
-                      />
+                      <Badge variant="secondary" className="ml-2">
+                        {t("members.archived")}
+                      </Badge>
                     )}
                   </TableCell>
                   <TableCell>{member.birthYear ?? "—"}</TableCell>
@@ -191,7 +201,7 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
               ))}
             </TableBody>
           </Table>
-        </Paper>
+        </div>
       )}
 
       {creating && (
@@ -205,6 +215,6 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
           onClose={() => setCreating(false)}
         />
       )}
-    </Stack>
+    </div>
   );
 }

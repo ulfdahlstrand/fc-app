@@ -5,23 +5,34 @@
  * validation mirrors the contract; the backend re-validates.
  */
 import { useState } from "react";
-import Alert from "@mui/material/Alert";
-import Button from "@mui/material/Button";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import MenuItem from "@mui/material/MenuItem";
-import Stack from "@mui/material/Stack";
-import Switch from "@mui/material/Switch";
-import TextField from "@mui/material/TextField";
 import { useTranslation } from "react-i18next";
 import {
   validateMemberFieldValue,
   type Member,
   type MemberFieldDefinition,
 } from "@fc-app/contracts";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+
+/** Radix Select forbids an empty-string value, so the "no selection" option uses this sentinel. */
+const NONE = "__none__";
 
 export function MemberFieldValuesDialog({
   fields,
@@ -67,13 +78,22 @@ export function MemberFieldValuesDialog({
   };
 
   return (
-    <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>{t("members.editFields")}</DialogTitle>
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
-        <Stack spacing={2} sx={{ mt: 1 }}>
-          {error && <Alert severity="error">{t("members.saveError")}</Alert>}
+        <DialogHeader>
+          <DialogTitle>{t("members.editFields")}</DialogTitle>
+        </DialogHeader>
+
+        <div className="grid gap-4">
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{t("members.saveError")}</AlertDescription>
+            </Alert>
+          )}
           {fields.length === 0 && (
-            <Alert severity="info">{t("members.noFields")}</Alert>
+            <Alert>
+              <AlertDescription>{t("members.noFields")}</AlertDescription>
+            </Alert>
           )}
           {fields.map((field) => (
             <FieldInput
@@ -83,18 +103,17 @@ export function MemberFieldValuesDialog({
               onChange={(value) => setValue(field.id, value)}
             />
           ))}
-        </Stack>
+        </div>
+
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onClose}>
+            {t("common.close")}
+          </Button>
+          <Button onClick={handleSave} disabled={invalid || saving}>
+            {t("common.save")}
+          </Button>
+        </DialogFooter>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>{t("common.close")}</Button>
-        <Button
-          variant="contained"
-          onClick={handleSave}
-          disabled={invalid || saving}
-        >
-          {t("common.save")}
-        </Button>
-      </DialogActions>
     </Dialog>
   );
 }
@@ -109,51 +128,55 @@ function FieldInput({
   onChange: (value: string) => void;
 }) {
   const label = field.required ? `${field.name} *` : field.name;
+  const fieldId = `field-${field.id}`;
 
   if (field.fieldType === "boolean") {
     return (
-      <FormControlLabel
-        control={
-          <Switch
-            checked={value === "true"}
-            onChange={(event) => onChange(event.target.checked ? "true" : "false")}
-          />
-        }
-        label={label}
-      />
+      <Label htmlFor={fieldId} className="gap-2">
+        <Switch
+          id={fieldId}
+          checked={value === "true"}
+          onCheckedChange={(checked) => onChange(checked ? "true" : "false")}
+        />
+        {label}
+      </Label>
     );
   }
 
   if (field.fieldType === "select") {
     return (
-      <TextField
-        select
-        label={label}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-      >
-        <MenuItem value="">—</MenuItem>
-        {field.options.map((option) => (
-          <MenuItem key={option} value={option}>
-            {option}
-          </MenuItem>
-        ))}
-      </TextField>
+      <div className="grid gap-1.5">
+        <Label htmlFor={fieldId}>{label}</Label>
+        <Select
+          value={value || NONE}
+          onValueChange={(next) => onChange(next === NONE ? "" : next)}
+        >
+          <SelectTrigger id={fieldId} className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={NONE}>—</SelectItem>
+            {field.options.map((option) => (
+              <SelectItem key={option} value={option}>
+                {option}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
     );
   }
 
   return (
-    <TextField
-      label={label}
-      type={field.fieldType === "date" ? "date" : "text"}
-      value={value}
-      onChange={(event) => onChange(event.target.value)}
-      {...(field.fieldType === "number"
-        ? { slotProps: { htmlInput: { inputMode: "decimal" } } }
-        : {})}
-      {...(field.fieldType === "date"
-        ? { slotProps: { inputLabel: { shrink: true } } }
-        : {})}
-    />
+    <div className="grid gap-1.5">
+      <Label htmlFor={fieldId}>{label}</Label>
+      <Input
+        id={fieldId}
+        type={field.fieldType === "date" ? "date" : "text"}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        {...(field.fieldType === "number" ? { inputMode: "decimal" } : {})}
+      />
+    </div>
   );
 }
