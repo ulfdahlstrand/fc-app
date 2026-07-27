@@ -55,10 +55,13 @@ function OnboardingPage() {
     mutationFn: (input: CreateClubInput) => orpc.createClub(input),
     onSuccess: async ({ team }) => {
       selectTeam(team.id);
-      // fetchQuery, not invalidateQueries: the myClubs query is inactive on
-      // this page, so invalidation would only mark the cached [] stale and
-      // the "/" guard could reuse it and bounce straight back here.
-      await queryClient.fetchQuery(myClubsQueryOptions);
+      // Force a fresh fetch (staleTime: 0) before navigating. The onboarding
+      // guard already cached an empty [] this session, which is still within
+      // the default staleTime — a plain fetchQuery would return that stale []
+      // without refetching, so the "/" guard would see no clubs and bounce
+      // straight back here. staleTime: 0 makes it actually refetch and update
+      // the cache the guard reads.
+      await queryClient.fetchQuery({ ...myClubsQueryOptions, staleTime: 0 });
       await navigate({ to: "/" });
     },
   });
