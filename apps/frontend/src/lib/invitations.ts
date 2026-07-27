@@ -5,12 +5,13 @@
  * by settings.club. The public getInvitation resolves a token before sign-in;
  * acceptInvitation joins the caller to the club/team.
  */
-import { queryOptions, useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { createInvitationInputSchema, type Permission } from "@fc-app/contracts";
 import { z } from "zod";
 import { orpc } from "../orpc-client";
 import { queryClient } from "../query-client";
 import { optionalText } from "./form";
+import { orpcQuery } from "./orpc-query";
 
 /**
  * Form schema for creating an invitation, derived from the contract's input
@@ -33,10 +34,7 @@ export type InvitationFormValues = z.input<typeof invitationFormSchema>;
 export type InvitationFormOutput = z.output<typeof invitationFormSchema>;
 
 export function invitationsQueryOptions(clubId: string) {
-  return queryOptions({
-    queryKey: ["invitations", clubId],
-    queryFn: () => orpc.listInvitations({ clubId }),
-  });
+  return orpcQuery.listInvitations.queryOptions({ input: { clubId } });
 }
 
 export function useInvitations(clubId: string) {
@@ -52,7 +50,9 @@ export function useCreateInvitation(clubId: string) {
       expiresInDays?: number;
     }) => orpc.createInvitation({ clubId, ...input }),
     onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["invitations", clubId] }),
+      queryClient.invalidateQueries({
+        queryKey: orpcQuery.listInvitations.key({ input: { clubId } }),
+      }),
   });
 }
 
@@ -61,7 +61,9 @@ export function useRevokeInvitation(clubId: string) {
     mutationFn: (invitationId: string) =>
       orpc.revokeInvitation({ clubId, invitationId }),
     onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["invitations", clubId] }),
+      queryClient.invalidateQueries({
+        queryKey: orpcQuery.listInvitations.key({ input: { clubId } }),
+      }),
   });
 }
 

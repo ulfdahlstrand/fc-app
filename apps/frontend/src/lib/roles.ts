@@ -5,12 +5,13 @@
  * clubs fetches the right set. Mutations invalidate both the roles list and
  * myClubs (a permission change can affect the caller's own gating).
  */
-import { queryOptions, useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { createRoleInputSchema, type Permission } from "@fc-app/contracts";
 import { z } from "zod";
 import { orpc } from "../orpc-client";
 import { queryClient } from "../query-client";
 import { requiredText } from "./form";
+import { orpcQuery } from "./orpc-query";
 
 /**
  * Form schema for a role's name, derived from the contract's create-role
@@ -30,10 +31,7 @@ export type RoleFormValues = z.input<typeof roleFormSchema>;
 export type RoleNameInput = z.output<typeof roleFormSchema>;
 
 export function rolesQueryOptions(clubId: string) {
-  return queryOptions({
-    queryKey: ["roles", clubId],
-    queryFn: () => orpc.listRoles({ clubId }),
-  });
+  return orpcQuery.listRoles.queryOptions({ input: { clubId } });
 }
 
 export function useRoles(clubId: string) {
@@ -42,8 +40,10 @@ export function useRoles(clubId: string) {
 
 async function invalidateRoles(clubId: string): Promise<void> {
   await Promise.all([
-    queryClient.invalidateQueries({ queryKey: ["roles", clubId] }),
-    queryClient.invalidateQueries({ queryKey: ["myClubs"] }),
+    queryClient.invalidateQueries({
+      queryKey: orpcQuery.listRoles.key({ input: { clubId } }),
+    }),
+    queryClient.invalidateQueries({ queryKey: orpcQuery.myClubs.key() }),
   ]);
 }
 
