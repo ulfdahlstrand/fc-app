@@ -111,7 +111,8 @@ function DialogTitle({
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn("text-lg leading-none font-semibold", className)}
+      // Panel headings are Anton — see `.font-display` in globals.css.
+      className={cn("font-display text-2xl leading-none", className)}
       {...props}
     />
   );

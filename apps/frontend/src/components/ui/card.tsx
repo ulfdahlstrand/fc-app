@@ -2,12 +2,17 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
+/**
+ * Kit panel: 22px radius (`rounded-xl`), no border, no shadow. Colour
+ * separates surfaces here — a white card on the `--surface-app` background is
+ * the whole separation mechanism.
+ */
 function Card({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card"
       className={cn(
-        "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm",
+        "bg-card text-card-foreground flex flex-col gap-5 rounded-xl py-6",
         className,
       )}
       {...props}
@@ -28,11 +33,12 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
+/** Panel headings are Anton — one weight, always uppercase (see `.font-display`). */
 function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-title"
-      className={cn("leading-none font-semibold", className)}
+      className={cn("font-display text-2xl leading-none", className)}
       {...props}
     />
   );

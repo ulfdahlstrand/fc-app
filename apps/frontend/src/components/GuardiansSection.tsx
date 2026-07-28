@@ -49,7 +49,7 @@ export function GuardiansSection({
   return (
     <div>
       <div className="mb-2 flex items-center justify-between">
-        <h2 className="text-lg font-semibold">{t("guardians.heading")}</h2>
+        <h2 className="font-display text-xl">{t("guardians.heading")}</h2>
         {canManage && (
           <Button size="sm" variant="outline" onClick={() => setLinking(true)}>
             {t("guardians.link")}
@@ -70,7 +70,7 @@ export function GuardiansSection({
           {guardians.data.guardians.map((guardian) => (
             <div
               key={guardian.userId}
-              className="flex flex-wrap items-center justify-between gap-2 rounded-md border p-3"
+              className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-card p-3"
             >
               <div>
                 <div className="flex items-center gap-2">

@@ -80,7 +80,7 @@ export function InvitationsSection({ clubId }: { clubId: string }) {
   return (
     <div>
       <div className="mb-2 flex items-center justify-between">
-        <h2 className="text-lg font-semibold">{t("invitations.heading")}</h2>
+        <h2 className="font-display text-xl">{t("invitations.heading")}</h2>
         <Button onClick={() => setCreating(true)}>{t("invitations.new")}</Button>
       </div>
 
@@ -97,7 +97,7 @@ export function InvitationsSection({ clubId }: { clubId: string }) {
           {invitations.data.invitations.map((invitation) => (
             <div
               key={invitation.id}
-              className="flex flex-wrap items-center justify-between gap-2 rounded-md border p-3"
+              className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-card p-3"
             >
               <div>
                 <div className="flex items-center gap-2">

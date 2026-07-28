@@ -4,28 +4,35 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 
+/**
+ * Kit buttons: full pill, bold Archivo, no shadow. Hover changes background
+ * colour (never opacity), press scales to 0.97, disabled drops to 40%.
+ *
+ * `default` is ink, not green — Kit reserves green so it can keep meaning
+ * "present". Reach for `brand` only when the button *is* the brand moment
+ * (a hero call to action), not to make a form's submit louder.
+ */
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-pill font-bold transition-[background-color,color,transform] duration-[120ms] ease-standard active:scale-[0.97] disabled:pointer-events-none disabled:opacity-40 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-ring/60 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 aria-invalid:border-destructive",
   {
     variants: {
       variant: {
-        default:
-          "bg-primary text-primary-foreground shadow-xs hover:bg-primary/90",
+        default: "bg-primary text-primary-foreground hover:bg-ink-raised",
+        brand: "bg-brand text-white hover:bg-brand-strong",
         destructive:
-          "bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
+          "bg-destructive text-destructive-foreground hover:bg-[var(--orange-800)] focus-visible:ring-destructive/30",
+        // The 2px ink outline is one of only two borders Kit allows.
         outline:
-          "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
-        secondary:
-          "bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80",
-        ghost:
-          "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
-        link: "text-primary underline-offset-4 hover:underline",
+          "border-2 border-[var(--border-strong)] bg-transparent text-foreground hover:bg-accent",
+        secondary: "bg-secondary text-secondary-foreground hover:bg-[var(--neutral-250)]",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-[var(--link)] underline-offset-4 hover:underline hover:text-[var(--link-hover)]",
       },
       size: {
-        default: "h-9 px-4 py-2 has-[>svg]:px-3",
-        sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5",
-        lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
-        icon: "size-9",
+        default: "h-11 px-[22px] text-[15px] has-[>svg]:px-5",
+        sm: "h-9 gap-1.5 px-4 text-sm has-[>svg]:px-3",
+        lg: "h-13 px-7 text-base has-[>svg]:px-6",
+        icon: "size-11",
       },
     },
     defaultVariants: {

@@ -77,7 +77,7 @@ function OnboardingPage() {
               noValidate
             >
               <div>
-                <h1 className="text-xl font-semibold">
+                <h1 className="font-display text-2xl">
                   {t("onboarding.heading")}
                 </h1>
                 <p className="mt-1 text-muted-foreground">

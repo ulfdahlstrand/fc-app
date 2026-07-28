@@ -84,7 +84,7 @@ function ClubRoles({ clubId, clubName }: { clubId: string; clubName: string }) {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
+        <h1 className="font-display text-4xl">
           {t("settings.club.heading")}
         </h1>
         <p className="text-muted-foreground">{clubName}</p>
@@ -92,7 +92,7 @@ function ClubRoles({ clubId, clubName }: { clubId: string; clubName: string }) {
 
       <div>
         <div className="mb-2 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">{t("settings.club.roles")}</h2>
+          <h2 className="font-display text-xl">{t("settings.club.roles")}</h2>
           <Button onClick={() => setCreating(true)}>
             {t("settings.club.newRole")}
           </Button>
@@ -149,7 +149,7 @@ function RoleRow({
   const isSystem = role.systemKey !== null;
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border p-3">
+    <div className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-card p-3">
       <div>
         <div className="flex items-center gap-2">
           <p className="font-medium">{role.name}</p>

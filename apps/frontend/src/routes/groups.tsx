@@ -91,7 +91,7 @@ function GroupsList({ teamId, teamName }: { teamId: string; teamName: string }) 
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
+          <h1 className="font-display text-4xl">
             {t("groups.heading")}
           </h1>
           <p className="text-muted-foreground">{teamName}</p>
@@ -114,7 +114,7 @@ function GroupsList({ teamId, teamName }: { teamId: string; teamName: string }) 
           {groups.data.groups.map((group) => (
             <div
               key={group.id}
-              className="flex flex-wrap items-center justify-between gap-2 rounded-md border p-3"
+              className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-card p-3"
             >
               <div>
                 <p className="font-medium">{group.name}</p>
@@ -366,7 +366,7 @@ function ManageGroupMembersDialog({
           {!ready ? (
             <p className="text-muted-foreground">{t("common.loading")}</p>
           ) : (
-            <div className="flex max-h-72 flex-col gap-2 overflow-y-auto rounded-md border p-3">
+            <div className="flex max-h-72 flex-col gap-2 overflow-y-auto rounded-md bg-card p-3">
               {options.map((member) => {
                 const id = `group-member-${member.id}`;
                 return (

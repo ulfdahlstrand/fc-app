@@ -50,7 +50,7 @@ function ProfilePage() {
 
           <div className="flex flex-col gap-2">
             <p className="text-sm font-medium">{t("profile.language")}</p>
-            <div className="inline-flex w-fit gap-1 rounded-md border p-1">
+            <div className="inline-flex w-fit gap-1 rounded-pill bg-card p-1">
               {supportedLanguages.map((language) => (
                 <Button
                   key={language}
@@ -113,12 +113,12 @@ function MyMembers() {
   return (
     <Card className="w-full max-w-md">
       <CardContent className="flex flex-col gap-3">
-        <h2 className="text-lg font-semibold">{t("profile.myMembers")}</h2>
+        <h2 className="font-display text-xl">{t("profile.myMembers")}</h2>
         {members.map((member) => (
           <button
             key={member.memberId}
             type="button"
-            className="flex items-center justify-between gap-2 rounded-lg border p-3 text-left transition-colors hover:bg-accent"
+            className="flex items-center justify-between gap-2 rounded-lg bg-card p-3 text-left transition-colors hover:bg-accent"
             onClick={() => {
               selectTeam(member.teamId);
               void navigate({
