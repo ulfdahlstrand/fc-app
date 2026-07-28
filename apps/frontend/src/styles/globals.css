@@ -5,10 +5,8 @@
  * `@theme inline` maps our CSS-variable design tokens onto Tailwind's color
  * scale so utilities like `bg-background` / `text-foreground` resolve.
  *
- * NOTE (migration): during the MUI → shadcn transition (epic #29) this file
- * coexists with MUI's CssBaseline. Both set a handful of base styles; MUI's
- * runtime (Emotion) styles keep precedence for MUI components. The base reset
- * here is intentionally minimal until MUI is removed in the cleanup step (#37).
+ * This is the app's only styling layer (ADR-007): MUI + Emotion were removed
+ * in the migration cleanup (#37), so Tailwind's preflight is the sole reset.
  */
 @import "tailwindcss";
 @import "tw-animate-css";

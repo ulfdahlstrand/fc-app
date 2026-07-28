@@ -12,11 +12,8 @@
     "routes:generate": "tsr generate"
   },
   "dependencies": {
-    "@emotion/react": "^11.14.0",
-    "@emotion/styled": "^11.14.0",
     "@fc-app/contracts": "*",
     "@hookform/resolvers": "^5.4.0",
-    "@mui/material": "^6.4.0",
     "@orpc/client": "^1.13.6",
     "@orpc/openapi-client": "^1.13.6",
     "@radix-ui/react-avatar": "^1.2.6",

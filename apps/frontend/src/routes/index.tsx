@@ -5,16 +5,15 @@
  * Placeholder home page until the dashboard (#20). Shows the selected team
  * and verifies the stack with a typed `health` call.
  */
-import Alert from "@mui/material/Alert";
-import Stack from "@mui/material/Stack";
-import Typography from "@mui/material/Typography";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
+import { CircleAlert, CircleCheck, Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { ensureMe } from "../lib/auth";
-import { ensureMyClubs, useSelectedTeam } from "../lib/clubs";
-import { takePendingInvite } from "../lib/invitations";
-import { orpc } from "../orpc-client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ensureMe } from "@/lib/auth";
+import { ensureMyClubs, useSelectedTeam } from "@/lib/clubs";
+import { takePendingInvite } from "@/lib/invitations";
+import { orpc } from "@/orpc-client";
 
 export const Route = createFileRoute("/")({
   beforeLoad: async () => {
@@ -42,21 +41,28 @@ function HomePage() {
   });
 
   return (
-    <Stack spacing={2}>
-      <Typography variant="h4" component="h1">
+    <div className="flex flex-col gap-4">
+      <h1 className="text-3xl font-bold tracking-tight">
         {selected ? selected.team.name : t("home.heading")}
-      </Typography>
-      {selected && (
-        <Typography color="text.secondary">{selected.club.name}</Typography>
-      )}
-      <Typography>{t("home.description")}</Typography>
+      </h1>
+      {selected && <p className="text-muted-foreground">{selected.club.name}</p>}
+      <p>{t("home.description")}</p>
       {health.isPending ? (
-        <Alert severity="info">{t("health.checking")}</Alert>
+        <Alert>
+          <Loader2 className="animate-spin" />
+          <AlertDescription>{t("health.checking")}</AlertDescription>
+        </Alert>
       ) : health.isError ? (
-        <Alert severity="warning">{t("health.error")}</Alert>
+        <Alert variant="destructive">
+          <CircleAlert />
+          <AlertDescription>{t("health.error")}</AlertDescription>
+        </Alert>
       ) : (
-        <Alert severity="success">{t("health.ok")}</Alert>
+        <Alert>
+          <CircleCheck className="text-green-600 dark:text-green-500" />
+          <AlertDescription>{t("health.ok")}</AlertDescription>
+        </Alert>
       )}
-    </Stack>
+    </div>
   );
 }

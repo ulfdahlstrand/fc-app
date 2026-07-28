@@ -33,3 +33,6 @@ Thumbs.db
 
 # Testing
 coverage/
+
+# Local design reference (Kit design system export — not tracked)
+design-reference.zip

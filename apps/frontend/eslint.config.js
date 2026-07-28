@@ -16,6 +16,20 @@ export default tseslint.config(
         "error",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
       ],
+      // ADR-007: the UI layer is shadcn/ui + Tailwind. Block MUI/Emotion so the
+      // removed dependency cannot creep back in after the migration (#37).
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@mui/*", "@emotion/*"],
+              message:
+                "MUI/Emotion were removed in ADR-007. Use shadcn/ui components in src/components/ui instead.",
+            },
+          ],
+        },
+      ],
     },
   },
   {
