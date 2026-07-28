@@ -163,6 +163,20 @@
         "name": {
           "too_small": "Field name is required."
         }
+      },
+      "activityTypes": "Activity types",
+      "newActivityType": "New activity type",
+      "editActivityType": "Edit activity type",
+      "name": "Name",
+      "colour": "Colour",
+      "supportsCallUps": "Call-ups",
+      "supportsCallUpsHint": "Activities of this type can have a squad called up.",
+      "activityTypesLoadError": "Could not load activity types.",
+      "activityTypeSaveError": "Could not save. Please check the fields.",
+      "activityValidation": {
+        "name": {
+          "too_small": "The activity type needs a name."
+        }
       }
     }
   },
@@ -261,5 +275,12 @@
     "invalid_format": "Enter a valid value.",
     "invalid_value": "Enter a valid value.",
     "custom": "Enter a valid value."
+  },
+  "activityColour": {
+    "green": "Green",
+    "ink": "Black",
+    "orange": "Orange",
+    "amber": "Amber",
+    "neutral": "Grey"
   }
 }

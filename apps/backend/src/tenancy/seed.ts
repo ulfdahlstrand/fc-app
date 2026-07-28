@@ -1,4 +1,5 @@
 import type { Kysely } from "kysely";
+import { DEFAULT_ACTIVITY_TYPES } from "@fc-app/contracts";
 import type { Database } from "../db/types.js";
 import { DEFAULT_ROLES } from "./roles.js";
 
@@ -52,13 +53,23 @@ export async function seedClubRoles(
 /**
  * Seeds a newly created team with its default configuration (ADR-005).
  *
- * Currently a no-op hook. Later issues extend it:
- * - #11: activity types (Training, Match)
+ * Seeds the default activity types (#11). Later issues extend it:
  * - #14: attendance statuses (Present, Absent, Ill)
  */
 export async function seedTeamDefaults(
-  _db: Kysely<Database>,
-  _teamId: string
+  db: Kysely<Database>,
+  teamId: string
 ): Promise<void> {
-  // Intentionally empty — see the issue list above.
+  await db
+    .insertInto("activity_types")
+    .values(
+      DEFAULT_ACTIVITY_TYPES.map((type, index) => ({
+        team_id: teamId,
+        name: type.name,
+        colour: type.colour,
+        supports_call_ups: type.supportsCallUps,
+        sort_order: index,
+      }))
+    )
+    .execute();
 }

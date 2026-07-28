@@ -140,6 +140,18 @@ export interface GroupMembersTable {
   member_id: string;
 }
 
+export interface ActivityTypesTable {
+  id: Generated<string>;
+  team_id: string;
+  name: string;
+  /** A Kit palette token name, not a hex value — see the migration. */
+  colour: Generated<string>;
+  supports_call_ups: Generated<boolean>;
+  sort_order: Generated<number>;
+  archived: Generated<boolean>;
+  created_at: Timestamp;
+}
+
 export interface Database {
   users: UsersTable;
   identities: IdentitiesTable;
@@ -156,4 +168,5 @@ export interface Database {
   member_guardians: MemberGuardiansTable;
   groups: GroupsTable;
   group_members: GroupMembersTable;
+  activity_types: ActivityTypesTable;
 }
