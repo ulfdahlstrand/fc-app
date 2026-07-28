@@ -16,12 +16,22 @@ import { useTranslation } from "react-i18next";
 import type { Activity, ActivityType } from "@fc-app/contracts";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { ActivityFormDialog } from "../components/ActivityFormDialog";
 import {
+  toActivityInput,
+  toRecurrenceInput,
   useActivities,
   useCreateActivity,
-  type ActivityWriteInput,
+  useCreateRecurringActivities,
+  type ActivityFormOutput,
 } from "../lib/activities";
 import {
   ACTIVITY_COLOUR_CHIP,
@@ -30,7 +40,9 @@ import {
 } from "../lib/activity-types";
 import { ensureMe } from "../lib/auth";
 import { ensureMyClubs, useHasPermission, useSelectedTeam } from "../lib/clubs";
+import { useSeasons } from "../lib/seasons";
 import {
+  formatDateRange,
   formatDayHeading,
   formatMonthTitle,
   formatTimeRange,
@@ -57,8 +69,10 @@ export const Route = createFileRoute("/activities")({
 
 type View = "month" | "list";
 
-/** Sentinel for "every type" — an empty string would be a real filter value. */
+/** Sentinels — an empty string would be a real filter value, and Radix
+ *  disallows an empty-string select item. */
 const ALL_TYPES = "__all__";
+const ALL_SEASONS = "__all__";
 
 function ActivitiesPage() {
   const { t } = useTranslation();
@@ -91,18 +105,26 @@ function Calendar({ teamId }: { teamId: string }) {
   const [month, setMonth] = useState(() => startOfMonth(new Date()));
   const [view, setView] = useState<View>("month");
   const [typeId, setTypeId] = useState(ALL_TYPES);
+  const [seasonId, setSeasonId] = useState(ALL_SEASONS);
   /** The day a "+" was clicked on; also the flag that opens the create dialog. */
   const [creatingOn, setCreatingOn] = useState<Date | null>(null);
 
+  const seasons = useSeasons(teamId);
+  // A season spans months, so it only makes sense as the *list's* window; the
+  // month grid always draws its own month.
+  const bySeason = view === "list" && seasonId !== ALL_SEASONS;
+  const season = seasons.data?.seasons.find((one) => one.id === seasonId);
+
   const range = useMemo(() => monthGridRange(month), [month]);
   const activities = useActivities(teamId, {
-    ...range,
+    ...(bySeason ? { seasonId } : range),
     ...(typeId === ALL_TYPES ? {} : { activityTypeId: typeId }),
   });
   // Archived types are included: an activity filed under a retired type still
   // has to render with its colour and name.
   const activityTypes = useActivityTypes(teamId, true);
   const createActivity = useCreateActivity(teamId);
+  const createSeries = useCreateRecurringActivities(teamId);
 
   const typesById = useMemo(() => {
     const map = new Map<string, ActivityType>();
@@ -116,8 +138,14 @@ function Calendar({ teamId }: { teamId: string }) {
     (type) => !type.archived,
   );
 
-  const handleCreate = async (input: ActivityWriteInput) => {
-    await createActivity.mutateAsync(input);
+  // One dialog, two endpoints: a repeating activity is a whole series, and the
+  // backend generates its occurrences in one transaction (#13).
+  const handleCreate = async (form: ActivityFormOutput) => {
+    if (form.repeats) {
+      await createSeries.mutateAsync(toRecurrenceInput(form));
+    } else {
+      await createActivity.mutateAsync(toActivityInput(form));
+    }
     setCreatingOn(null);
   };
 
@@ -125,34 +153,44 @@ function Calendar({ teamId }: { teamId: string }) {
     <div className="flex flex-col gap-[18px]">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="kit-overline">{formatMonthTitle(month, locale)}</p>
+          <p className="kit-overline">
+            {season
+              ? `${season.name}${SEPARATOR}${formatDateRange(season.startsOn, season.endsOn, locale)}`
+              : formatMonthTitle(month, locale)}
+          </p>
           <h1 className="font-display text-4xl">{t("activities.heading")}</h1>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           <ViewToggle view={view} onChange={setView} />
-          <Button
-            size="icon"
-            variant="outline"
-            aria-label={t("activities.previousMonth")}
-            onClick={() => setMonth((current) => shiftMonth(current, -1))}
-          >
-            <ChevronLeftIcon />
-          </Button>
-          <Button
-            size="icon"
-            variant="outline"
-            aria-label={t("activities.nextMonth")}
-            onClick={() => setMonth((current) => shiftMonth(current, 1))}
-          >
-            <ChevronRightIcon />
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => setMonth(startOfMonth(new Date()))}
-          >
-            {t("activities.today")}
-          </Button>
+          {/* A season already fixes the window — stepping months inside it
+              would only be a way to look at nothing. */}
+          {!bySeason && (
+            <>
+              <Button
+                size="icon"
+                variant="outline"
+                aria-label={t("activities.previousMonth")}
+                onClick={() => setMonth((current) => shiftMonth(current, -1))}
+              >
+                <ChevronLeftIcon />
+              </Button>
+              <Button
+                size="icon"
+                variant="outline"
+                aria-label={t("activities.nextMonth")}
+                onClick={() => setMonth((current) => shiftMonth(current, 1))}
+              >
+                <ChevronRightIcon />
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setMonth(startOfMonth(new Date()))}
+              >
+                {t("activities.today")}
+              </Button>
+            </>
+          )}
           {canManage && (
             <Button onClick={() => setCreatingOn(new Date())}>
               {t("activities.new")}
@@ -161,11 +199,30 @@ function Calendar({ teamId }: { teamId: string }) {
         </div>
       </div>
 
-      <TypeFilter
-        types={activityTypes.data?.activityTypes ?? []}
-        value={typeId}
-        onChange={setTypeId}
-      />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <TypeFilter
+          types={activityTypes.data?.activityTypes ?? []}
+          value={typeId}
+          onChange={setTypeId}
+        />
+        {view === "list" && (seasons.data?.seasons.length ?? 0) > 0 && (
+          <Select value={seasonId} onValueChange={setSeasonId}>
+            <SelectTrigger className="w-56" aria-label={t("seasons.filter")}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_SEASONS}>
+                {t("seasons.allActivities")}
+              </SelectItem>
+              {seasons.data?.seasons.map((one) => (
+                <SelectItem key={one.id} value={one.id}>
+                  {one.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+      </div>
 
       {activities.isPending ? (
         <p className="text-muted-foreground">{t("common.loading")}</p>

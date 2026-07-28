@@ -1,8 +1,18 @@
 import { ORPCError } from "@orpc/server";
+import { addDays } from "date-fns";
 import type { Kysely, Selectable } from "kysely";
-import type { Activity } from "@fc-app/contracts";
+import type { Activity, ActivitySeries } from "@fc-app/contracts";
+import {
+  generateOccurrences,
+  localTimeOf,
+  withLocalTime,
+} from "../activities/recurrence.js";
 import { getDb } from "../db/client.js";
-import type { ActivitiesTable, Database } from "../db/types.js";
+import type {
+  ActivitiesTable,
+  ActivitySeriesTable,
+  Database,
+} from "../db/types.js";
 import { os, requireUser } from "../orpc.js";
 import { requireTeamPermission } from "../tenancy/membership.js";
 
@@ -19,6 +29,7 @@ function toActivity(row: Selectable<ActivitiesTable>): Activity {
     id: row.id,
     teamId: row.team_id,
     activityTypeId: row.activity_type_id,
+    seriesId: row.series_id,
     title: row.title,
     startsAt: row.starts_at.toISOString(),
     endsAt: row.ends_at?.toISOString() ?? null,
@@ -107,6 +118,33 @@ export const listActivitiesHandler = os.listActivities.handler(
       query = query.where("activity_type_id", "=", input.activityTypeId);
     }
 
+    // A season is a date range, not a foreign key (#13): membership is decided
+    // by where the activity starts, so a corrected season re-answers it for
+    // every activity at once. `ends_on` is inclusive, hence "< the day after".
+    //
+    // The boundaries are read as UTC midnight. Teams do not carry a timezone
+    // yet, and a season is months long, so the only thing this can misplace is
+    // an activity within a couple of hours of midnight on the very first or
+    // last day. Worth revisiting if teams ever gain a zone of their own.
+    if (input.seasonId !== undefined) {
+      const season = await db
+        .selectFrom("seasons")
+        .select(["starts_on", "ends_on"])
+        .where("id", "=", input.seasonId)
+        .where("team_id", "=", input.teamId)
+        .executeTakeFirst();
+      if (!season) {
+        throw new ORPCError("NOT_FOUND", { message: "Season not found" });
+      }
+      query = query
+        .where("starts_at", ">=", new Date(`${season.starts_on}T00:00:00Z`))
+        .where(
+          "starts_at",
+          "<",
+          addDays(new Date(`${season.ends_on}T00:00:00Z`), 1)
+        );
+    }
+
     // Cancelled activities are returned too — they stay on the calendar,
     // struck through, so nobody turns up at the pitch for them.
     const rows = await query.orderBy("starts_at").execute();
@@ -190,9 +228,239 @@ export const updateActivityHandler = os.updateActivity.handler(
       .where("team_id", "=", input.teamId)
       .returningAll()
       .executeTakeFirstOrThrow();
+
+    if (input.scope === "following" && existing.series_id !== null) {
+      await applyToFollowing(db, {
+        seriesId: existing.series_id,
+        teamId: input.teamId,
+        after: updated.starts_at,
+        input,
+        previousStart: existing.starts_at,
+        newStart: startsAt,
+        newEnd: endsAt,
+      });
+    }
+
     return { activity: toActivity(updated) };
   }
 );
+
+/**
+ * Carries an edit forward through the rest of a series (#13).
+ *
+ * What travels: the type, title, location and notes, and — if the edit moved
+ * the *time of day* — the new start and end times. What does not: the dates.
+ * Each later occurrence keeps the day the coach put it on; only the clock
+ * changes, which is what "every Tuesday, but from 18:30 now" means. Cancelling
+ * stays per-occurrence, so a single called-off training is never resurrected
+ * by a later edit.
+ *
+ * The series template is rewritten too, so the record of "what this series is"
+ * matches what its remaining occurrences say.
+ */
+async function applyToFollowing(
+  db: Kysely<Database>,
+  args: {
+    seriesId: string;
+    teamId: string;
+    after: Date;
+    input: {
+      activityTypeId?: string | undefined;
+      title?: string | null | undefined;
+      location?: string | null | undefined;
+      notes?: string | null | undefined;
+      startsAt?: string | undefined;
+      endsAt?: string | null | undefined;
+    };
+    previousStart: Date;
+    newStart: Date;
+    newEnd: Date | null;
+  }
+): Promise<void> {
+  const series = await db
+    .selectFrom("activity_series")
+    .selectAll()
+    .where("id", "=", args.seriesId)
+    .where("team_id", "=", args.teamId)
+    .executeTakeFirst();
+  if (!series) return;
+
+  const zone = series.time_zone;
+  const startTime = localTimeOf(args.newStart, zone);
+  const endTime = args.newEnd === null ? null : localTimeOf(args.newEnd, zone);
+  const timeMoved =
+    args.input.startsAt !== undefined &&
+    localTimeOf(args.previousStart, zone) !== startTime;
+  const endChanged = args.input.endsAt !== undefined;
+
+  const shared = {
+    ...(args.input.activityTypeId !== undefined && {
+      activity_type_id: args.input.activityTypeId,
+    }),
+    ...(args.input.title !== undefined && { title: args.input.title }),
+    ...(args.input.location !== undefined && { location: args.input.location }),
+    ...(args.input.notes !== undefined && { notes: args.input.notes }),
+  };
+
+  // The template and the occurrences have to move together, or a failure
+  // halfway leaves a series describing something its rows do not do.
+  await db.transaction().execute(async (trx) => {
+    await trx
+      .updateTable("activity_series")
+      .set({
+        ...shared,
+        ...(timeMoved && { start_time: startTime }),
+        ...(endChanged && { end_time: endTime }),
+        updated_at: new Date(),
+      })
+      .where("id", "=", args.seriesId)
+      .execute();
+
+    // Nothing time-related changed (a rename, a new location): one statement
+    // covers every later occurrence.
+    if (!timeMoved && !endChanged) {
+      if (Object.keys(shared).length === 0) return;
+      await trx
+        .updateTable("activities")
+        .set({ ...shared, updated_at: new Date() })
+        .where("series_id", "=", args.seriesId)
+        .where("team_id", "=", args.teamId)
+        .where("starts_at", ">", args.after)
+        .execute();
+      return;
+    }
+
+    // A moved time has to be resolved per occurrence: each keeps its own local
+    // date, and the offset from UTC may differ across a DST change.
+    const later = await trx
+      .selectFrom("activities")
+      .selectAll()
+      .where("series_id", "=", args.seriesId)
+      .where("team_id", "=", args.teamId)
+      .where("starts_at", ">", args.after)
+      .execute();
+
+    for (const occurrence of later) {
+      const startsAt = timeMoved
+        ? withLocalTime(occurrence.starts_at, startTime, zone)
+        : occurrence.starts_at;
+      const endsAt = endChanged
+        ? endTime === null
+          ? null
+          : withLocalTime(startsAt, endTime, zone)
+        : occurrence.ends_at;
+
+      await trx
+        .updateTable("activities")
+        .set({
+          ...shared,
+          ...(timeMoved && { starts_at: startsAt }),
+          ...(endChanged && { ends_at: endsAt }),
+          updated_at: new Date(),
+        })
+        .where("id", "=", occurrence.id)
+        .execute();
+    }
+  });
+}
+
+export const createRecurringActivitiesHandler =
+  os.createRecurringActivities.handler(async ({ input, context }) => {
+    const user = requireUser(context);
+    const db = getDb();
+    await requireTeamPermission(db, user.id, input.teamId, "activities.manage");
+
+    await requireUsableType(db, input.teamId, input.activityTypeId);
+
+    const rule = {
+      weekdays: input.weekdays,
+      startTime: input.startTime,
+      endTime: input.endTime ?? null,
+      startsOn: input.startsOn,
+      until: input.until,
+      timeZone: input.timeZone,
+    };
+
+    let occurrences;
+    try {
+      occurrences = generateOccurrences(rule);
+    } catch (error) {
+      // A range that would bury the calendar, or a zone the server cannot
+      // resolve — both are the caller's mistake, not a server fault.
+      throw new ORPCError("BAD_REQUEST", {
+        message: error instanceof Error ? error.message : "Invalid recurrence",
+      });
+    }
+    if (occurrences.length === 0) {
+      throw new ORPCError("BAD_REQUEST", {
+        message: "That pattern does not fall on any day in the range",
+      });
+    }
+
+    // One transaction: a series whose occurrences half-exist is worse than no
+    // series at all.
+    return await db.transaction().execute(async (trx) => {
+      const series = await trx
+        .insertInto("activity_series")
+        .values({
+          team_id: input.teamId,
+          activity_type_id: input.activityTypeId,
+          title: input.title ?? null,
+          location: input.location ?? null,
+          notes: input.notes ?? null,
+          weekdays: input.weekdays,
+          start_time: input.startTime,
+          end_time: input.endTime ?? null,
+          starts_on: input.startsOn,
+          until: input.until,
+          time_zone: input.timeZone,
+        })
+        .returningAll()
+        .executeTakeFirstOrThrow();
+
+      const rows = await trx
+        .insertInto("activities")
+        .values(
+          occurrences.map((occurrence) => ({
+            team_id: input.teamId,
+            activity_type_id: input.activityTypeId,
+            series_id: series.id,
+            title: input.title ?? null,
+            starts_at: occurrence.startsAt,
+            ends_at: occurrence.endsAt,
+            location: input.location ?? null,
+            notes: input.notes ?? null,
+          }))
+        )
+        .returningAll()
+        .execute();
+
+      return {
+        series: toActivitySeries(series),
+        activities: rows.map(toActivity),
+      };
+    });
+  });
+
+function toActivitySeries(
+  row: Selectable<ActivitySeriesTable>
+): ActivitySeries {
+  return {
+    id: row.id,
+    teamId: row.team_id,
+    activityTypeId: row.activity_type_id,
+    title: row.title,
+    location: row.location,
+    notes: row.notes,
+    weekdays: row.weekdays,
+    // Postgres hands back "18:00:00"; the contract carries "18:00".
+    startTime: row.start_time.slice(0, 5),
+    endTime: row.end_time === null ? null : row.end_time.slice(0, 5),
+    startsOn: row.starts_on,
+    until: row.until,
+    timeZone: row.time_zone,
+  };
+}
 
 export const setActivityCancelledHandler = os.setActivityCancelled.handler(
   async ({ input, context }) => {

@@ -20,8 +20,10 @@ import {
   endOfMonth,
   endOfWeek,
   format,
+  getISODay,
   isSameDay,
   isSameMonth,
+  parseISO,
   startOfDay,
   startOfMonth,
   startOfWeek,
@@ -137,6 +139,72 @@ export function defaultActivitySlot(day: Date = new Date()): {
     startsAt: format(start, "yyyy-MM-dd'T'HH:mm"),
     endsAt: format(end, "yyyy-MM-dd'T'HH:mm"),
   };
+}
+
+// --- Recurring activities (#13) -------------------------------------------
+//
+// A series is stored as local wall time, so these deal in "YYYY-MM-DD",
+// "HH:mm" and ISO weekday numbers rather than instants.
+
+/** ISO weekday numbers in display order, Monday first. */
+export const ISO_WEEKDAYS = [1, 2, 3, 4, 5, 6, 7] as const;
+
+/** The value a `<input type="date">` holds for a local date. */
+export function toDateInput(day: Date): string {
+  return format(day, "yyyy-MM-dd");
+}
+
+/** The value a `<input type="time">` holds for a local time. */
+export function toTimeInput(day: Date): string {
+  return format(day, "HH:mm");
+}
+
+/** The local calendar date an ISO instant falls on, "YYYY-MM-DD". */
+export function localDateOf(iso: string): string {
+  return toDateInput(new Date(iso));
+}
+
+/** The local wall time an ISO instant falls on, "HH:mm". */
+export function localTimeOf(iso: string): string {
+  return toTimeInput(new Date(iso));
+}
+
+/** "YYYY-MM-DD" → the ISO weekday it falls on (1 = Monday). */
+export function isoWeekdayOf(date: string): number {
+  return getISODay(parseISO(date));
+}
+
+/** Short weekday names keyed by ISO number, for the recurrence picker. */
+export function isoWeekdayLabels(locale: Locale): Record<number, string> {
+  const monday = startOfWeek(new Date(), { weekStartsOn: WEEK_STARTS_ON });
+  return Object.fromEntries(
+    ISO_WEEKDAYS.map((weekday, index) => [
+      weekday,
+      format(addDays(monday, index), "EEEEEE", { locale }),
+    ]),
+  );
+}
+
+/**
+ * The browser's IANA zone, sent with a new series so the backend can generate
+ * occurrences at the right local time. Falls back to Sweden — this is a
+ * Swedish club app, and a wrong-by-an-hour series beats a failed one.
+ */
+export function browserTimeZone(): string {
+  return (
+    Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Stockholm"
+  );
+}
+
+/** "5 maj 2026 – 15 juni 2026", the way a season states its range. */
+export function formatDateRange(
+  startsOn: string,
+  endsOn: string,
+  locale: Locale,
+): string {
+  const start = format(parseISO(startsOn), "d MMM yyyy", { locale });
+  const end = format(parseISO(endsOn), "d MMM yyyy", { locale });
+  return `${start} – ${end}`;
 }
 
 export { isSameDay, isSameMonth, startOfDay, startOfMonth };

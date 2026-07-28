@@ -152,10 +152,41 @@ export interface ActivityTypesTable {
   created_at: Timestamp;
 }
 
+export interface SeasonsTable {
+  id: Generated<string>;
+  team_id: string;
+  name: string;
+  /** DATE columns: a season starts on a day, not at an instant. */
+  starts_on: ColumnType<string, string, string>;
+  ends_on: ColumnType<string, string, string>;
+  created_at: Timestamp;
+}
+
+export interface ActivitySeriesTable {
+  id: Generated<string>;
+  team_id: string;
+  activity_type_id: string;
+  title: string | null;
+  location: string | null;
+  notes: string | null;
+  /** ISO weekday numbers, 1 = Monday … 7 = Sunday. */
+  weekdays: number[];
+  /** Local wall time ("18:00"), resolved through `time_zone`. */
+  start_time: string;
+  end_time: string | null;
+  starts_on: ColumnType<string, string, string>;
+  until: ColumnType<string, string, string>;
+  time_zone: string;
+  created_at: Timestamp;
+  updated_at: ColumnType<Date, never, Date>;
+}
+
 export interface ActivitiesTable {
   id: Generated<string>;
   team_id: string;
   activity_type_id: string;
+  /** Set when the activity was generated from a series (#13); null for one-offs. */
+  series_id: string | null;
   /** Optional headline ("vs. Skiljebo SK"); falls back to the type name. */
   title: string | null;
   starts_at: ColumnType<Date, Date, Date>;
@@ -187,4 +218,6 @@ export interface Database {
   group_members: GroupMembersTable;
   activity_types: ActivityTypesTable;
   activities: ActivitiesTable;
+  activity_series: ActivitySeriesTable;
+  seasons: SeasonsTable;
 }

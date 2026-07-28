@@ -1,10 +1,17 @@
 import {
   createActivityHandler,
+  createRecurringActivitiesHandler,
   getActivityHandler,
   listActivitiesHandler,
   setActivityCancelledHandler,
   updateActivityHandler,
 } from "./procedures/activities.js";
+import {
+  createSeasonHandler,
+  deleteSeasonHandler,
+  listSeasonsHandler,
+  updateSeasonHandler,
+} from "./procedures/seasons.js";
 import {
   archiveActivityTypeHandler,
   createActivityTypeHandler,
@@ -114,6 +121,11 @@ export const router = os.router({
   createActivity: createActivityHandler,
   updateActivity: updateActivityHandler,
   setActivityCancelled: setActivityCancelledHandler,
+  createRecurringActivities: createRecurringActivitiesHandler,
+  listSeasons: listSeasonsHandler,
+  createSeason: createSeasonHandler,
+  updateSeason: updateSeasonHandler,
+  deleteSeason: deleteSeasonHandler,
 });
 
 /** AppRouter type — re-exported for use in tests and future tooling. */
