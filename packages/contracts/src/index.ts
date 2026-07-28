@@ -709,6 +709,93 @@ export const listMemberGroupsOutputSchema = z.object({
   groups: z.array(groupSchema),
 });
 
+/**
+ * Activity type colours are Kit palette token names, never hex.
+ *
+ * The Kit design system allows three colour families and nothing else, so a
+ * free-form colour picker would let a team design its way out of the system.
+ * Storing the token (rather than the resolved value) also means the palette
+ * can be re-themed without touching stored data.
+ */
+export const activityColourSchema = z.enum([
+  "green", // the brand — training, the everyday session
+  "ink", // the near-black — matches and other headline fixtures
+  "orange", // needs someone to act
+  "amber", // partial, provisional
+  "neutral", // everything else: meetings, admin, social
+]);
+
+export type ActivityColour = z.infer<typeof activityColourSchema>;
+
+export const activityTypeSchema = z.object({
+  id: z.string(),
+  teamId: z.string(),
+  name: z.string(),
+  colour: activityColourSchema,
+  /** Read by call-ups (#16) to decide which activities get a call-up tab. */
+  supportsCallUps: z.boolean(),
+  sortOrder: z.number().int(),
+  archived: z.boolean(),
+});
+
+export type ActivityType = z.infer<typeof activityTypeSchema>;
+
+/**
+ * The types every new team starts with (ADR-005). Seeded on team creation and
+ * editable afterwards — they are ordinary rows, not protected system records.
+ */
+export const DEFAULT_ACTIVITY_TYPES: readonly {
+  name: string;
+  colour: ActivityColour;
+  supportsCallUps: boolean;
+}[] = [
+  { name: "Training", colour: "green", supportsCallUps: false },
+  { name: "Match", colour: "ink", supportsCallUps: true },
+];
+
+export const listActivityTypesInputSchema = z.object({
+  teamId: z.string(),
+  includeArchived: queryBooleanSchema.optional(),
+});
+
+export const listActivityTypesOutputSchema = z.object({
+  activityTypes: z.array(activityTypeSchema),
+});
+
+export const createActivityTypeInputSchema = z.object({
+  teamId: z.string(),
+  name: z.string().min(1).max(100),
+  colour: activityColourSchema.optional(),
+  supportsCallUps: z.boolean().optional(),
+});
+
+export const createActivityTypeOutputSchema = z.object({
+  activityType: activityTypeSchema,
+});
+
+export const updateActivityTypeInputSchema = z.object({
+  teamId: z.string(),
+  activityTypeId: z.string(),
+  name: z.string().min(1).max(100).optional(),
+  colour: activityColourSchema.optional(),
+  supportsCallUps: z.boolean().optional(),
+  sortOrder: z.number().int().optional(),
+});
+
+export const updateActivityTypeOutputSchema = z.object({
+  activityType: activityTypeSchema,
+});
+
+export const archiveActivityTypeInputSchema = z.object({
+  teamId: z.string(),
+  activityTypeId: z.string(),
+  archived: z.boolean(),
+});
+
+export const archiveActivityTypeOutputSchema = z.object({
+  activityType: activityTypeSchema,
+});
+
 // ---------------------------------------------------------------------------
 // Router contract
 //
@@ -860,6 +947,22 @@ export const contract = oc.router({
     .route({ method: "GET", path: "/members/groups" })
     .input(listMemberGroupsInputSchema)
     .output(listMemberGroupsOutputSchema),
+  listActivityTypes: oc
+    .route({ method: "GET", path: "/activity-types" })
+    .input(listActivityTypesInputSchema)
+    .output(listActivityTypesOutputSchema),
+  createActivityType: oc
+    .route({ method: "POST", path: "/activity-types" })
+    .input(createActivityTypeInputSchema)
+    .output(createActivityTypeOutputSchema),
+  updateActivityType: oc
+    .route({ method: "POST", path: "/activity-types/update" })
+    .input(updateActivityTypeInputSchema)
+    .output(updateActivityTypeOutputSchema),
+  archiveActivityType: oc
+    .route({ method: "POST", path: "/activity-types/archive" })
+    .input(archiveActivityTypeInputSchema)
+    .output(archiveActivityTypeOutputSchema),
 });
 
 /** Inferred contract type — used by the frontend to create a typed oRPC client. */

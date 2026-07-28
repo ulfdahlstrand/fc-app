@@ -163,6 +163,20 @@
         "name": {
           "too_small": "Fältnamnet krävs."
         }
+      },
+      "activityTypes": "Aktivitetstyper",
+      "newActivityType": "Ny aktivitetstyp",
+      "editActivityType": "Redigera aktivitetstyp",
+      "name": "Namn",
+      "colour": "Färg",
+      "supportsCallUps": "Kallelser",
+      "supportsCallUpsHint": "Aktiviteter av den här typen kan ha en uttagen trupp.",
+      "activityTypesLoadError": "Kunde inte ladda aktivitetstyper.",
+      "activityTypeSaveError": "Kunde inte spara. Kontrollera fälten.",
+      "activityValidation": {
+        "name": {
+          "too_small": "Aktivitetstypen behöver ett namn."
+        }
       }
     }
   },
@@ -261,5 +275,12 @@
     "invalid_format": "Ange ett giltigt värde.",
     "invalid_value": "Ange ett giltigt värde.",
     "custom": "Ange ett giltigt värde."
+  },
+  "activityColour": {
+    "green": "Grön",
+    "ink": "Svart",
+    "orange": "Orange",
+    "amber": "Gul",
+    "neutral": "Grå"
   }
 }

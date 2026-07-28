@@ -1,3 +1,9 @@
+import {
+  archiveActivityTypeHandler,
+  createActivityTypeHandler,
+  listActivityTypesHandler,
+  updateActivityTypeHandler,
+} from "./procedures/activity-types.js";
 import { createClubHandler } from "./procedures/create-club.js";
 import {
   addGuardianHandler,
@@ -92,6 +98,10 @@ export const router = os.router({
   listGroupMembers: listGroupMembersHandler,
   setGroupMembers: setGroupMembersHandler,
   listMemberGroups: listMemberGroupsHandler,
+  listActivityTypes: listActivityTypesHandler,
+  createActivityType: createActivityTypeHandler,
+  updateActivityType: updateActivityTypeHandler,
+  archiveActivityType: archiveActivityTypeHandler,
 });
 
 /** AppRouter type — re-exported for use in tests and future tooling. */

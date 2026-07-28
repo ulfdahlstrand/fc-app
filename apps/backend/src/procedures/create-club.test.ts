@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { Kysely } from "kysely";
+import { DEFAULT_ACTIVITY_TYPES } from "@fc-app/contracts";
 import type { Database } from "../db/types.js";
 import { DEFAULT_ROLES } from "../tenancy/roles.js";
 import { createClub } from "./create-club.js";
@@ -76,6 +77,30 @@ describe("createClub", () => {
         team_id: null,
         role_id: ADMIN_ROLE_ID,
       },
+    ]);
+  });
+
+  it("seeds the new team with the default activity types (#11)", async () => {
+    const { db, insertedValues } = buildDbMock();
+
+    await createClub(db, USER_ID, "FC Test", "P14");
+
+    // One bulk insert carrying every default type, in declaration order.
+    expect(insertedValues["activity_types"]).toEqual([
+      DEFAULT_ACTIVITY_TYPES.map((type, index) => ({
+        team_id: TEAM_ID,
+        name: type.name,
+        colour: type.colour,
+        supports_call_ups: type.supportsCallUps,
+        sort_order: index,
+      })),
+    ]);
+    // Match is the type that can have a squad called up (#16).
+    expect(
+      DEFAULT_ACTIVITY_TYPES.map((t) => [t.name, t.supportsCallUps])
+    ).toEqual([
+      ["Training", false],
+      ["Match", true],
     ]);
   });
 });
