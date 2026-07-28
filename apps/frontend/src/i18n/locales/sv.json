@@ -39,6 +39,7 @@
     "label": "Välj lag"
   },
   "nav": {
+    "activities": "Kalender",
     "members": "Medlemmar",
     "groups": "Grupper",
     "teamSettings": "Laginställningar",
@@ -240,6 +241,48 @@
     "validation": {
       "name": {
         "too_small": "Gruppens namn krävs."
+      }
+    }
+  },
+  "activities": {
+    "heading": "Aktiviteter",
+    "new": "Ny aktivitet",
+    "newOnDay": "Ny aktivitet den här dagen",
+    "newTitle": "Ny aktivitet",
+    "editTitle": "Redigera aktivitet",
+    "type": "Typ",
+    "titleField": "Rubrik",
+    "titleHelp": "Lämnar du den tom får aktiviteten typens namn.",
+    "starts": "Börjar",
+    "ends": "Slutar",
+    "when": "När",
+    "location": "Plats",
+    "notes": "Anteckningar",
+    "allTypes": "Alla",
+    "viewMonth": "Månad",
+    "viewList": "Lista",
+    "today": "Idag",
+    "previousMonth": "Föregående månad",
+    "nextMonth": "Nästa månad",
+    "cancel": "Ställ in",
+    "cancelled": "Inställd",
+    "restore": "Kör den ändå",
+    "backToCalendar": "Kalendern",
+    "empty": "Inget i kalendern den här månaden.",
+    "forbidden": "Du har inte behörighet att se lagets kalender.",
+    "loadError": "Kunde inte ladda kalendern.",
+    "saveError": "Kunde inte spara. Kontrollera fälten.",
+    "notFound": "Aktiviteten hittades inte.",
+    "validation": {
+      "activityTypeId": {
+        "too_small": "Välj en aktivitetstyp."
+      },
+      "startsAt": {
+        "too_small": "En starttid krävs.",
+        "custom": "Ange en giltig starttid."
+      },
+      "endsAt": {
+        "custom": "Sluttiden måste vara efter starttiden."
       }
     }
   },

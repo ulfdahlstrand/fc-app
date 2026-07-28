@@ -14,11 +14,13 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as MembersRouteImport } from './routes/members'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as GroupsRouteImport } from './routes/groups'
+import { Route as ActivitiesRouteImport } from './routes/activities'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SettingsTeamRouteImport } from './routes/settings.team'
 import { Route as SettingsClubRouteImport } from './routes/settings.club'
 import { Route as MembersMemberIdRouteImport } from './routes/members_.$memberId'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
+import { Route as ActivitiesActivityIdRouteImport } from './routes/activities_.$activityId'
 
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
@@ -43,6 +45,11 @@ const LoginRoute = LoginRouteImport.update({
 const GroupsRoute = GroupsRouteImport.update({
   id: '/groups',
   path: '/groups',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ActivitiesRoute = ActivitiesRouteImport.update({
+  id: '/activities',
+  path: '/activities',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -70,14 +77,21 @@ const InviteTokenRoute = InviteTokenRouteImport.update({
   path: '/invite/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ActivitiesActivityIdRoute = ActivitiesActivityIdRouteImport.update({
+  id: '/activities_/$activityId',
+  path: '/activities/$activityId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/activities': typeof ActivitiesRoute
   '/groups': typeof GroupsRoute
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
   '/onboarding': typeof OnboardingRoute
   '/profile': typeof ProfileRoute
+  '/activities/$activityId': typeof ActivitiesActivityIdRoute
   '/invite/$token': typeof InviteTokenRoute
   '/members/$memberId': typeof MembersMemberIdRoute
   '/settings/club': typeof SettingsClubRoute
@@ -85,11 +99,13 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/activities': typeof ActivitiesRoute
   '/groups': typeof GroupsRoute
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
   '/onboarding': typeof OnboardingRoute
   '/profile': typeof ProfileRoute
+  '/activities/$activityId': typeof ActivitiesActivityIdRoute
   '/invite/$token': typeof InviteTokenRoute
   '/members/$memberId': typeof MembersMemberIdRoute
   '/settings/club': typeof SettingsClubRoute
@@ -98,11 +114,13 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/activities': typeof ActivitiesRoute
   '/groups': typeof GroupsRoute
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
   '/onboarding': typeof OnboardingRoute
   '/profile': typeof ProfileRoute
+  '/activities_/$activityId': typeof ActivitiesActivityIdRoute
   '/invite/$token': typeof InviteTokenRoute
   '/members_/$memberId': typeof MembersMemberIdRoute
   '/settings/club': typeof SettingsClubRoute
@@ -112,11 +130,13 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/activities'
     | '/groups'
     | '/login'
     | '/members'
     | '/onboarding'
     | '/profile'
+    | '/activities/$activityId'
     | '/invite/$token'
     | '/members/$memberId'
     | '/settings/club'
@@ -124,11 +144,13 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/activities'
     | '/groups'
     | '/login'
     | '/members'
     | '/onboarding'
     | '/profile'
+    | '/activities/$activityId'
     | '/invite/$token'
     | '/members/$memberId'
     | '/settings/club'
@@ -136,11 +158,13 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/activities'
     | '/groups'
     | '/login'
     | '/members'
     | '/onboarding'
     | '/profile'
+    | '/activities_/$activityId'
     | '/invite/$token'
     | '/members_/$memberId'
     | '/settings/club'
@@ -149,11 +173,13 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ActivitiesRoute: typeof ActivitiesRoute
   GroupsRoute: typeof GroupsRoute
   LoginRoute: typeof LoginRoute
   MembersRoute: typeof MembersRoute
   OnboardingRoute: typeof OnboardingRoute
   ProfileRoute: typeof ProfileRoute
+  ActivitiesActivityIdRoute: typeof ActivitiesActivityIdRoute
   InviteTokenRoute: typeof InviteTokenRoute
   MembersMemberIdRoute: typeof MembersMemberIdRoute
   SettingsClubRoute: typeof SettingsClubRoute
@@ -197,6 +223,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GroupsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/activities': {
+      id: '/activities'
+      path: '/activities'
+      fullPath: '/activities'
+      preLoaderRoute: typeof ActivitiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -232,16 +265,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InviteTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/activities_/$activityId': {
+      id: '/activities_/$activityId'
+      path: '/activities/$activityId'
+      fullPath: '/activities/$activityId'
+      preLoaderRoute: typeof ActivitiesActivityIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ActivitiesRoute: ActivitiesRoute,
   GroupsRoute: GroupsRoute,
   LoginRoute: LoginRoute,
   MembersRoute: MembersRoute,
   OnboardingRoute: OnboardingRoute,
   ProfileRoute: ProfileRoute,
+  ActivitiesActivityIdRoute: ActivitiesActivityIdRoute,
   InviteTokenRoute: InviteTokenRoute,
   MembersMemberIdRoute: MembersMemberIdRoute,
   SettingsClubRoute: SettingsClubRoute,

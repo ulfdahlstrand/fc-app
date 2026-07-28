@@ -797,6 +797,141 @@ export const archiveActivityTypeOutputSchema = z.object({
 });
 
 // ---------------------------------------------------------------------------
+// Activities (issue #12)
+//
+// The calendar is the team's hub: trainings, matches and whatever else a team
+// invents, all typed by a team-configured activity type (#11).
+//
+// Instants cross the wire as ISO 8601 strings with an offset — the client
+// composes them from local wall time, the database stores timestamptz, and
+// nothing in between has to agree on a timezone. Activities are cancelled,
+// never deleted: a cancelled training still has to show up (struck through) so
+// nobody turns up at the pitch for it.
+// ---------------------------------------------------------------------------
+
+/** An ISO 8601 instant carrying a zone — "…Z" or "…+02:00". */
+const isoInstantSchema = z.iso.datetime({ offset: true });
+
+export const activitySchema = z.object({
+  id: z.string(),
+  teamId: z.string(),
+  activityTypeId: z.string(),
+  /** Optional headline ("vs. Skiljebo SK"); falls back to the type name. */
+  title: z.string().nullable(),
+  startsAt: isoInstantSchema,
+  /** Open-ended activities are allowed — a team party has no set finish. */
+  endsAt: isoInstantSchema.nullable(),
+  location: z.string().nullable(),
+  notes: z.string().nullable(),
+  cancelled: z.boolean(),
+});
+
+export type Activity = z.infer<typeof activitySchema>;
+
+/** An end that precedes its start is a typo, not a schedule. */
+function endsAfterStart(value: {
+  startsAt: string;
+  endsAt?: string | null | undefined;
+}): boolean {
+  return (
+    value.endsAt === undefined ||
+    value.endsAt === null ||
+    new Date(value.endsAt).getTime() > new Date(value.startsAt).getTime()
+  );
+}
+
+const ENDS_BEFORE_START = {
+  path: ["endsAt"],
+  error: "The end time must come after the start time",
+};
+
+/**
+ * `from`/`to` bound the window the calendar is showing — a month grid asks for
+ * its own six weeks, the list view for a wider span. Both are optional; without
+ * them the whole history comes back, which is fine for a team's first season
+ * and cheap to page later.
+ */
+export const listActivitiesInputSchema = z.object({
+  teamId: z.string(),
+  from: isoInstantSchema.optional(),
+  to: isoInstantSchema.optional(),
+  activityTypeId: z.string().optional(),
+});
+
+export const listActivitiesOutputSchema = z.object({
+  activities: z.array(activitySchema),
+});
+
+export const getActivityInputSchema = z.object({
+  teamId: z.string(),
+  activityId: z.string(),
+});
+
+export const getActivityOutputSchema = z.object({
+  activity: activitySchema,
+});
+
+/**
+ * Fields accepted when creating or updating an activity. Exported so the
+ * frontend derives its form validation from the same rules the API enforces
+ * (ADR-007) instead of restating them.
+ */
+export const activityWriteFields = {
+  activityTypeId: z.string().min(1),
+  title: z.string().max(100).nullable(),
+  startsAt: isoInstantSchema,
+  endsAt: isoInstantSchema.nullable(),
+  location: z.string().max(200).nullable(),
+  notes: z.string().max(2000).nullable(),
+};
+
+export const createActivityInputSchema = z
+  .object({
+    teamId: z.string(),
+    activityTypeId: activityWriteFields.activityTypeId,
+    title: activityWriteFields.title.optional(),
+    startsAt: activityWriteFields.startsAt,
+    endsAt: activityWriteFields.endsAt.optional(),
+    location: activityWriteFields.location.optional(),
+    notes: activityWriteFields.notes.optional(),
+  })
+  .refine(endsAfterStart, ENDS_BEFORE_START);
+
+export const createActivityOutputSchema = z.object({
+  activity: activitySchema,
+});
+
+/**
+ * Every field is optional, so start/end cannot be checked against each other
+ * here — a request may change only one of them. The handler validates the
+ * merged row instead.
+ */
+export const updateActivityInputSchema = z.object({
+  teamId: z.string(),
+  activityId: z.string(),
+  activityTypeId: activityWriteFields.activityTypeId.optional(),
+  title: activityWriteFields.title.optional(),
+  startsAt: activityWriteFields.startsAt.optional(),
+  endsAt: activityWriteFields.endsAt.optional(),
+  location: activityWriteFields.location.optional(),
+  notes: activityWriteFields.notes.optional(),
+});
+
+export const updateActivityOutputSchema = z.object({
+  activity: activitySchema,
+});
+
+export const setActivityCancelledInputSchema = z.object({
+  teamId: z.string(),
+  activityId: z.string(),
+  cancelled: z.boolean(),
+});
+
+export const setActivityCancelledOutputSchema = z.object({
+  activity: activitySchema,
+});
+
+// ---------------------------------------------------------------------------
 // Router contract
 //
 // Defines the shape of every procedure (input + output schemas) without any
@@ -963,6 +1098,26 @@ export const contract = oc.router({
     .route({ method: "POST", path: "/activity-types/archive" })
     .input(archiveActivityTypeInputSchema)
     .output(archiveActivityTypeOutputSchema),
+  listActivities: oc
+    .route({ method: "GET", path: "/activities" })
+    .input(listActivitiesInputSchema)
+    .output(listActivitiesOutputSchema),
+  getActivity: oc
+    .route({ method: "GET", path: "/activities/get" })
+    .input(getActivityInputSchema)
+    .output(getActivityOutputSchema),
+  createActivity: oc
+    .route({ method: "POST", path: "/activities" })
+    .input(createActivityInputSchema)
+    .output(createActivityOutputSchema),
+  updateActivity: oc
+    .route({ method: "POST", path: "/activities/update" })
+    .input(updateActivityInputSchema)
+    .output(updateActivityOutputSchema),
+  setActivityCancelled: oc
+    .route({ method: "POST", path: "/activities/cancel" })
+    .input(setActivityCancelledInputSchema)
+    .output(setActivityCancelledOutputSchema),
 });
 
 /** Inferred contract type — used by the frontend to create a typed oRPC client. */

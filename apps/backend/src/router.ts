@@ -1,4 +1,11 @@
 import {
+  createActivityHandler,
+  getActivityHandler,
+  listActivitiesHandler,
+  setActivityCancelledHandler,
+  updateActivityHandler,
+} from "./procedures/activities.js";
+import {
   archiveActivityTypeHandler,
   createActivityTypeHandler,
   listActivityTypesHandler,
@@ -102,6 +109,11 @@ export const router = os.router({
   createActivityType: createActivityTypeHandler,
   updateActivityType: updateActivityTypeHandler,
   archiveActivityType: archiveActivityTypeHandler,
+  listActivities: listActivitiesHandler,
+  getActivity: getActivityHandler,
+  createActivity: createActivityHandler,
+  updateActivity: updateActivityHandler,
+  setActivityCancelled: setActivityCancelledHandler,
 });
 
 /** AppRouter type — re-exported for use in tests and future tooling. */

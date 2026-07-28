@@ -53,6 +53,20 @@ export const ACTIVITY_COLOUR_DOT: Record<ActivityColour, string> = {
   neutral: "bg-[var(--neutral-450)]",
 };
 
+/**
+ * Kit surface/text pairs per colour token, for the chips an activity gets on
+ * the calendar (#12). The tints are the ones Kit already assigns to states —
+ * present green, absent orange, late amber — plus solid ink, which Kit uses
+ * for the "next fixture" card and therefore for matches.
+ */
+export const ACTIVITY_COLOUR_CHIP: Record<ActivityColour, string> = {
+  green: "bg-surface-present text-ink",
+  ink: "bg-ink text-white",
+  orange: "bg-surface-absent text-absent",
+  amber: "bg-surface-late text-late",
+  neutral: "bg-[var(--neutral-100)] text-ink",
+};
+
 export function activityTypesQueryOptions(
   teamId: string,
   includeArchived = false

@@ -79,6 +79,9 @@ function RootLayout() {
             <nav className="ml-auto flex flex-wrap items-center gap-2">
               <TeamSwitcher />
               {canViewMembers && (
+                <NavPill to="/activities">{t("nav.activities")}</NavPill>
+              )}
+              {canViewMembers && (
                 <NavPill to="/members">{t("nav.members")}</NavPill>
               )}
               {canViewMembers && (
