@@ -96,7 +96,7 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
+          <h1 className="font-display text-4xl">
             {t("members.heading")}
           </h1>
           <p className="text-muted-foreground">{teamName}</p>
@@ -160,7 +160,7 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
       ) : members.data.members.length === 0 ? (
         <p className="text-muted-foreground">{t("members.empty")}</p>
       ) : (
-        <div className="rounded-md border">
+        <div className="rounded-xl bg-card px-2">
           <Table>
             <TableHeader>
               <TableRow>

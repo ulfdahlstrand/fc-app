@@ -105,7 +105,7 @@ function MemberFields({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
+        <h1 className="font-display text-4xl">
           {t("settings.team.heading")}
         </h1>
         <p className="text-muted-foreground">{teamName}</p>
@@ -113,7 +113,7 @@ function MemberFields({
 
       <div>
         <div className="mb-2 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">{t("settings.team.fields")}</h2>
+          <h2 className="font-display text-xl">{t("settings.team.fields")}</h2>
           <Button onClick={() => setCreating(true)}>
             {t("settings.team.newField")}
           </Button>
@@ -132,7 +132,7 @@ function MemberFields({
             {fields.data.fields.map((field) => (
               <div
                 key={field.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-md border p-3"
+                className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-card p-3"
               >
                 <div>
                   <div className="flex items-center gap-2">

@@ -44,7 +44,7 @@ function LoginPage() {
     <div className="mt-16 flex flex-col items-center">
       <Card className="w-full max-w-sm">
         <CardContent className="flex flex-col items-center gap-6">
-          <h1 className="text-xl font-semibold">{t("login.heading")}</h1>
+          <h1 className="font-display text-2xl">{t("login.heading")}</h1>
           <p className="text-center text-muted-foreground">
             {t("login.description")}
           </p>

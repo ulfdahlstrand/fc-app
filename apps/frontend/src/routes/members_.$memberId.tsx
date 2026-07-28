@@ -97,7 +97,7 @@ function MemberDetail({
 
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-semibold tracking-tight">
+          <h1 className="font-display text-4xl">
             {m.firstName} {m.lastName}
           </h1>
           {m.archived && <Badge variant="secondary">{t("members.archived")}</Badge>}
@@ -137,7 +137,7 @@ function MemberDetail({
       {activeFields.length > 0 && (
         <div>
           <div className="mb-2 flex items-center justify-between">
-            <h2 className="text-lg font-semibold">{t("members.customFields")}</h2>
+            <h2 className="font-display text-xl">{t("members.customFields")}</h2>
             {canManage && (
               <Button size="sm" variant="outline" onClick={() => setEditingFields(true)}>
                 {t("members.editFields")}
@@ -162,7 +162,7 @@ function MemberDetail({
 
       {(memberGroups.data?.groups.length ?? 0) > 0 && (
         <div>
-          <h2 className="mb-2 text-lg font-semibold">{t("groups.heading")}</h2>
+          <h2 className="mb-2 font-display text-xl">{t("groups.heading")}</h2>
           <div className="flex flex-wrap gap-2">
             {memberGroups.data?.groups.map((group) => (
               <Badge key={group.id} variant="secondary">

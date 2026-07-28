@@ -1,14 +1,24 @@
 /**
- * Global stylesheet — Tailwind CSS v4 + shadcn/ui design tokens.
+ * Global stylesheet — Tailwind CSS v4 + the "Kit" design system.
  *
- * Tailwind v4 is CSS-first: `@import "tailwindcss"` pulls in the framework and
- * `@theme inline` maps our CSS-variable design tokens onto Tailwind's color
- * scale so utilities like `bg-background` / `text-foreground` resolve.
+ * Kit is the design language for the club-management app: saturated pitch
+ * green, near-black ink, warm neutrals, chunky pills and oversized condensed
+ * headlines. Every raw value below is lifted verbatim from the Kit token set
+ * (`tokens/colors.css`, `radii.css`, …) — do not round or re-derive them.
  *
- * NOTE (migration): during the MUI → shadcn transition (epic #29) this file
- * coexists with MUI's CssBaseline. Both set a handful of base styles; MUI's
- * runtime (Emotion) styles keep precedence for MUI components. The base reset
- * here is intentionally minimal until MUI is removed in the cleanup step (#37).
+ * Three layers, in order:
+ *   1. `:root` raw palette   — the Kit scales, named as Kit names them.
+ *   2. `:root` semantic vars — shadcn's contract (`--primary`, `--border`, …)
+ *      mapped onto those scales, so every existing shadcn component re-themes
+ *      without touching its markup.
+ *   3. `@theme inline`       — exposes both to Tailwind as utilities
+ *      (`bg-background`, `bg-brand`, `rounded-pill`, `font-display`, …).
+ *
+ * Two Kit rules are load-bearing and easy to undo by accident:
+ *   - **Primary actions are ink, not green.** Green stays meaningful (it also
+ *     means "present"), so `--primary` is the near-black, never the brand.
+ *   - **Colour separates surfaces, not shadow.** Panels carry no border and no
+ *     shadow; the only shadow in the system sits under a whole device frame.
  */
 @import "tailwindcss";
 @import "tw-animate-css";
@@ -16,49 +26,154 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --radius: 0.625rem;
+  /* ---- Kit palette: brand green ---------------------------------------- */
+  --green-600: #008c35;
+  --green-500: #00b341; /* the brand green — hero, primary marks, "here" */
+  --green-400: #00e070; /* signal green, on ink only */
+  --green-200: #9fe4bc;
+  --green-150: #bdecd2;
+  --green-100: #cff5de;
+  --green-050: #dff6e9;
+  --green-025: #eaf9f0; /* present-row tint */
+  --green-900: #0b3d22; /* photo-well backstop */
 
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  /* ---- Kit palette: ink ------------------------------------------------ */
+  --ink-900: #0c100e;
+  --ink-800: #111413; /* the workhorse near-black */
+  --ink-700: #1e2321;
+  --ink-600: #2a2f2c;
+
+  /* ---- Kit palette: neutrals (warm, slightly green — never blue-grey) --- */
+  --neutral-000: #ffffff;
+  --neutral-050: #f1f3ee; /* app background */
+  --neutral-100: #edefea;
+  --neutral-150: #e4e8e3;
+  --neutral-200: #dededa; /* canvas / desk */
+  --neutral-250: #dce3de;
+  --neutral-300: #d8dcd6;
+  --neutral-400: #c6cbc6;
+  --neutral-450: #b7bdb8;
+  --neutral-500: #9aa39e;
+  --neutral-550: #8e9793;
+  --neutral-600: #8a918d;
+  --neutral-650: #6b7370;
+  --neutral-700: #5c635f; /* body text */
+  --neutral-800: #4a524e;
+
+  /* ---- Kit palette: orange (absence, "needs a nudge") ------------------- */
+  --orange-500: #ff5a1f;
+  --orange-200: #ffd9c7;
+  --orange-050: #ffede6;
+  --orange-800: #b23a0e;
+
+  /* ---- Kit palette: amber (late, partial) ------------------------------- */
+  --amber-500: #f5a524;
+  --amber-050: #fff6e4;
+  --amber-800: #8a6212;
+
+  /* ---- Kit semantic aliases -------------------------------------------- */
+  --surface-app: var(--neutral-050);
+  --surface-canvas: var(--neutral-200);
+  --surface-card: var(--neutral-000);
+  --surface-ink: var(--ink-800);
+  --surface-ink-raised: var(--ink-700);
+  --surface-brand: var(--green-500);
+  --surface-present: var(--green-025);
+  --surface-absent: var(--orange-050);
+  --surface-late: var(--amber-050);
+
+  --text-present: var(--green-500);
+  --text-absent: var(--orange-800);
+  --text-late: var(--amber-800);
+  --text-signal: var(--green-400);
+  --text-on-ink-muted: var(--neutral-500);
+  --text-on-brand-muted: var(--green-100);
+
+  --border-strong: var(--ink-800);
+  --border-dashed: var(--neutral-450); /* dashed always means "not decided yet" */
+
+  --link: #1f7a4c;
+  --link-hover: var(--ink-900);
+
+  /* ---- Kit scrims (shadows live in `@theme` below) ---------------------- */
+  --scrim-photo: linear-gradient(
+    180deg,
+    rgb(6 26 15 / 0.7) 0%,
+    rgb(6 26 15 / 0.2) 34%,
+    rgb(0 140 53 / 0.85) 76%,
+    #00b341 100%
+  );
+  --glow-hero: rgb(255 255 255 / 0.1);
+
+  /* ---- Kit motion ------------------------------------------------------ */
+  --duration-fast: 120ms; /* state flips */
+  --duration-base: 180ms; /* layout */
+  --duration-slow: 260ms;
+  --press-scale: 0.97;
+  /* `--ease-standard` is declared in `@theme` so it also emits the
+     `ease-standard` utility; it is available here as a plain var too. */
+
+  /* ---- shadcn contract, mapped onto Kit -------------------------------- */
+  --background: var(--surface-app);
+  --foreground: var(--ink-800);
+  --card: var(--surface-card);
+  --card-foreground: var(--ink-800);
+  --popover: var(--surface-card);
+  --popover-foreground: var(--ink-800);
+
+  /* Ink, not green — see the header note. */
+  --primary: var(--ink-800);
+  --primary-foreground: var(--neutral-000);
+
+  --secondary: var(--neutral-150);
+  --secondary-foreground: var(--ink-800);
+  --muted: var(--neutral-100);
+  --muted-foreground: var(--neutral-700);
+
+  /* `accent` is shadcn's hover surface: Kit hovers deepen the background one
+     step, never change opacity. */
+  --accent: var(--neutral-150);
+  --accent-foreground: var(--ink-800);
+
+  /* Kit has no red. Orange is the system's "a person must do something"
+     signal and is the honest match for a destructive action. */
+  --destructive: var(--orange-500);
+  --destructive-foreground: var(--neutral-000);
+
+  --border: var(--neutral-300);
+  --input: var(--neutral-300);
+
+  /* Kit leaves focus unspecified (a documented caveat). Brand green reads as
+     deliberate against every Kit surface and clears 3:1 on white. */
+  --ring: var(--green-500);
 }
 
+/**
+ * Kit is a daylight system — it specifies no dark mode, and the app ships no
+ * theme toggle, so nothing applies `.dark` today. This block exists only so
+ * the UI degrades sanely if one is added: surfaces move onto the ink scale and
+ * signal green (which Kit permits *only* on ink) carries the brand.
+ */
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --background: var(--ink-900);
+  --foreground: var(--neutral-050);
+  --card: var(--ink-800);
+  --card-foreground: var(--neutral-050);
+  --popover: var(--ink-800);
+  --popover-foreground: var(--neutral-050);
+  --primary: var(--neutral-050);
+  --primary-foreground: var(--ink-800);
+  --secondary: var(--ink-700);
+  --secondary-foreground: var(--neutral-050);
+  --muted: var(--ink-700);
+  --muted-foreground: var(--neutral-500);
+  --accent: var(--ink-600);
+  --accent-foreground: var(--neutral-050);
+  --destructive: var(--orange-500);
+  --destructive-foreground: var(--neutral-000);
+  --border: rgb(255 255 255 / 0.12);
+  --input: rgb(255 255 255 / 0.15);
+  --ring: var(--green-400);
 }
 
 @theme inline {
@@ -82,17 +197,74 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  /* Kit-specific utilities: `bg-brand`, `bg-ink`, `text-present`, … */
+  --color-brand: var(--green-500);
+  --color-brand-strong: var(--green-600);
+  --color-brand-signal: var(--green-400);
+  --color-ink: var(--ink-800);
+  --color-ink-raised: var(--ink-700);
+  --color-surface-present: var(--surface-present);
+  --color-surface-absent: var(--surface-absent);
+  --color-surface-late: var(--surface-late);
+  --color-present: var(--text-present);
+  --color-absent: var(--text-absent);
+  --color-late: var(--text-late);
+
+  /* Type: Anton for display (always uppercase), Archivo for everything else. */
+  --font-sans: "Archivo", system-ui, -apple-system, sans-serif;
+  --font-display: "Anton", "Archivo Black", system-ui, sans-serif;
+
+  /* Radii — nothing in Kit is square-cornered. `rounded-xl` is the 22px panel
+     radius, so shadcn's Card lands on the Kit value with no markup change. */
+  --radius-sm: 9px;
+  --radius-md: 16px; /* row */
+  --radius-lg: 18px; /* tile */
+  --radius-xl: 22px; /* panel — every Card */
+  --radius-pill: 999px;
+
+  /* Elevation: only whole frames cast a shadow. Literals, not `var()` — a
+     theme key that references its own name would be circular. */
+  --shadow-frame: 0 24px 60px rgb(12 16 14 / 0.18);
+  --shadow-overlay: 0 12px 32px rgb(12 16 14 / 0.16);
+
+  /* Motion: fast and flat. Emits the `ease-standard` utility. */
+  --ease-standard: cubic-bezier(0.2, 0.8, 0.3, 1);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
+    font-size: 15px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Kit: body copy gets `text-wrap: pretty`; headings stay balanced. */
+  p,
+  li,
+  dd {
+    text-wrap: pretty;
+  }
+
+  /* Anton has one weight and is always uppercase — enforce it at the root so
+     a stray `font-bold` can't fake a second weight. */
+  .font-display {
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    line-height: 1;
+  }
+
+  /* The 12px uppercase micro-label that sits above every Kit panel. */
+  .overline {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1.1px;
+    text-transform: uppercase;
+    color: var(--muted-foreground);
   }
 }

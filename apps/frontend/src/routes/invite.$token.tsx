@@ -60,7 +60,7 @@ function InvitePage() {
     <div className="mt-12 flex flex-col items-center">
       <Card className="w-full max-w-md">
         <CardContent className="flex flex-col gap-6">
-          <h1 className="text-xl font-semibold">{t("invite.heading")}</h1>
+          <h1 className="font-display text-2xl">{t("invite.heading")}</h1>
 
           {invitation.isPending ? (
             <div className="flex justify-center py-2">

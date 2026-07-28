@@ -42,7 +42,7 @@ function HomePage() {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight">
+        <h1 className="font-display text-5xl">
           {selected ? selected.team.name : t("home.heading")}
         </h1>
         {selected && (
