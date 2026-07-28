@@ -152,6 +152,23 @@ export interface ActivityTypesTable {
   created_at: Timestamp;
 }
 
+export interface ActivitiesTable {
+  id: Generated<string>;
+  team_id: string;
+  activity_type_id: string;
+  /** Optional headline ("vs. Skiljebo SK"); falls back to the type name. */
+  title: string | null;
+  starts_at: ColumnType<Date, Date, Date>;
+  /** null = open-ended (a team party has no set finish). */
+  ends_at: ColumnType<Date | null, Date | null, Date | null>;
+  location: string | null;
+  notes: string | null;
+  /** Cancelled, never deleted — the row stays visible, struck through. */
+  cancelled: Generated<boolean>;
+  created_at: Timestamp;
+  updated_at: ColumnType<Date, never, Date>;
+}
+
 export interface Database {
   users: UsersTable;
   identities: IdentitiesTable;
@@ -169,4 +186,5 @@ export interface Database {
   groups: GroupsTable;
   group_members: GroupMembersTable;
   activity_types: ActivityTypesTable;
+  activities: ActivitiesTable;
 }

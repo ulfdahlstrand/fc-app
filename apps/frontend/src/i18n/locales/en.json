@@ -39,6 +39,7 @@
     "label": "Select team"
   },
   "nav": {
+    "activities": "Calendar",
     "members": "Members",
     "groups": "Groups",
     "teamSettings": "Team settings",
@@ -240,6 +241,48 @@
     "validation": {
       "name": {
         "too_small": "Group name is required."
+      }
+    }
+  },
+  "activities": {
+    "heading": "Activities",
+    "new": "New activity",
+    "newOnDay": "New activity on this day",
+    "newTitle": "New activity",
+    "editTitle": "Edit activity",
+    "type": "Type",
+    "titleField": "Title",
+    "titleHelp": "Leave it blank and the activity is named after its type.",
+    "starts": "Starts",
+    "ends": "Ends",
+    "when": "When",
+    "location": "Location",
+    "notes": "Notes",
+    "allTypes": "All",
+    "viewMonth": "Month",
+    "viewList": "List",
+    "today": "Today",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
+    "cancel": "Call it off",
+    "cancelled": "Called off",
+    "restore": "Put it back on",
+    "backToCalendar": "Calendar",
+    "empty": "Nothing in the calendar this month.",
+    "forbidden": "You do not have permission to see this team's calendar.",
+    "loadError": "Could not load the calendar.",
+    "saveError": "Could not save. Please check the fields.",
+    "notFound": "Activity not found.",
+    "validation": {
+      "activityTypeId": {
+        "too_small": "Pick an activity type."
+      },
+      "startsAt": {
+        "too_small": "A start time is required.",
+        "custom": "Enter a valid start time."
+      },
+      "endsAt": {
+        "custom": "The end time must come after the start time."
       }
     }
   },

@@ -259,8 +259,11 @@
     line-height: 1;
   }
 
-  /* The 12px uppercase micro-label that sits above every Kit panel. */
-  .overline {
+  /* The 12px uppercase micro-label that sits above every Kit panel.
+     Named `kit-overline`, not `overline`: Tailwind owns `.overline` as the
+     `text-decoration-line: overline` utility, and a utility beats this base
+     layer — every label would grow a line above it. */
+  .kit-overline {
     font-size: 12px;
     font-weight: 600;
     letter-spacing: 1.1px;
