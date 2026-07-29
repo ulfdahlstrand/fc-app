@@ -13,12 +13,19 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { Activity, CallupResponse, Member } from "@fc-app/contracts";
+import type {
+  Activity,
+  CallupInvitation,
+  CallupResponse,
+  Member,
+} from "@fc-app/contracts";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useRespondToCallup } from "@/lib/callup-responses";
 import {
   countResponses,
+  onBehalfTitle,
   RESPONSE_DISC,
   RESPONSE_GLYPH,
   squadChanged,
@@ -58,6 +65,9 @@ export function CallupSection({
     }
     return map;
   }, [callup.data]);
+  // The counts follow the squad on screen, so a member added but not yet
+  // saved counts as pending rather than as nothing.
+  const responseOf = (memberId: string) => responses.get(memberId) ?? "pending";
 
   /** The squad as the coach is picking it. */
   const [squad, setSquad] = useState<Set<string>>(new Set());
@@ -80,11 +90,12 @@ export function CallupSection({
   }
 
   const published = callup.data.callup?.published ?? false;
+  const invitationByMember = new Map(
+    (callup.data.invitations ?? []).map((one) => [one.memberId, one]),
+  );
   // Counts follow what is on screen, so the number moves with the taps.
   const counts = countResponses(
-    [...squad].map((memberId) => ({
-      response: responses.get(memberId) ?? "pending",
-    })),
+    [...squad].map((memberId) => ({ response: responseOf(memberId) })),
   );
   const dirty = squadChanged(squad, saved);
 
@@ -183,8 +194,11 @@ export function CallupSection({
             key={member.id}
             member={member}
             inSquad={squad.has(member.id)}
-            response={responses.get(member.id) ?? "pending"}
+            invitation={invitationByMember.get(member.id)}
             canManage={canManage}
+            canAnswer={canManage && published && saved.has(member.id)}
+            teamId={teamId}
+            activityId={activity.id}
             onToggle={() => toggle(member.id)}
           />
         ))}
@@ -260,20 +274,30 @@ function GroupButton({
 function SquadRow({
   member,
   inSquad,
-  response,
+  invitation,
   canManage,
+  canAnswer,
+  teamId,
+  activityId,
   onToggle,
 }: {
   member: Member;
   inSquad: boolean;
-  response: CallupResponse;
+  invitation: CallupInvitation | undefined;
   canManage: boolean;
+  /** A coach may answer for a member once the squad has been published. */
+  canAnswer: boolean;
+  teamId: string;
+  activityId: string;
   onToggle: () => void;
 }) {
   const { t } = useTranslation();
+  const respond = useRespondToCallup();
+  const response: CallupResponse = invitation?.response ?? "pending";
   const initials =
     `${member.firstName.charAt(0)}${member.lastName.charAt(0)}`.toUpperCase();
   const label = t(`callups.response.${response}`);
+  const onBehalf = invitation?.respondedBy?.onBehalf === true;
 
   return (
     <div
@@ -300,10 +324,66 @@ function SquadRow({
         <span className="truncate font-semibold">
           {member.firstName} {member.lastName}
         </span>
-        <span className="text-muted-foreground text-xs">
+        <span className="text-muted-foreground flex flex-wrap items-center gap-x-1.5 text-xs">
           {inSquad ? label : t("callups.notCalled")}
+          {/* An answer a coach put there says so, and says who on hover. An
+              answer nobody can trace is worse than no answer. */}
+          {inSquad && onBehalf && (
+            <span
+              className="border-b border-dotted border-current"
+              title={onBehalfTitle(
+                invitation?.respondedBy ?? null,
+                invitation?.respondedAt ?? null,
+                {
+                  by: (name) => t("callups.updatedByName", { name }),
+                  unknown: t("callups.updatedByUnknown"),
+                },
+              )}
+            >
+              {t("callups.updatedByCoach")}
+            </span>
+          )}
         </span>
       </span>
+
+      {/* Recording "he phoned to say he can't make it" — the way a good half
+          of these answers actually arrive. */}
+      {canAnswer && (
+        <span className="flex shrink-0 gap-1">
+          <Button
+            size="sm"
+            variant={response === "accepted" ? "brand" : "outline"}
+            disabled={respond.isPending}
+            aria-label={`${member.firstName} — ${t("callupsPage.accept")}`}
+            onClick={() =>
+              respond.mutate({
+                teamId,
+                activityId,
+                memberId: member.id,
+                response: "accepted",
+              })
+            }
+          >
+            ✓
+          </Button>
+          <Button
+            size="sm"
+            variant={response === "declined" ? "destructive" : "outline"}
+            disabled={respond.isPending}
+            aria-label={`${member.firstName} — ${t("callupsPage.decline")}`}
+            onClick={() =>
+              respond.mutate({
+                teamId,
+                activityId,
+                memberId: member.id,
+                response: "declined",
+              })
+            }
+          >
+            ✕
+          </Button>
+        </span>
+      )}
 
       {canManage ? (
         <button

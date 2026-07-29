@@ -379,7 +379,10 @@
       "pending": "Inget svar än",
       "accepted": "Spelar",
       "declined": "Kan inte"
-    }
+    },
+    "updatedByCoach": "ändrat av en tränare",
+    "updatedByName": "Svarat av {{name}}",
+    "updatedByUnknown": "Svarat av en tränare"
   },
   "callupsPage": {
     "heading": "Kallelser",

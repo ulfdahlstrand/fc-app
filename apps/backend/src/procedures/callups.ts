@@ -30,14 +30,22 @@ function toCallup(row: Selectable<CallupsTable>): Callup {
   };
 }
 
-function toInvitation(
-  row: Selectable<CallupInvitationsTable>
+export function toInvitation(
+  row: Selectable<CallupInvitationsTable> & { responder_name?: string | null }
 ): CallupInvitation {
   return {
     memberId: row.member_id,
     response: row.response as CallupResponse,
     respondedAt: row.responded_at?.toISOString() ?? null,
     responseNote: row.response_note,
+    respondedBy:
+      row.responded_at === null
+        ? null
+        : {
+            userId: row.responded_by_user_id,
+            name: row.responder_name ?? null,
+            onBehalf: row.responded_on_behalf,
+          },
   };
 }
 
@@ -73,9 +81,13 @@ async function loadInvitations(
   db: Kysely<Database>,
   callupId: string
 ): Promise<CallupInvitation[]> {
+  // Left join: the responder's account may since have been removed, and the
+  // answer outlives it.
   const rows = await db
     .selectFrom("callup_invitations")
-    .selectAll()
+    .leftJoin("users", "users.id", "callup_invitations.responded_by_user_id")
+    .selectAll("callup_invitations")
+    .select("users.name as responder_name")
     .where("callup_id", "=", callupId)
     .execute();
   return rows.map(toInvitation);

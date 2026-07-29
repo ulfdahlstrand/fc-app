@@ -27,7 +27,7 @@ import {
   useRespondToCallup,
   useTeamCallups,
 } from "../lib/callup-responses";
-import { RESPONSE_DISC, RESPONSE_GLYPH } from "../lib/callups";
+import { onBehalfTitle, RESPONSE_DISC, RESPONSE_GLYPH } from "../lib/callups";
 import { ensureMyClubs, useHasPermission, useSelectedTeam } from "../lib/clubs";
 import {
   formatDateLong,
@@ -179,8 +179,21 @@ function RespondRow({
           {showName && (
             <span className="truncate font-semibold">{callup.memberName}</span>
           )}
-          <span className="text-muted-foreground text-sm">
+          <span className="text-muted-foreground flex flex-wrap items-center gap-x-1.5 text-sm">
             {t(`callups.response.${callup.response}`)}
+            {/* If a coach put this answer here, say so — and say which coach
+                on hover. It is the guardian's question, after all. */}
+            {callup.respondedBy?.onBehalf === true && (
+              <span
+                className="border-b border-dotted border-current"
+                title={onBehalfTitle(callup.respondedBy, null, {
+                  by: (name) => t("callups.updatedByName", { name }),
+                  unknown: t("callups.updatedByUnknown"),
+                })}
+              >
+                {t("callups.updatedByCoach")}
+              </span>
+            )}
           </span>
         </span>
 

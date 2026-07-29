@@ -24,6 +24,7 @@ function callup(activityId: string, memberName: string): MyCallup {
     memberName,
     response: "pending",
     responseNote: null,
+    respondedBy: null,
   };
 }
 

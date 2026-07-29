@@ -85,6 +85,21 @@ export function countResponses(
   };
 }
 
+/**
+ * The line under an answer a coach recorded for someone else. Kit's voice is
+ * "reasons, not codes": the who and the when belong together, and the name
+ * goes in the tooltip so the row stays one line.
+ */
+export function onBehalfTitle(
+  responder: { name: string | null } | null,
+  respondedAt: string | null,
+  labels: { by: (name: string) => string; unknown: string },
+): string {
+  const who = responder?.name ?? null;
+  const when = respondedAt === null ? "" : ` · ${new Date(respondedAt).toLocaleString()}`;
+  return `${who === null ? labels.unknown : labels.by(who)}${when}`;
+}
+
 /** Members in `squad` but not saved, or saved but no longer in `squad`. */
 export function squadChanged(squad: Set<string>, saved: Set<string>): boolean {
   if (squad.size !== saved.size) return true;

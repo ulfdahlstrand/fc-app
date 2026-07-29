@@ -1,9 +1,16 @@
 import { ORPCError } from "@orpc/server";
 import type { CallupResponse, CallupSummary, MyCallup } from "@fc-app/contracts";
-import { requireLinkedMember } from "../callups/linked-members.js";
+import {
+  decideResponder,
+  isLinkedMember,
+} from "../callups/linked-members.js";
 import { getDb } from "../db/client.js";
 import { os, requireUser } from "../orpc.js";
-import { requireTeamPermission } from "../tenancy/membership.js";
+import {
+  requireTeamAccess,
+  requireTeamPermission,
+} from "../tenancy/membership.js";
+import { toInvitation } from "./callups.js";
 
 /**
  * Call-up responses (issue #17).
@@ -19,8 +26,20 @@ export const respondToCallupHandler = os.respondToCallup.handler(
   async ({ input, context }) => {
     const user = requireUser(context);
     const db = getDb();
-    await requireTeamPermission(db, user.id, input.teamId, "callups.respond");
-    await requireLinkedMember(db, user.id, input.memberId);
+
+    // Two routes in — linked to the member, or holding callups.manage. The
+    // rule itself lives in `decideResponder`; this only gathers the facts.
+    const access = await requireTeamAccess(db, user.id, input.teamId);
+    const decision = decideResponder({
+      isLinked: await isLinkedMember(db, user.id, input.memberId),
+      canManage: access.membership.permissions.includes("callups.manage"),
+      canRespond: access.membership.permissions.includes("callups.respond"),
+    });
+    if (!decision.allowed) {
+      throw new ORPCError("FORBIDDEN", {
+        message: "You can only answer for members you are linked to",
+      });
+    }
 
     // The invitation has to exist *and* belong to a published call-up on an
     // activity in this team. An unpublished squad has not been asked yet.
@@ -57,6 +76,8 @@ export const respondToCallupHandler = os.respondToCallup.handler(
         // An answer without a note clears any earlier one: the note belongs to
         // the answer, and a stale reason is worse than none.
         response_note: input.note ?? null,
+        responded_by_user_id: user.id,
+        responded_on_behalf: decision.onBehalf,
       })
       .where("callup_id", "=", invitation.callup_id)
       .where("member_id", "=", input.memberId)
@@ -64,12 +85,7 @@ export const respondToCallupHandler = os.respondToCallup.handler(
       .executeTakeFirstOrThrow();
 
     return {
-      invitation: {
-        memberId: updated.member_id,
-        response: updated.response as CallupResponse,
-        respondedAt: updated.responded_at?.toISOString() ?? null,
-        responseNote: updated.response_note,
-      },
+      invitation: toInvitation({ ...updated, responder_name: user.name }),
     };
   }
 );
@@ -91,6 +107,12 @@ export const myCallupsHandler = os.myCallups.handler(async ({ context }) => {
         .on("member_guardians.user_id", "=", user.id)
     )
     .innerJoin("teams", "teams.id", "activities.team_id")
+    // Left join: the answer outlives the account that gave it.
+    .leftJoin(
+      "users as responder",
+      "responder.id",
+      "callup_invitations.responded_by_user_id"
+    )
     .select([
       "activities.team_id as team_id",
       "teams.name as team_name",
@@ -106,6 +128,10 @@ export const myCallupsHandler = os.myCallups.handler(async ({ context }) => {
       "members.last_name as last_name",
       "callup_invitations.response as response",
       "callup_invitations.response_note as response_note",
+      "callup_invitations.responded_at as responded_at",
+      "callup_invitations.responded_by_user_id as responded_by_user_id",
+      "callup_invitations.responded_on_behalf as responded_on_behalf",
+      "responder.name as responder_name",
     ])
     // Only published squads: an unpublished one has not been asked yet.
     .where("callups.published", "=", true)
@@ -129,6 +155,14 @@ export const myCallupsHandler = os.myCallups.handler(async ({ context }) => {
     memberName: `${row.first_name} ${row.last_name}`,
     response: row.response as CallupResponse,
     responseNote: row.response_note,
+    respondedBy:
+      row.responded_at === null
+        ? null
+        : {
+            userId: row.responded_by_user_id,
+            name: row.responder_name,
+            onBehalf: row.responded_on_behalf,
+          },
   }));
 
   return {

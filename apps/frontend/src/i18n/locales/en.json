@@ -379,7 +379,10 @@
       "pending": "No reply yet",
       "accepted": "Playing",
       "declined": "Can't make it"
-    }
+    },
+    "updatedByCoach": "updated by a coach",
+    "updatedByName": "Answered by {{name}}",
+    "updatedByUnknown": "Answered by a coach"
   },
   "callupsPage": {
     "heading": "Call-ups",

@@ -9,7 +9,7 @@ import { ORPCError } from "@orpc/server";
 import { describe, expect, it, vi } from "vitest";
 import type { Kysely } from "kysely";
 import type { Database } from "../db/types.js";
-import { requireLinkedMember } from "./linked-members.js";
+import { decideResponder, requireLinkedMember } from "./linked-members.js";
 
 const GUARDIAN = "550e8400-e29b-41d4-a716-446655440001";
 const OTHER_USER = "550e8400-e29b-41d4-a716-446655440002";
@@ -98,5 +98,41 @@ describe("requireLinkedMember", () => {
 
     expect(chain.where).toHaveBeenCalledWith("user_id", "=", GUARDIAN);
     expect(chain.where).toHaveBeenCalledWith("member_id", "=", CHILD_ONE);
+  });
+});
+
+describe("decideResponder", () => {
+  it("lets a linked guardian answer, and does not call it on behalf", () => {
+    expect(
+      decideResponder({ isLinked: true, canManage: false, canRespond: true })
+    ).toEqual({ allowed: true, onBehalf: false });
+  });
+
+  it("lets a coach answer for someone else, marked as on behalf", () => {
+    // "He phoned to say he can't make it" — half of these arrive this way.
+    expect(
+      decideResponder({ isLinked: false, canManage: true, canRespond: false })
+    ).toEqual({ allowed: true, onBehalf: true });
+  });
+
+  it("does not brand a coach answering for their own child", () => {
+    // Coaching the team your child plays in is the grassroots default. That
+    // answer is the guardian's own, and must not be labelled as the coach's.
+    expect(
+      decideResponder({ isLinked: true, canManage: true, canRespond: true })
+    ).toEqual({ allowed: true, onBehalf: false });
+  });
+
+  it("refuses a player answering for a team-mate", () => {
+    // Every player in a squad holds callups.respond.
+    expect(
+      decideResponder({ isLinked: false, canManage: false, canRespond: true })
+    ).toEqual({ allowed: false, onBehalf: false });
+  });
+
+  it("refuses a linked user who has lost the permission", () => {
+    expect(
+      decideResponder({ isLinked: true, canManage: false, canRespond: false })
+    ).toEqual({ allowed: false, onBehalf: false });
   });
 });

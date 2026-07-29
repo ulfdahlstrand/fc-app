@@ -1249,13 +1249,32 @@ export const callupSchema = z.object({
 
 export type Callup = z.infer<typeof callupSchema>;
 
+/**
+ * Who put the answer there (#17). A coach may answer on a member's behalf —
+ * "he phoned to say he can't make it" — and when they do, the squad has to be
+ * able to see that it came from the coach, and from which one.
+ *
+ * `onBehalf` is false when the responder was answering for themselves or for
+ * a child they are guardian to, *including* when that person is also the
+ * coach: answering for your own child is nobody's behalf but your own.
+ */
+export const callupResponderSchema = z.object({
+  userId: z.string().nullable(),
+  name: z.string().nullable(),
+  onBehalf: z.boolean(),
+});
+
+export type CallupResponder = z.infer<typeof callupResponderSchema>;
+
 export const callupInvitationSchema = z.object({
   memberId: z.string(),
   response: callupResponseSchema,
-  /** When the member (or their guardian) answered; null while pending. */
+  /** When the member (or their guardian, or a coach) answered; null while pending. */
   respondedAt: isoInstantSchema.nullable(),
   /** The member's own words — "away that weekend". */
   responseNote: z.string().nullable(),
+  /** null while pending. */
+  respondedBy: callupResponderSchema.nullable(),
 });
 
 export type CallupInvitation = z.infer<typeof callupInvitationSchema>;
@@ -1343,6 +1362,7 @@ export const myCallupSchema = z.object({
   memberName: z.string(),
   response: callupResponseSchema,
   responseNote: z.string().nullable(),
+  respondedBy: callupResponderSchema.nullable(),
 });
 
 export type MyCallup = z.infer<typeof myCallupSchema>;
