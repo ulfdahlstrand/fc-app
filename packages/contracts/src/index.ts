@@ -1093,6 +1093,134 @@ export const deleteSeasonOutputSchema = z.object({
 });
 
 // ---------------------------------------------------------------------------
+// Attendance statuses (issue #14, ADR-005)
+//
+// Statuses are team configuration, not code: seeded with Present, Absent and
+// Ill, and a team adds its own ("Late", "Injured"). They share the Kit palette
+// tokens with activity types — three colour families and nothing else.
+//
+// `countsAsPresent` is what statistics (#15) sums. It is a separate flag
+// rather than an inference from the name, because a team may well decide that
+// "Late" counts and "Injured" does not, and neither name says so.
+// ---------------------------------------------------------------------------
+
+export const attendanceStatusSchema = z.object({
+  id: z.string(),
+  teamId: z.string(),
+  name: z.string(),
+  colour: activityColourSchema,
+  countsAsPresent: z.boolean(),
+  sortOrder: z.number().int(),
+  archived: z.boolean(),
+});
+
+export type AttendanceStatus = z.infer<typeof attendanceStatusSchema>;
+
+/**
+ * The statuses every new team starts with (ADR-005). Ordinary rows, editable
+ * afterwards — the order here is the order a coach taps through.
+ */
+export const DEFAULT_ATTENDANCE_STATUSES: readonly {
+  name: string;
+  colour: ActivityColour;
+  countsAsPresent: boolean;
+}[] = [
+  { name: "Present", colour: "green", countsAsPresent: true },
+  { name: "Absent", colour: "orange", countsAsPresent: false },
+  { name: "Ill", colour: "amber", countsAsPresent: false },
+];
+
+export const listAttendanceStatusesInputSchema = z.object({
+  teamId: z.string(),
+  includeArchived: queryBooleanSchema.optional(),
+});
+
+export const listAttendanceStatusesOutputSchema = z.object({
+  attendanceStatuses: z.array(attendanceStatusSchema),
+});
+
+export const createAttendanceStatusInputSchema = z.object({
+  teamId: z.string(),
+  name: z.string().min(1).max(100),
+  colour: activityColourSchema.optional(),
+  countsAsPresent: z.boolean().optional(),
+});
+
+export const createAttendanceStatusOutputSchema = z.object({
+  attendanceStatus: attendanceStatusSchema,
+});
+
+export const updateAttendanceStatusInputSchema = z.object({
+  teamId: z.string(),
+  attendanceStatusId: z.string(),
+  name: z.string().min(1).max(100).optional(),
+  colour: activityColourSchema.optional(),
+  countsAsPresent: z.boolean().optional(),
+  sortOrder: z.number().int().optional(),
+});
+
+export const updateAttendanceStatusOutputSchema = z.object({
+  attendanceStatus: attendanceStatusSchema,
+});
+
+export const archiveAttendanceStatusInputSchema = z.object({
+  teamId: z.string(),
+  attendanceStatusId: z.string(),
+  archived: z.boolean(),
+});
+
+export const archiveAttendanceStatusOutputSchema = z.object({
+  attendanceStatus: attendanceStatusSchema,
+});
+
+// ---------------------------------------------------------------------------
+// Attendance records (issue #14)
+//
+// One record per member per activity, or none at all — an unmarked member is
+// the absence of a row, not a status called "unknown". In Kit that state is a
+// dashed ring, and dashed always means "not decided yet".
+//
+// Recording is a bulk write: the coach marks the roster standing at the side
+// of the pitch and saves once, rather than firing a request per tap on a
+// connection that may not be there.
+// ---------------------------------------------------------------------------
+
+export const attendanceRecordSchema = z.object({
+  activityId: z.string(),
+  memberId: z.string(),
+  statusId: z.string(),
+  note: z.string().nullable(),
+});
+
+export type AttendanceRecord = z.infer<typeof attendanceRecordSchema>;
+
+export const listAttendanceInputSchema = z.object({
+  teamId: z.string(),
+  activityId: z.string(),
+});
+
+export const listAttendanceOutputSchema = z.object({
+  records: z.array(attendanceRecordSchema),
+});
+
+/** A `null` status clears the member's mark, putting them back to unmarked. */
+export const attendanceEntrySchema = z.object({
+  memberId: z.string(),
+  statusId: z.string().nullable(),
+  note: z.string().max(500).nullable().optional(),
+});
+
+export const setAttendanceInputSchema = z.object({
+  teamId: z.string(),
+  activityId: z.string(),
+  entries: z.array(attendanceEntrySchema),
+});
+
+export const setAttendanceOutputSchema = z.object({
+  records: z.array(attendanceRecordSchema),
+});
+
+// ---------------------------------------------------------------------------
 // Router contract
 //
 // Defines the shape of every procedure (input + output schemas) without any
@@ -1299,6 +1427,30 @@ export const contract = oc.router({
     .route({ method: "POST", path: "/seasons/delete" })
     .input(deleteSeasonInputSchema)
     .output(deleteSeasonOutputSchema),
+  listAttendanceStatuses: oc
+    .route({ method: "GET", path: "/attendance-statuses" })
+    .input(listAttendanceStatusesInputSchema)
+    .output(listAttendanceStatusesOutputSchema),
+  createAttendanceStatus: oc
+    .route({ method: "POST", path: "/attendance-statuses" })
+    .input(createAttendanceStatusInputSchema)
+    .output(createAttendanceStatusOutputSchema),
+  updateAttendanceStatus: oc
+    .route({ method: "POST", path: "/attendance-statuses/update" })
+    .input(updateAttendanceStatusInputSchema)
+    .output(updateAttendanceStatusOutputSchema),
+  archiveAttendanceStatus: oc
+    .route({ method: "POST", path: "/attendance-statuses/archive" })
+    .input(archiveAttendanceStatusInputSchema)
+    .output(archiveAttendanceStatusOutputSchema),
+  listAttendance: oc
+    .route({ method: "GET", path: "/attendance" })
+    .input(listAttendanceInputSchema)
+    .output(listAttendanceOutputSchema),
+  setAttendance: oc
+    .route({ method: "POST", path: "/attendance" })
+    .input(setAttendanceInputSchema)
+    .output(setAttendanceOutputSchema),
 });
 
 /** Inferred contract type — used by the frontend to create a typed oRPC client. */

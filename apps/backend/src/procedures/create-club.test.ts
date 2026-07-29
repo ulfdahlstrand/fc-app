@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import type { Kysely } from "kysely";
-import { DEFAULT_ACTIVITY_TYPES } from "@fc-app/contracts";
+import {
+  DEFAULT_ACTIVITY_TYPES,
+  DEFAULT_ATTENDANCE_STATUSES,
+} from "@fc-app/contracts";
 import type { Database } from "../db/types.js";
 import { DEFAULT_ROLES } from "../tenancy/roles.js";
 import { createClub } from "./create-club.js";
@@ -101,6 +104,31 @@ describe("createClub", () => {
     ).toEqual([
       ["Training", false],
       ["Match", true],
+    ]);
+  });
+
+  it("seeds the new team with the default attendance statuses (#14)", async () => {
+    const { db, insertedValues } = buildDbMock();
+
+    await createClub(db, USER_ID, "FC Test", "P14");
+
+    // The seeded order is the order a coach taps through at the pitch side.
+    expect(insertedValues["attendance_statuses"]).toEqual([
+      DEFAULT_ATTENDANCE_STATUSES.map((status, index) => ({
+        team_id: TEAM_ID,
+        name: status.name,
+        colour: status.colour,
+        counts_as_present: status.countsAsPresent,
+        sort_order: index,
+      })),
+    ]);
+    // Only Present counts towards the statistics (#15) reads.
+    expect(
+      DEFAULT_ATTENDANCE_STATUSES.map((s) => [s.name, s.countsAsPresent])
+    ).toEqual([
+      ["Present", true],
+      ["Absent", false],
+      ["Ill", false],
     ]);
   });
 });
