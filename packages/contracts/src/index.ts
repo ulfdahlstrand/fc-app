@@ -1221,6 +1221,84 @@ export const setAttendanceOutputSchema = z.object({
 });
 
 // ---------------------------------------------------------------------------
+// Call-ups (issue #16) — the matchtrupp.
+//
+// One call-up per activity, holding the squad. An invitation exists for every
+// selected member and starts as `pending`; #17 lets players and guardians
+// answer it themselves.
+//
+// A call-up has a draft and a published state. Publishing is what tells the
+// squad they are in it, so selecting fourteen names must be possible without
+// anyone's phone buzzing on each tap.
+// ---------------------------------------------------------------------------
+
+export const callupResponseSchema = z.enum([
+  "pending", // not decided yet — Kit's dashed ring
+  "accepted",
+  "declined",
+]);
+
+export type CallupResponse = z.infer<typeof callupResponseSchema>;
+
+export const callupSchema = z.object({
+  id: z.string(),
+  activityId: z.string(),
+  note: z.string().nullable(),
+  published: z.boolean(),
+});
+
+export type Callup = z.infer<typeof callupSchema>;
+
+export const callupInvitationSchema = z.object({
+  memberId: z.string(),
+  response: callupResponseSchema,
+  /** When the member (or their guardian) answered; null while pending. */
+  respondedAt: isoInstantSchema.nullable(),
+  /** The member's own words — "away that weekend". */
+  responseNote: z.string().nullable(),
+});
+
+export type CallupInvitation = z.infer<typeof callupInvitationSchema>;
+
+export const getCallupInputSchema = z.object({
+  teamId: z.string(),
+  activityId: z.string(),
+});
+
+export const getCallupOutputSchema = z.object({
+  /** null until a squad is first saved — an activity has no call-up by default. */
+  callup: callupSchema.nullable(),
+  invitations: z.array(callupInvitationSchema),
+});
+
+/**
+ * The squad, as a whole. Members not in the list are removed; members already
+ * in it keep the answer they gave, so saving a squad again never silently
+ * discards a reply.
+ */
+export const setCallupSquadInputSchema = z.object({
+  teamId: z.string(),
+  activityId: z.string(),
+  memberIds: z.array(z.string()),
+});
+
+export const setCallupSquadOutputSchema = z.object({
+  callup: callupSchema,
+  invitations: z.array(callupInvitationSchema),
+});
+
+export const updateCallupInputSchema = z.object({
+  teamId: z.string(),
+  activityId: z.string(),
+  note: z.string().max(2000).nullable().optional(),
+  published: z.boolean().optional(),
+});
+
+export const updateCallupOutputSchema = z.object({
+  callup: callupSchema,
+});
+
+// ---------------------------------------------------------------------------
 // Attendance statistics (issue #15)
 //
 // The rate is **attended ÷ marked**, not attended ÷ activities held. A session
@@ -1529,6 +1607,18 @@ export const contract = oc.router({
     .route({ method: "GET", path: "/attendance/member" })
     .input(memberAttendanceInputSchema)
     .output(memberAttendanceOutputSchema),
+  getCallup: oc
+    .route({ method: "GET", path: "/callups" })
+    .input(getCallupInputSchema)
+    .output(getCallupOutputSchema),
+  setCallupSquad: oc
+    .route({ method: "POST", path: "/callups/squad" })
+    .input(setCallupSquadInputSchema)
+    .output(setCallupSquadOutputSchema),
+  updateCallup: oc
+    .route({ method: "POST", path: "/callups/update" })
+    .input(updateCallupInputSchema)
+    .output(updateCallupOutputSchema),
 });
 
 /** Inferred contract type — used by the frontend to create a typed oRPC client. */

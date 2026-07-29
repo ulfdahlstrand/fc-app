@@ -281,7 +281,8 @@
     "partOfSeries": "Repeats weekly",
     "tab": {
       "info": "Info",
-      "attendance": "Attendance"
+      "attendance": "Attendance",
+      "callup": "Call-up"
     },
     "scopeTitle": "This training repeats",
     "scopeHelp": "Later occurrences keep their dates — only the time and details follow along.",
@@ -357,6 +358,27 @@
     "history": "Attendance history",
     "noHistory": "No activities to show yet.",
     "loadError": "Could not load statistics."
+  },
+  "callups": {
+    "draft": "Draft — nobody has been told yet",
+    "published": "Published",
+    "publish": "Publish the squad",
+    "unpublish": "Back to draft",
+    "saveFirst": "Save the squad before publishing it.",
+    "accepted": "Accepted",
+    "notCalled": "Not called up",
+    "addGroup": "Add a group",
+    "selected": "{{count}} of {{total}} called up",
+    "save": "Save squad · {{count}}",
+    "declinedHint": "{{count}} declined — worth calling someone else up.",
+    "noMembers": "There is nobody in the roster to call up yet.",
+    "loadError": "Could not load the call-up.",
+    "saveError": "Could not save. Please try again.",
+    "response": {
+      "pending": "No reply yet",
+      "accepted": "Playing",
+      "declined": "Can't make it"
+    }
   },
   "seasons": {
     "heading": "Seasons",

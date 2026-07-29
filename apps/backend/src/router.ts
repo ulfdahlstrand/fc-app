@@ -15,6 +15,11 @@ import {
   memberAttendanceHandler,
 } from "./procedures/attendance-stats.js";
 import {
+  getCallupHandler,
+  setCallupSquadHandler,
+  updateCallupHandler,
+} from "./procedures/callups.js";
+import {
   archiveAttendanceStatusHandler,
   createAttendanceStatusHandler,
   listAttendanceStatusesHandler,
@@ -148,6 +153,9 @@ export const router = os.router({
   setAttendance: setAttendanceHandler,
   attendanceStats: attendanceStatsHandler,
   memberAttendance: memberAttendanceHandler,
+  getCallup: getCallupHandler,
+  setCallupSquad: setCallupSquadHandler,
+  updateCallup: updateCallupHandler,
 });
 
 /** AppRouter type — re-exported for use in tests and future tooling. */

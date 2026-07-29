@@ -281,7 +281,8 @@
     "partOfSeries": "Upprepas varje vecka",
     "tab": {
       "info": "Info",
-      "attendance": "Närvaro"
+      "attendance": "Närvaro",
+      "callup": "Kallelse"
     },
     "scopeTitle": "Den här träningen upprepas",
     "scopeHelp": "Kommande tillfällen behåller sina datum – bara tid och detaljer följer med.",
@@ -357,6 +358,27 @@
     "history": "Närvarohistorik",
     "noHistory": "Inga aktiviteter att visa ännu.",
     "loadError": "Kunde inte ladda statistiken."
+  },
+  "callups": {
+    "draft": "Utkast – ingen är meddelad än",
+    "published": "Publicerad",
+    "publish": "Publicera truppen",
+    "unpublish": "Tillbaka till utkast",
+    "saveFirst": "Spara truppen innan du publicerar den.",
+    "accepted": "Tackat ja",
+    "notCalled": "Inte uttagen",
+    "addGroup": "Lägg till en grupp",
+    "selected": "{{count}} av {{total}} uttagna",
+    "save": "Spara truppen · {{count}}",
+    "declinedHint": "{{count}} har tackat nej – värt att ta ut någon annan.",
+    "noMembers": "Det finns ingen i truppen att kalla ännu.",
+    "loadError": "Kunde inte ladda kallelsen.",
+    "saveError": "Kunde inte spara. Försök igen.",
+    "response": {
+      "pending": "Inget svar än",
+      "accepted": "Spelar",
+      "declined": "Kan inte"
+    }
   },
   "seasons": {
     "heading": "Säsonger",
