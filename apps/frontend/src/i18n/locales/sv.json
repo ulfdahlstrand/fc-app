@@ -42,6 +42,7 @@
     "activities": "Kalender",
     "members": "Medlemmar",
     "groups": "Grupper",
+    "statistics": "Statistik",
     "teamSettings": "Laginställningar",
     "clubSettings": "Klubbinställningar"
   },
@@ -333,6 +334,29 @@
         "too_small": "Statusen behöver ett namn."
       }
     }
+  },
+  "statistics": {
+    "heading": "Statistik",
+    "forbidden": "Du har inte behörighet att se lagets statistik.",
+    "member": "Medlem",
+    "attended": "Närvarande",
+    "marked": "Markerade",
+    "rate": "Andel %",
+    "teamRate": "Lagets andel",
+    "teamRateHint": "Av alla markeringar",
+    "sessions": "Tillfällen",
+    "sessionsHint": "I det valda urvalet",
+    "atRisk": "Värt ett samtal",
+    "atRiskHint": "Under 75 % av sina markeringar",
+    "allTime": "Hela tiden",
+    "from": "Från",
+    "to": "Till",
+    "notMarked": "Inte markerad",
+    "export": "Exportera CSV",
+    "empty": "Ingen i truppen matchar de filtren.",
+    "history": "Närvarohistorik",
+    "noHistory": "Inga aktiviteter att visa ännu.",
+    "loadError": "Kunde inte ladda statistiken."
   },
   "seasons": {
     "heading": "Säsonger",
