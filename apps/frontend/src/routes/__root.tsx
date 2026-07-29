@@ -54,6 +54,7 @@ function RootLayout() {
   const user = me.data?.user;
   const selected = useSelectedTeam();
   const canViewMembers = useHasPermission("members.view");
+  const canRespond = useHasPermission("callups.respond");
   const canManageTeam = useHasPermission("settings.team");
   const canManageClub = useHasPermission("settings.club");
 
@@ -86,6 +87,11 @@ function RootLayout() {
               )}
               {canViewMembers && (
                 <NavPill to="/groups">{t("nav.groups")}</NavPill>
+              )}
+              {/* Call-ups are for whoever is asked as well as whoever asks,
+                  so this is the one nav item a player also sees. */}
+              {(canViewMembers || canRespond) && (
+                <NavPill to="/callups">{t("nav.callups")}</NavPill>
               )}
               {canViewMembers && (
                 <NavPill to="/statistics">{t("nav.statistics")}</NavPill>

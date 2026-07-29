@@ -15,6 +15,7 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as MembersRouteImport } from './routes/members'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as GroupsRouteImport } from './routes/groups'
+import { Route as CallupsRouteImport } from './routes/callups'
 import { Route as ActivitiesRouteImport } from './routes/activities'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SettingsTeamRouteImport } from './routes/settings.team'
@@ -51,6 +52,11 @@ const LoginRoute = LoginRouteImport.update({
 const GroupsRoute = GroupsRouteImport.update({
   id: '/groups',
   path: '/groups',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CallupsRoute = CallupsRouteImport.update({
+  id: '/callups',
+  path: '/callups',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ActivitiesRoute = ActivitiesRouteImport.update({
@@ -92,6 +98,7 @@ const ActivitiesActivityIdRoute = ActivitiesActivityIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/activities': typeof ActivitiesRoute
+  '/callups': typeof CallupsRoute
   '/groups': typeof GroupsRoute
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
@@ -107,6 +114,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/activities': typeof ActivitiesRoute
+  '/callups': typeof CallupsRoute
   '/groups': typeof GroupsRoute
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
@@ -123,6 +131,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/activities': typeof ActivitiesRoute
+  '/callups': typeof CallupsRoute
   '/groups': typeof GroupsRoute
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
@@ -140,6 +149,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/activities'
+    | '/callups'
     | '/groups'
     | '/login'
     | '/members'
@@ -155,6 +165,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/activities'
+    | '/callups'
     | '/groups'
     | '/login'
     | '/members'
@@ -170,6 +181,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/activities'
+    | '/callups'
     | '/groups'
     | '/login'
     | '/members'
@@ -186,6 +198,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ActivitiesRoute: typeof ActivitiesRoute
+  CallupsRoute: typeof CallupsRoute
   GroupsRoute: typeof GroupsRoute
   LoginRoute: typeof LoginRoute
   MembersRoute: typeof MembersRoute
@@ -243,6 +256,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GroupsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/callups': {
+      id: '/callups'
+      path: '/callups'
+      fullPath: '/callups'
+      preLoaderRoute: typeof CallupsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/activities': {
       id: '/activities'
       path: '/activities'
@@ -298,6 +318,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ActivitiesRoute: ActivitiesRoute,
+  CallupsRoute: CallupsRoute,
   GroupsRoute: GroupsRoute,
   LoginRoute: LoginRoute,
   MembersRoute: MembersRoute,

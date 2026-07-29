@@ -42,6 +42,7 @@
     "activities": "Kalender",
     "members": "Medlemmar",
     "groups": "Grupper",
+    "callups": "Kallelser",
     "statistics": "Statistik",
     "teamSettings": "Laginställningar",
     "clubSettings": "Klubbinställningar"
@@ -379,6 +380,22 @@
       "accepted": "Spelar",
       "declined": "Kan inte"
     }
+  },
+  "callupsPage": {
+    "heading": "Kallelser",
+    "subtitle": "Vilka som spelar",
+    "pending": "{{count}} kvar att svara på",
+    "mine": "Dina kallelser",
+    "team": "Lagets kallelser",
+    "teamOnly": "Kommande kallelser",
+    "accept": "Spelar",
+    "decline": "Kan inte",
+    "notePlaceholder": "Lägg till en anledning (valfritt)",
+    "ofSquad": "av {{count}}",
+    "showPast": "Visa tidigare",
+    "upcomingOnly": "Bara kommande",
+    "noneYet": "Inga kallelser ännu.",
+    "empty": "Du har inga kallelser att svara på."
   },
   "seasons": {
     "heading": "Säsonger",

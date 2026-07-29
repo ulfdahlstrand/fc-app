@@ -42,6 +42,7 @@
     "activities": "Calendar",
     "members": "Members",
     "groups": "Groups",
+    "callups": "Call-ups",
     "statistics": "Statistics",
     "teamSettings": "Team settings",
     "clubSettings": "Club settings"
@@ -379,6 +380,22 @@
       "accepted": "Playing",
       "declined": "Can't make it"
     }
+  },
+  "callupsPage": {
+    "heading": "Call-ups",
+    "subtitle": "Who is playing",
+    "pending": "{{count}} still to answer",
+    "mine": "Your call-ups",
+    "team": "The team's call-ups",
+    "teamOnly": "Upcoming call-ups",
+    "accept": "Playing",
+    "decline": "Can't make it",
+    "notePlaceholder": "Add a reason (optional)",
+    "ofSquad": "of {{count}}",
+    "showPast": "Show past ones",
+    "upcomingOnly": "Upcoming only",
+    "noneYet": "No call-ups yet.",
+    "empty": "You have no call-ups to answer."
   },
   "seasons": {
     "heading": "Seasons",

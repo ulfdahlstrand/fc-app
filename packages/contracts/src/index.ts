@@ -1299,6 +1299,92 @@ export const updateCallupOutputSchema = z.object({
 });
 
 // ---------------------------------------------------------------------------
+// Call-up responses (issue #17)
+//
+// Players and guardians answer for themselves. A user may respond only for
+// members they are *linked* to — themselves, or a child they are guardian for
+// (#9). That check is the whole security surface of this feature: everything
+// else here is a list.
+//
+// Only `accepted` and `declined` can be sent. `pending` is where an invitation
+// starts, not somewhere a person can put it back to.
+// ---------------------------------------------------------------------------
+
+export const callupAnswerSchema = z.enum(["accepted", "declined"]);
+
+export type CallupAnswer = z.infer<typeof callupAnswerSchema>;
+
+export const respondToCallupInputSchema = z.object({
+  teamId: z.string(),
+  activityId: z.string(),
+  /** Which linked member is answering — a guardian answers per child. */
+  memberId: z.string(),
+  response: callupAnswerSchema,
+  note: z.string().max(500).nullable().optional(),
+});
+
+export const respondToCallupOutputSchema = z.object({
+  invitation: callupInvitationSchema,
+});
+
+/** One call-up awaiting (or holding) an answer, for a member I am linked to. */
+export const myCallupSchema = z.object({
+  teamId: z.string(),
+  teamName: z.string(),
+  activityId: z.string(),
+  startsAt: isoInstantSchema,
+  endsAt: isoInstantSchema.nullable(),
+  title: z.string().nullable(),
+  activityTypeId: z.string(),
+  location: z.string().nullable(),
+  /** The coach's note on the squad, if any. */
+  callupNote: z.string().nullable(),
+  memberId: z.string(),
+  memberName: z.string(),
+  response: callupResponseSchema,
+  responseNote: z.string().nullable(),
+});
+
+export type MyCallup = z.infer<typeof myCallupSchema>;
+
+export const myCallupsInputSchema = z.object({});
+
+export const myCallupsOutputSchema = z.object({
+  callups: z.array(myCallupSchema),
+  /** What the dashboard (#20) shows as "unanswered". */
+  pending: z.number().int(),
+});
+
+/** A call-up in the coach's overview, with its response tally. */
+export const callupSummarySchema = z.object({
+  activityId: z.string(),
+  startsAt: isoInstantSchema,
+  title: z.string().nullable(),
+  activityTypeId: z.string(),
+  location: z.string().nullable(),
+  cancelled: z.boolean(),
+  published: z.boolean(),
+  squad: z.number().int(),
+  accepted: z.number().int(),
+  declined: z.number().int(),
+  pending: z.number().int(),
+});
+
+export type CallupSummary = z.infer<typeof callupSummarySchema>;
+
+export const listCallupsInputSchema = z.object({
+  teamId: z.string(),
+  /** Past call-ups are history; the default is what is still to come. */
+  includePast: queryBooleanSchema.optional(),
+});
+
+export const listCallupsOutputSchema = z.object({
+  callups: z.array(callupSummarySchema),
+  /** Unanswered invitations across the listed call-ups, for #20. */
+  pending: z.number().int(),
+});
+
+// ---------------------------------------------------------------------------
 // Attendance statistics (issue #15)
 //
 // The rate is **attended ÷ marked**, not attended ÷ activities held. A session
@@ -1619,6 +1705,18 @@ export const contract = oc.router({
     .route({ method: "POST", path: "/callups/update" })
     .input(updateCallupInputSchema)
     .output(updateCallupOutputSchema),
+  respondToCallup: oc
+    .route({ method: "POST", path: "/callups/respond" })
+    .input(respondToCallupInputSchema)
+    .output(respondToCallupOutputSchema),
+  myCallups: oc
+    .route({ method: "GET", path: "/my-callups" })
+    .input(myCallupsInputSchema)
+    .output(myCallupsOutputSchema),
+  listCallups: oc
+    .route({ method: "GET", path: "/callups/list" })
+    .input(listCallupsInputSchema)
+    .output(listCallupsOutputSchema),
 });
 
 /** Inferred contract type — used by the frontend to create a typed oRPC client. */
