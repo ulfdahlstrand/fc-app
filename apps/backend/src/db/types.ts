@@ -152,6 +152,28 @@ export interface ActivityTypesTable {
   created_at: Timestamp;
 }
 
+export interface AttendanceStatusesTable {
+  id: Generated<string>;
+  team_id: string;
+  name: string;
+  /** A Kit palette token name, not a hex value — see the migration. */
+  colour: Generated<string>;
+  /** What statistics (#15) sums; stored, never inferred from the name. */
+  counts_as_present: Generated<boolean>;
+  sort_order: Generated<number>;
+  archived: Generated<boolean>;
+  created_at: Timestamp;
+}
+
+export interface AttendanceRecordsTable {
+  activity_id: string;
+  member_id: string;
+  status_id: string;
+  note: string | null;
+  created_at: Timestamp;
+  updated_at: ColumnType<Date, never, Date>;
+}
+
 export interface SeasonsTable {
   id: Generated<string>;
   team_id: string;
@@ -220,4 +242,6 @@ export interface Database {
   activities: ActivitiesTable;
   activity_series: ActivitySeriesTable;
   seasons: SeasonsTable;
+  attendance_statuses: AttendanceStatusesTable;
+  attendance_records: AttendanceRecordsTable;
 }

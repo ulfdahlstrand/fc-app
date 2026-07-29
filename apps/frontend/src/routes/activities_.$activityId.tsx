@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { ActivityFormDialog } from "../components/ActivityFormDialog";
+import { AttendanceSection } from "../components/AttendanceSection";
 import {
   toActivityInput,
   useActivity,
@@ -84,6 +85,7 @@ function ActivityDetail({
   const locale = useDateLocale();
   const canManage = useHasPermission("activities.manage");
   const [editing, setEditing] = useState(false);
+  const [tab, setTab] = useState<"info" | "attendance">("info");
   /** A submitted edit waiting for its scope answer (#13). */
   const [pending, setPending] = useState<ActivityFormOutput | null>(null);
 
@@ -173,6 +175,30 @@ function ActivityDetail({
         </div>
       </div>
 
+      {/* The detail page is the anchor #14 and #16 extend with tabs. */}
+      <div className="bg-secondary flex w-fit rounded-pill p-1">
+        {(["info", "attendance"] as const).map((value) => (
+          <button
+            key={value}
+            type="button"
+            aria-pressed={tab === value}
+            onClick={() => setTab(value)}
+            className={cn(
+              "rounded-pill px-4 py-1.5 text-sm font-bold transition-colors duration-[120ms] ease-standard",
+              tab === value
+                ? "bg-ink text-white"
+                : "text-muted-foreground hover:bg-[var(--neutral-250)]",
+            )}
+          >
+            {t(`activities.tab.${value}`)}
+          </button>
+        ))}
+      </div>
+
+      {tab === "attendance" ? (
+        <AttendanceSection teamId={teamId} activity={current} />
+      ) : (
+        <>
       <div className="bg-card flex flex-col gap-4 rounded-xl px-7 py-6">
         <dl className="grid gap-4 sm:grid-cols-2">
           <Detail label={t("activities.type")} value={type?.name ?? "—"} />
@@ -216,6 +242,8 @@ function ActivityDetail({
               : t("activities.cancel")}
           </Button>
         </div>
+      )}
+        </>
       )}
 
       {editing && (

@@ -278,6 +278,10 @@
     "until": "Sista datum",
     "untilHelp": "Serien slutar efter det här datumet.",
     "partOfSeries": "Upprepas varje vecka",
+    "tab": {
+      "info": "Info",
+      "attendance": "Närvaro"
+    },
     "scopeTitle": "Den här träningen upprepas",
     "scopeHelp": "Kommande tillfällen behåller sina datum – bara tid och detaljer följer med.",
     "scopeOccurrence": "Ändra bara den här",
@@ -298,6 +302,35 @@
       },
       "until": {
         "custom": "Ange ett sista datum, samma dag eller senare än det första."
+      }
+    }
+  },
+  "attendance": {
+    "heading": "Tryck för att markera",
+    "checkedIn": "Här",
+    "allHere": "Alla här",
+    "unmarked": "Inte markerad",
+    "marked": "{{count}} av {{total}} markerade",
+    "save": "Spara · {{count}} ändrade",
+    "discard": "Ångra ändringar",
+    "noMembers": "Det finns ingen i truppen att markera ännu.",
+    "noStatuses": "Lägg till en närvarostatus i laginställningarna först.",
+    "loadError": "Kunde inte ladda närvaron.",
+    "saveError": "Kunde inte spara. Försök igen."
+  },
+  "attendanceStatuses": {
+    "heading": "Närvarostatusar",
+    "new": "Ny status",
+    "newTitle": "Ny närvarostatus",
+    "editTitle": "Redigera närvarostatus",
+    "countsAsPresent": "Räknas som här",
+    "countsAsPresentHint": "Statistiken räknar den här statusen som närvaro.",
+    "empty": "Inga närvarostatusar ännu.",
+    "loadError": "Kunde inte ladda närvarostatusar.",
+    "saveError": "Kunde inte spara. Kontrollera fälten.",
+    "validation": {
+      "name": {
+        "too_small": "Statusen behöver ett namn."
       }
     }
   },

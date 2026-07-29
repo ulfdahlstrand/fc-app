@@ -7,6 +7,16 @@ import {
   updateActivityHandler,
 } from "./procedures/activities.js";
 import {
+  listAttendanceHandler,
+  setAttendanceHandler,
+} from "./procedures/attendance.js";
+import {
+  archiveAttendanceStatusHandler,
+  createAttendanceStatusHandler,
+  listAttendanceStatusesHandler,
+  updateAttendanceStatusHandler,
+} from "./procedures/attendance-statuses.js";
+import {
   createSeasonHandler,
   deleteSeasonHandler,
   listSeasonsHandler,
@@ -126,6 +136,12 @@ export const router = os.router({
   createSeason: createSeasonHandler,
   updateSeason: updateSeasonHandler,
   deleteSeason: deleteSeasonHandler,
+  listAttendanceStatuses: listAttendanceStatusesHandler,
+  createAttendanceStatus: createAttendanceStatusHandler,
+  updateAttendanceStatus: updateAttendanceStatusHandler,
+  archiveAttendanceStatus: archiveAttendanceStatusHandler,
+  listAttendance: listAttendanceHandler,
+  setAttendance: setAttendanceHandler,
 });
 
 /** AppRouter type — re-exported for use in tests and future tooling. */

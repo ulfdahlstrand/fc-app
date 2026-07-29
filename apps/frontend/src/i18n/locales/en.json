@@ -278,6 +278,10 @@
     "until": "Last date",
     "untilHelp": "The series stops after this date.",
     "partOfSeries": "Repeats weekly",
+    "tab": {
+      "info": "Info",
+      "attendance": "Attendance"
+    },
     "scopeTitle": "This training repeats",
     "scopeHelp": "Later occurrences keep their dates — only the time and details follow along.",
     "scopeOccurrence": "Change this one",
@@ -298,6 +302,35 @@
       },
       "until": {
         "custom": "Give a last date, on or after the first one."
+      }
+    }
+  },
+  "attendance": {
+    "heading": "Tap to mark",
+    "checkedIn": "Here",
+    "allHere": "All here",
+    "unmarked": "Not marked",
+    "marked": "{{count}} of {{total}} marked",
+    "save": "Save · {{count}} changed",
+    "discard": "Undo changes",
+    "noMembers": "There is nobody in the roster to mark yet.",
+    "noStatuses": "Add an attendance status in team settings first.",
+    "loadError": "Could not load attendance.",
+    "saveError": "Could not save. Please try again."
+  },
+  "attendanceStatuses": {
+    "heading": "Attendance statuses",
+    "new": "New status",
+    "newTitle": "New attendance status",
+    "editTitle": "Edit attendance status",
+    "countsAsPresent": "Counts as here",
+    "countsAsPresentHint": "Statistics count this status towards attendance.",
+    "empty": "No attendance statuses yet.",
+    "loadError": "Could not load attendance statuses.",
+    "saveError": "Could not save. Please check the fields.",
+    "validation": {
+      "name": {
+        "too_small": "The status needs a name."
       }
     }
   },

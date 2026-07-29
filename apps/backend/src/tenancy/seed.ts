@@ -1,5 +1,8 @@
 import type { Kysely } from "kysely";
-import { DEFAULT_ACTIVITY_TYPES } from "@fc-app/contracts";
+import {
+  DEFAULT_ACTIVITY_TYPES,
+  DEFAULT_ATTENDANCE_STATUSES,
+} from "@fc-app/contracts";
 import type { Database } from "../db/types.js";
 import { DEFAULT_ROLES } from "./roles.js";
 
@@ -53,8 +56,9 @@ export async function seedClubRoles(
 /**
  * Seeds a newly created team with its default configuration (ADR-005).
  *
- * Seeds the default activity types (#11). Later issues extend it:
- * - #14: attendance statuses (Present, Absent, Ill)
+ * Seeds the default activity types (#11) and attendance statuses (#14). Both
+ * are ordinary rows, not protected system records — a team can rename or
+ * retire any of them.
  */
 export async function seedTeamDefaults(
   db: Kysely<Database>,
@@ -68,6 +72,20 @@ export async function seedTeamDefaults(
         name: type.name,
         colour: type.colour,
         supports_call_ups: type.supportsCallUps,
+        sort_order: index,
+      }))
+    )
+    .execute();
+
+  // The seeded order is the order a coach taps through at the pitch side.
+  await db
+    .insertInto("attendance_statuses")
+    .values(
+      DEFAULT_ATTENDANCE_STATUSES.map((status, index) => ({
+        team_id: teamId,
+        name: status.name,
+        colour: status.colour,
+        counts_as_present: status.countsAsPresent,
         sort_order: index,
       }))
     )
