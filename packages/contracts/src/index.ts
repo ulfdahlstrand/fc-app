@@ -1474,6 +1474,121 @@ export const memberAttendanceOutputSchema = z.object({
   stats: memberAttendanceStatsSchema,
 });
 
+/**
+ * A member is worth a word when they are marked often enough for the number to
+ * mean something and still below this. Kit's own sample screen flags 64% and
+ * 71% as "at risk", so the line sits just above those.
+ *
+ * It lives in the contract because two sides count it: the statistics page
+ * (#15) flags the rows, and the dashboard (#20) counts them server-side. A
+ * threshold that drifted between them would put a number on the dashboard that
+ * the page it links to disagrees with.
+ */
+export const AT_RISK_RATE = 75;
+export const AT_RISK_MIN_MARKED = 3;
+
+export function isAtRisk(member: {
+  rate: number | null;
+  marked: number;
+}): boolean {
+  return (
+    member.rate !== null &&
+    member.marked >= AT_RISK_MIN_MARKED &&
+    member.rate < AT_RISK_RATE
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Dashboard (issue #20)
+//
+// The landing page inside a team context. It aggregates features that already
+// have their own pages, so it is deliberately **one** procedure rather than
+// four: the page must load in a single round of queries, and four calls that
+// each re-derive the caller's membership is how a landing page gets slow.
+//
+// Every widget is nullable, and null and empty mean different things:
+//
+//   - `null`  — the caller may not see this. The widget is not rendered.
+//   - `[]`/0  — the caller may see it and there is nothing there yet. The
+//               widget renders its empty state.
+//
+// That distinction is what lets a player and a coach share one page without
+// the player being shown an empty coach's dashboard.
+// ---------------------------------------------------------------------------
+
+/** One activity in the "what's next" widget, with its type already resolved. */
+export const dashboardActivitySchema = z.object({
+  id: z.string(),
+  startsAt: isoInstantSchema,
+  endsAt: isoInstantSchema.nullable(),
+  title: z.string().nullable(),
+  location: z.string().nullable(),
+  cancelled: z.boolean(),
+  activityTypeId: z.string(),
+  /**
+   * Denormalised onto the activity so the dashboard stays a single request.
+   * Everywhere else the frontend joins these client-side from a cached list.
+   */
+  activityTypeName: z.string(),
+  activityTypeColour: activityColourSchema,
+  /** null when there is no squad yet, or the squad is still a draft. */
+  callup: z
+    .object({
+      squad: z.number().int(),
+      accepted: z.number().int(),
+      declined: z.number().int(),
+      pending: z.number().int(),
+    })
+    .nullable(),
+});
+
+export type DashboardActivity = z.infer<typeof dashboardActivitySchema>;
+
+/**
+ * The attendance widget: a rate, and the same rate over the window before it.
+ * A single percentage is a fact; two of them are a trend, which is the thing a
+ * coach actually acts on.
+ */
+export const dashboardAttendanceSchema = z.object({
+  /** The window both rates are measured over. */
+  windowDays: z.number().int(),
+  /** null when nothing is marked in the window — no rate can be stated. */
+  rate: z.number().nullable(),
+  /** The window immediately before, for comparison. null when it was empty. */
+  previousRate: z.number().nullable(),
+  /** Activities held in the window, cancelled ones excluded. */
+  activities: z.number().int(),
+  /** Attendance marks made in the window — the denominator of `rate`. */
+  marked: z.number().int(),
+  /** Members below the at-risk line, counted with `isAtRisk`. */
+  atRisk: z.number().int(),
+});
+
+export type DashboardAttendance = z.infer<typeof dashboardAttendanceSchema>;
+
+export const dashboardInputSchema = z.object({
+  teamId: z.string(),
+});
+
+export const dashboardOutputSchema = z.object({
+  /**
+   * What *this* user has been asked and has not answered, for the members they
+   * are linked to (#9) in this team. Never null: it needs no permission, only
+   * a link, and it is the whole dashboard for most parents.
+   */
+  myPendingCallups: z.array(myCallupSchema),
+  /** The next few activities. null without `members.view`. */
+  upcoming: z.array(dashboardActivitySchema).nullable(),
+  /**
+   * Unanswered invitations across the team's published, upcoming squads.
+   * null without `members.view`. Drafts are excluded — a squad nobody has been
+   * told about is not a question anyone is failing to answer.
+   */
+  callupsPending: z.number().int().nullable(),
+  /** null without `members.view`. */
+  attendance: dashboardAttendanceSchema.nullable(),
+});
+
 // ---------------------------------------------------------------------------
 // Router contract
 //
@@ -1737,6 +1852,10 @@ export const contract = oc.router({
     .route({ method: "GET", path: "/callups/list" })
     .input(listCallupsInputSchema)
     .output(listCallupsOutputSchema),
+  dashboard: oc
+    .route({ method: "GET", path: "/dashboard" })
+    .input(dashboardInputSchema)
+    .output(dashboardOutputSchema),
 });
 
 /** Inferred contract type — used by the frontend to create a typed oRPC client. */

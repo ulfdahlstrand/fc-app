@@ -47,20 +47,11 @@ export function useMemberAttendance(teamId: string, memberId: string) {
 }
 
 /**
- * A member is worth a word when they are marked often enough for the number to
- * mean something and still below this. Kit's own sample screen flags 64% and
- * 71% as "at risk", so the line sits just above those.
+ * The at-risk line lives in the contract: the dashboard (#20) counts these
+ * server-side, and a threshold that differed between the two would put a
+ * number on the dashboard that this page disagrees with.
  */
-export const AT_RISK_RATE = 75;
-const AT_RISK_MIN_MARKED = 3;
-
-export function isAtRisk(member: MemberAttendanceStats): boolean {
-  return (
-    member.rate !== null &&
-    member.marked >= AT_RISK_MIN_MARKED &&
-    member.rate < AT_RISK_RATE
-  );
-}
+export { AT_RISK_RATE, isAtRisk } from "@fc-app/contracts";
 
 // --- CSV export -----------------------------------------------------------
 

@@ -3,13 +3,32 @@
     "title": "FC App"
   },
   "home": {
-    "heading": "Lagadministration för fotbollslag",
-    "description": "Grundstrukturen är på plats. Se docs/product/product-spec.md för planerade sidor och funktioner."
+    "heading": "Lagadministration för fotbollslag"
   },
-  "health": {
-    "checking": "Kontrollerar anslutning till servern…",
-    "ok": "Servern svarar — hela kedjan fungerar.",
-    "error": "Kunde inte nå servern. Kontrollera att backend körs."
+  "dashboard": {
+    "loadError": "Kunde inte ladda översikten.",
+    "next": "Närmast",
+    "nothingPlanned": "Inget inplanerat ännu",
+    "toCalendar": "Till kalendern",
+    "thenComes": "Därefter",
+    "squadAccepted": "{{accepted}} av {{squad}} kommer",
+    "awaiting_one": "{{count}} kvar att svara",
+    "awaiting_other": "{{count}} kvar att svara",
+    "attendance": "Närvaro, {{days}} dagar",
+    "nothingMarked": "Inget markerat ännu",
+    "noComparison": "Ingen tidigare period att jämföra med",
+    "trendUp": "Upp {{points}} enheter mot perioden innan",
+    "trendDown": "Ner {{points}} enheter mot perioden innan",
+    "unanswered": "Obesvarade",
+    "unansweredHint": "Målsmän har inte svarat",
+    "everyoneAnswered": "Alla har svarat",
+    "atRisk": "Värt ett samtal",
+    "atRiskHint": "Under 75 % av sina markeringar",
+    "nobodyAtRisk": "Ingen håller på att glida iväg",
+    "yourCallups_one": "Du har {{count}} fråga att svara på",
+    "yourCallups_other": "Du har {{count}} frågor att svara på",
+    "toCallups": "Till kallelserna",
+    "allClear": "Inget behöver dig just nu."
   },
   "login": {
     "heading": "Logga in",
