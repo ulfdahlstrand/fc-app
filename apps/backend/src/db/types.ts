@@ -152,6 +152,26 @@ export interface ActivityTypesTable {
   created_at: Timestamp;
 }
 
+export interface CallupsTable {
+  id: Generated<string>;
+  activity_id: string;
+  note: string | null;
+  /** Draft until a coach publishes: picking a squad is not telling it. */
+  published: Generated<boolean>;
+  created_at: Timestamp;
+  updated_at: ColumnType<Date, never, Date>;
+}
+
+export interface CallupInvitationsTable {
+  callup_id: string;
+  member_id: string;
+  /** pending | accepted | declined — see `callupResponseSchema`. */
+  response: Generated<string>;
+  responded_at: ColumnType<Date | null, Date | null, Date | null>;
+  response_note: string | null;
+  created_at: Timestamp;
+}
+
 export interface AttendanceStatusesTable {
   id: Generated<string>;
   team_id: string;
@@ -244,4 +264,6 @@ export interface Database {
   seasons: SeasonsTable;
   attendance_statuses: AttendanceStatusesTable;
   attendance_records: AttendanceRecordsTable;
+  callups: CallupsTable;
+  callup_invitations: CallupInvitationsTable;
 }

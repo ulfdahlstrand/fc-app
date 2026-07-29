@@ -23,6 +23,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ActivityFormDialog } from "../components/ActivityFormDialog";
 import { AttendanceSection } from "../components/AttendanceSection";
+import { CallupSection } from "../components/CallupSection";
 import {
   toActivityInput,
   useActivity,
@@ -39,6 +40,8 @@ import {
   SEPARATOR,
   useDateLocale,
 } from "../lib/dates";
+
+type Tab = "info" | "attendance" | "callup";
 
 export const Route = createFileRoute("/activities_/$activityId")({
   beforeLoad: async () => {
@@ -85,7 +88,7 @@ function ActivityDetail({
   const locale = useDateLocale();
   const canManage = useHasPermission("activities.manage");
   const [editing, setEditing] = useState(false);
-  const [tab, setTab] = useState<"info" | "attendance">("info");
+  const [tab, setTab] = useState<Tab>("info");
   /** A submitted edit waiting for its scope answer (#13). */
   const [pending, setPending] = useState<ActivityFormOutput | null>(null);
 
@@ -109,6 +112,9 @@ function ActivityDetail({
   const types: ActivityType[] = activityTypes.data?.activityTypes ?? [];
   const type = types.find((candidate) => candidate.id === current.activityTypeId);
   const heading = current.title ?? type?.name ?? "";
+  const tabs: Tab[] = type?.supportsCallUps
+    ? ["info", "attendance", "callup"]
+    : ["info", "attendance"];
 
   const save = async (form: ActivityFormOutput, scope: ActivityEditScope) => {
     await updateActivity.mutateAsync({
@@ -175,9 +181,10 @@ function ActivityDetail({
         </div>
       </div>
 
-      {/* The detail page is the anchor #14 and #16 extend with tabs. */}
+      {/* The detail page is the anchor #14 and #16 extend with tabs. The
+          call-up tab appears only for types that can have a squad (#11). */}
       <div className="bg-secondary flex w-fit rounded-pill p-1">
-        {(["info", "attendance"] as const).map((value) => (
+        {tabs.map((value) => (
           <button
             key={value}
             type="button"
@@ -197,6 +204,8 @@ function ActivityDetail({
 
       {tab === "attendance" ? (
         <AttendanceSection teamId={teamId} activity={current} />
+      ) : tab === "callup" ? (
+        <CallupSection teamId={teamId} activity={current} />
       ) : (
         <>
       <div className="bg-card flex flex-col gap-4 rounded-xl px-7 py-6">
