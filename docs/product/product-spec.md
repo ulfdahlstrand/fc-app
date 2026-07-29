@@ -94,7 +94,11 @@ tracked items) is **configuration data, not code**.
 
 ### 5. Call-ups (matchtrupp)
 - Select a squad for an activity (typically a match), from roster or group.
+- A call-up is a **draft until published** — picking a squad is not telling it.
 - Members/guardians respond (accept/decline) — response tracking for coaches.
+- **Removing a member from a squad is silent**, published or not. It stays
+  silent when notifications arrive later: being taken out of a squad is a
+  conversation a coach should have, not a message an app should send.
 
 ### 6. Communication
 - Posts/announcements to the team or targeted groups.
