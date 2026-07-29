@@ -90,13 +90,22 @@ export const respondToCallupHandler = os.respondToCallup.handler(
   }
 );
 
-export const myCallupsHandler = os.myCallups.handler(async ({ context }) => {
-  const user = requireUser(context);
-  const db = getDb();
-
-  // Driven by the guardian links, not by team membership: this is "what am I
-  // being asked", and it spans every club and team the user is linked into.
-  const rows = await db
+/**
+ * The call-ups a user has been asked about, for every member they are linked
+ * to (#9). Shared with the dashboard (#20), which asks the same question
+ * narrowed to one team.
+ *
+ * Driven by the guardian links, not by team membership: this is "what am I
+ * being asked", and by default it spans every club and team the user is linked
+ * into. Because the links *are* the authorisation, no permission check belongs
+ * here — a user can only ever reach members they are attached to.
+ */
+export async function loadMyCallups(
+  db: ReturnType<typeof getDb>,
+  userId: string,
+  options: { teamId?: string; pendingOnly?: boolean } = {}
+): Promise<MyCallup[]> {
+  let query = db
     .selectFrom("callup_invitations")
     .innerJoin("callups", "callups.id", "callup_invitations.callup_id")
     .innerJoin("activities", "activities.id", "callups.activity_id")
@@ -104,7 +113,7 @@ export const myCallupsHandler = os.myCallups.handler(async ({ context }) => {
     .innerJoin("member_guardians", (join) =>
       join
         .onRef("member_guardians.member_id", "=", "callup_invitations.member_id")
-        .on("member_guardians.user_id", "=", user.id)
+        .on("member_guardians.user_id", "=", userId)
     )
     .innerJoin("teams", "teams.id", "activities.team_id")
     // Left join: the answer outlives the account that gave it.
@@ -137,11 +146,22 @@ export const myCallupsHandler = os.myCallups.handler(async ({ context }) => {
     .where("callups.published", "=", true)
     .where("activities.cancelled", "=", false)
     // What is still to come. A call-up for last Tuesday is not a question.
-    .where("activities.starts_at", ">=", new Date())
-    .orderBy("activities.starts_at")
-    .execute();
+    .where("activities.starts_at", ">=", new Date());
 
-  const callups: MyCallup[] = rows.map((row) => ({
+  // The dashboard (#20) is a team page, so it narrows to the selected team —
+  // the standalone page deliberately does not, because a guardian with
+  // children in two teams should not have half their questions hidden by the
+  // team switcher.
+  if (options.teamId !== undefined) {
+    query = query.where("activities.team_id", "=", options.teamId);
+  }
+  if (options.pendingOnly === true) {
+    query = query.where("callup_invitations.response", "=", "pending");
+  }
+
+  const rows = await query.orderBy("activities.starts_at").execute();
+
+  return rows.map((row) => ({
     teamId: row.team_id,
     teamName: row.team_name,
     activityId: row.activity_id,
@@ -164,6 +184,11 @@ export const myCallupsHandler = os.myCallups.handler(async ({ context }) => {
             onBehalf: row.responded_on_behalf,
           },
   }));
+}
+
+export const myCallupsHandler = os.myCallups.handler(async ({ context }) => {
+  const user = requireUser(context);
+  const callups = await loadMyCallups(getDb(), user.id);
 
   return {
     callups,

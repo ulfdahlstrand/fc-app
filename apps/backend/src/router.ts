@@ -43,6 +43,7 @@ import {
   updateActivityTypeHandler,
 } from "./procedures/activity-types.js";
 import { createClubHandler } from "./procedures/create-club.js";
+import { dashboardHandler } from "./procedures/dashboard.js";
 import {
   addGuardianHandler,
   listClubUsersHandler,
@@ -164,6 +165,7 @@ export const router = os.router({
   respondToCallup: respondToCallupHandler,
   myCallups: myCallupsHandler,
   listCallups: listCallupsHandler,
+  dashboard: dashboardHandler,
 });
 
 /** AppRouter type — re-exported for use in tests and future tooling. */

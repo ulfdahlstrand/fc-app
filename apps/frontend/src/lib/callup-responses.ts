@@ -34,10 +34,14 @@ export function useRespondToCallup() {
       note?: string | null;
     }) => orpc.respondToCallup(input),
     onSuccess: async (_data, input) => {
-      // The answer moves three views: my own list, the coach's overview, and
-      // the squad on the activity page.
+      // The answer moves four views: my own list, the coach's overview, the
+      // squad on the activity page, and the dashboard that counts what is
+      // still unanswered.
       await queryClient.invalidateQueries({
         queryKey: orpcQuery.myCallups.key({ input: {} }),
+      });
+      await queryClient.invalidateQueries({
+        queryKey: orpcQuery.dashboard.key({ input: { teamId: input.teamId } }),
       });
       await queryClient.invalidateQueries({
         queryKey: orpcQuery.listCallups.key({ input: { teamId: input.teamId } }),

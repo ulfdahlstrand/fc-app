@@ -3,13 +3,32 @@
     "title": "FC App"
   },
   "home": {
-    "heading": "Team administration for football teams",
-    "description": "The foundation is in place. See docs/product/product-spec.md for planned pages and features."
+    "heading": "Team administration for football teams"
   },
-  "health": {
-    "checking": "Checking server connection…",
-    "ok": "Server is responding — the full stack works.",
-    "error": "Could not reach the server. Check that the backend is running."
+  "dashboard": {
+    "loadError": "Could not load the dashboard.",
+    "next": "Next up",
+    "nothingPlanned": "Nothing planned yet",
+    "toCalendar": "To the calendar",
+    "thenComes": "Then comes",
+    "squadAccepted": "{{accepted}} of {{squad}} are coming",
+    "awaiting_one": "{{count}} still to answer",
+    "awaiting_other": "{{count}} still to answer",
+    "attendance": "Attendance, {{days}} days",
+    "nothingMarked": "Nothing marked yet",
+    "noComparison": "No earlier period to compare with",
+    "trendUp": "Up {{points}} points on the period before",
+    "trendDown": "Down {{points}} points on the period before",
+    "unanswered": "Unanswered",
+    "unansweredHint": "Guardians haven't replied",
+    "everyoneAnswered": "Everyone has replied",
+    "atRisk": "Worth a word",
+    "atRiskHint": "Under 75% of their marks",
+    "nobodyAtRisk": "Nobody is drifting away",
+    "yourCallups_one": "You have {{count}} question to answer",
+    "yourCallups_other": "You have {{count}} questions to answer",
+    "toCallups": "To the call-ups",
+    "allClear": "Nothing needs you right now."
   },
   "login": {
     "heading": "Sign in",
