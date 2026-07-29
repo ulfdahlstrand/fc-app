@@ -169,6 +169,10 @@ export interface CallupInvitationsTable {
   response: Generated<string>;
   responded_at: ColumnType<Date | null, Date | null, Date | null>;
   response_note: string | null;
+  /** Who answered; null while pending, or if the account is since gone. */
+  responded_by_user_id: string | null;
+  /** True when a coach answered for someone they are not linked to. */
+  responded_on_behalf: Generated<boolean>;
   created_at: Timestamp;
 }
 

@@ -20,6 +20,11 @@ import {
   updateCallupHandler,
 } from "./procedures/callups.js";
 import {
+  listCallupsHandler,
+  myCallupsHandler,
+  respondToCallupHandler,
+} from "./procedures/callup-responses.js";
+import {
   archiveAttendanceStatusHandler,
   createAttendanceStatusHandler,
   listAttendanceStatusesHandler,
@@ -156,6 +161,9 @@ export const router = os.router({
   getCallup: getCallupHandler,
   setCallupSquad: setCallupSquadHandler,
   updateCallup: updateCallupHandler,
+  respondToCallup: respondToCallupHandler,
+  myCallups: myCallupsHandler,
+  listCallups: listCallupsHandler,
 });
 
 /** AppRouter type — re-exported for use in tests and future tooling. */
