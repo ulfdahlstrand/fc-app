@@ -1,6 +1,15 @@
 import { Kysely, PostgresDialect } from "kysely";
-import { Pool } from "pg";
+import { Pool, types } from "pg";
 import type { Database } from "./types.js";
+
+/**
+ * A DATE column has no time and no timezone. node-postgres parses it into a
+ * JS Date at *local* midnight by default, which is the exact class of bug
+ * seasons and recurring activities (#13) exist to avoid: a season starting
+ * "2026-08-01" would arrive as 2026-07-31T22:00Z and could be reported back a
+ * day early. Keep DATE as the string Postgres sent.
+ */
+types.setTypeParser(types.builtins.DATE, (value) => value);
 
 // ---------------------------------------------------------------------------
 // Kysely database client

@@ -273,6 +273,15 @@
     "loadError": "Kunde inte ladda kalendern.",
     "saveError": "Kunde inte spara. Kontrollera fälten.",
     "notFound": "Aktiviteten hittades inte.",
+    "repeatsWeekly": "Upprepas varje vecka",
+    "onDays": "På de här dagarna",
+    "until": "Sista datum",
+    "untilHelp": "Serien slutar efter det här datumet.",
+    "partOfSeries": "Upprepas varje vecka",
+    "scopeTitle": "Den här träningen upprepas",
+    "scopeHelp": "Kommande tillfällen behåller sina datum – bara tid och detaljer följer med.",
+    "scopeOccurrence": "Ändra bara den här",
+    "scopeFollowing": "Ändra den här och de som kommer",
     "validation": {
       "activityTypeId": {
         "too_small": "Välj en aktivitetstyp."
@@ -283,6 +292,40 @@
       },
       "endsAt": {
         "custom": "Sluttiden måste vara efter starttiden."
+      },
+      "weekdays": {
+        "custom": "Välj minst en dag."
+      },
+      "until": {
+        "custom": "Ange ett sista datum, samma dag eller senare än det första."
+      }
+    }
+  },
+  "seasons": {
+    "heading": "Säsonger",
+    "new": "Ny säsong",
+    "newTitle": "Ny säsong",
+    "editTitle": "Redigera säsong",
+    "name": "Namn",
+    "startsOn": "Första datum",
+    "endsOn": "Sista datum",
+    "filter": "Säsong",
+    "allActivities": "Alla aktiviteter",
+    "empty": "Inga säsonger ännu.",
+    "loadError": "Kunde inte ladda säsonger.",
+    "saveError": "Kunde inte spara. Kontrollera fälten.",
+    "validation": {
+      "name": {
+        "too_small": "Säsongen behöver ett namn."
+      },
+      "startsOn": {
+        "too_small": "Ett första datum krävs.",
+        "invalid_format": "Ange ett giltigt datum."
+      },
+      "endsOn": {
+        "too_small": "Ett sista datum krävs.",
+        "invalid_format": "Ange ett giltigt datum.",
+        "custom": "Sista datumet får inte vara före det första."
       }
     }
   },

@@ -273,6 +273,15 @@
     "loadError": "Could not load the calendar.",
     "saveError": "Could not save. Please check the fields.",
     "notFound": "Activity not found.",
+    "repeatsWeekly": "Repeats every week",
+    "onDays": "On these days",
+    "until": "Last date",
+    "untilHelp": "The series stops after this date.",
+    "partOfSeries": "Repeats weekly",
+    "scopeTitle": "This training repeats",
+    "scopeHelp": "Later occurrences keep their dates — only the time and details follow along.",
+    "scopeOccurrence": "Change this one",
+    "scopeFollowing": "Change this and the ones after",
     "validation": {
       "activityTypeId": {
         "too_small": "Pick an activity type."
@@ -283,6 +292,40 @@
       },
       "endsAt": {
         "custom": "The end time must come after the start time."
+      },
+      "weekdays": {
+        "custom": "Pick at least one day."
+      },
+      "until": {
+        "custom": "Give a last date, on or after the first one."
+      }
+    }
+  },
+  "seasons": {
+    "heading": "Seasons",
+    "new": "New season",
+    "newTitle": "New season",
+    "editTitle": "Edit season",
+    "name": "Name",
+    "startsOn": "First date",
+    "endsOn": "Last date",
+    "filter": "Season",
+    "allActivities": "All activities",
+    "empty": "No seasons yet.",
+    "loadError": "Could not load seasons.",
+    "saveError": "Could not save. Please check the fields.",
+    "validation": {
+      "name": {
+        "too_small": "The season needs a name."
+      },
+      "startsOn": {
+        "too_small": "A first date is required.",
+        "invalid_format": "Enter a valid date."
+      },
+      "endsOn": {
+        "too_small": "A last date is required.",
+        "invalid_format": "Enter a valid date.",
+        "custom": "The last date must not come before the first."
       }
     }
   },

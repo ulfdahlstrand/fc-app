@@ -36,13 +36,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import {
   activityFormSchema,
+  type ActivityFormOutput,
   type ActivityFormValues,
-  type ActivityWriteInput,
 } from "@/lib/activities";
-import { defaultActivitySlot, toDateTimeInput } from "@/lib/dates";
+import {
+  defaultActivitySlot,
+  isoWeekdayLabels,
+  isoWeekdayOf,
+  ISO_WEEKDAYS,
+  toDateTimeInput,
+  useDateLocale,
+} from "@/lib/dates";
 import { useZodResolver } from "@/lib/form";
 
 function defaultValues(
@@ -58,6 +67,11 @@ function defaultValues(
       endsAt: activity.endsAt === null ? "" : toDateTimeInput(activity.endsAt),
       location: activity.location ?? "",
       notes: activity.notes ?? "",
+      // Editing never changes a recurrence rule (ADR-008) — the scope choice
+      // covers what a coach actually needs.
+      repeats: false,
+      weekdays: [],
+      until: "",
     };
   }
 
@@ -71,6 +85,11 @@ function defaultValues(
     endsAt: slot.endsAt,
     location: "",
     notes: "",
+    repeats: false,
+    // Pre-ticked to the day the activity starts on: "repeats weekly" almost
+    // always means "this weekday, every week".
+    weekdays: [isoWeekdayOf(slot.startsAt.slice(0, 10))],
+    until: "",
   };
 }
 
@@ -90,14 +109,21 @@ export function ActivityFormDialog({
   day?: Date;
   saving: boolean;
   errorMessage: string | null;
-  onSave: (input: ActivityWriteInput) => void;
+  onSave: (form: ActivityFormOutput) => void;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
-  const form = useForm<ActivityFormValues, unknown, ActivityWriteInput>({
+  const locale = useDateLocale();
+  const form = useForm<ActivityFormValues, unknown, ActivityFormOutput>({
     resolver: useZodResolver(activityFormSchema, "activities.validation"),
     defaultValues: defaultValues(activityTypes, activity, day),
   });
+
+  // Recurrence is a create-time choice; an existing activity is edited through
+  // the scope question on the detail page instead.
+  const isEdit = activity !== undefined;
+  const repeats = form.watch("repeats");
+  const weekdayLabels = isoWeekdayLabels(locale);
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
@@ -220,6 +246,91 @@ export function ActivityFormDialog({
                 </FormItem>
               )}
             />
+
+            {!isEdit && (
+              <div className="flex flex-col gap-4 rounded-md bg-secondary p-4">
+                <FormField
+                  control={form.control}
+                  name="repeats"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center gap-3">
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel className="!mt-0">
+                        {t("activities.repeatsWeekly")}
+                      </FormLabel>
+                    </FormItem>
+                  )}
+                />
+
+                {repeats && (
+                  <>
+                    <FormField
+                      control={form.control}
+                      name="weekdays"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t("activities.onDays")}</FormLabel>
+                          <FormControl>
+                            <div className="flex flex-wrap gap-1.5">
+                              {ISO_WEEKDAYS.map((weekday) => {
+                                const picked = field.value.includes(weekday);
+                                return (
+                                  <button
+                                    key={weekday}
+                                    type="button"
+                                    aria-pressed={picked}
+                                    onClick={() =>
+                                      field.onChange(
+                                        picked
+                                          ? field.value.filter(
+                                              (day) => day !== weekday,
+                                            )
+                                          : [...field.value, weekday].sort(),
+                                      )
+                                    }
+                                    className={cn(
+                                      "size-10 rounded-full text-sm font-bold uppercase transition-colors duration-[120ms] ease-standard",
+                                      picked
+                                        ? "bg-ink text-white"
+                                        : "bg-card text-muted-foreground hover:bg-[var(--neutral-250)]",
+                                    )}
+                                  >
+                                    {weekdayLabels[weekday]}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="until"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t("activities.until")}</FormLabel>
+                          <FormControl>
+                            <Input type="date" {...field} />
+                          </FormControl>
+                          <FormDescription>
+                            {t("activities.untilHelp")}
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </>
+                )}
+              </div>
+            )}
           </form>
         </Form>
 

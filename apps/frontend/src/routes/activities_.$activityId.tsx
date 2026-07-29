@@ -10,16 +10,24 @@ import { useState } from "react";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { ChevronLeftIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import type { ActivityType } from "@fc-app/contracts";
+import type { ActivityEditScope, ActivityType } from "@fc-app/contracts";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { ActivityFormDialog } from "../components/ActivityFormDialog";
 import {
+  toActivityInput,
   useActivity,
   useSetActivityCancelled,
   useUpdateActivity,
-  type ActivityWriteInput,
+  type ActivityFormOutput,
 } from "../lib/activities";
 import { useActivityTypes } from "../lib/activity-types";
 import { ensureMe } from "../lib/auth";
@@ -76,6 +84,8 @@ function ActivityDetail({
   const locale = useDateLocale();
   const canManage = useHasPermission("activities.manage");
   const [editing, setEditing] = useState(false);
+  /** A submitted edit waiting for its scope answer (#13). */
+  const [pending, setPending] = useState<ActivityFormOutput | null>(null);
 
   const activity = useActivity(teamId, activityId);
   const activityTypes = useActivityTypes(teamId, true);
@@ -98,9 +108,25 @@ function ActivityDetail({
   const type = types.find((candidate) => candidate.id === current.activityTypeId);
   const heading = current.title ?? type?.name ?? "";
 
-  const handleSave = async (input: ActivityWriteInput) => {
-    await updateActivity.mutateAsync({ activityId: current.id, ...input });
+  const save = async (form: ActivityFormOutput, scope: ActivityEditScope) => {
+    await updateActivity.mutateAsync({
+      activityId: current.id,
+      scope,
+      ...toActivityInput(form),
+    });
     setEditing(false);
+    setPending(null);
+  };
+
+  // An occurrence of a series asks how far the edit reaches before it saves;
+  // a one-off has nothing to ask about (#13).
+  const handleSave = async (form: ActivityFormOutput) => {
+    if (current.seriesId === null) {
+      await save(form, "occurrence");
+      return;
+    }
+    setEditing(false);
+    setPending(form);
   };
 
   return (
@@ -133,11 +159,18 @@ function ActivityDetail({
         >
           {heading}
         </h1>
-        {current.cancelled && (
-          <span className="bg-destructive w-fit rounded-pill px-3 py-1 text-xs font-bold tracking-[1px] uppercase">
-            {t("activities.cancelled")}
-          </span>
-        )}
+        <div className="flex flex-wrap gap-2">
+          {current.cancelled && (
+            <span className="bg-destructive w-fit rounded-pill px-3 py-1 text-xs font-bold tracking-[1px] uppercase">
+              {t("activities.cancelled")}
+            </span>
+          )}
+          {current.seriesId !== null && (
+            <span className="bg-ink-raised w-fit rounded-pill px-3 py-1 text-xs font-bold tracking-[1px] text-[var(--neutral-500)] uppercase">
+              {t("activities.partOfSeries")}
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="bg-card flex flex-col gap-4 rounded-xl px-7 py-6">
@@ -203,6 +236,34 @@ function ActivityDetail({
           onSave={handleSave}
           onClose={() => setEditing(false)}
         />
+      )}
+
+      {pending !== null && (
+        <Dialog open onOpenChange={(open) => !open && setPending(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t("activities.scopeTitle")}</DialogTitle>
+              <DialogDescription>
+                {t("activities.scopeHelp")}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex flex-col gap-2">
+              <Button
+                disabled={updateActivity.isPending}
+                onClick={() => save(pending, "occurrence")}
+              >
+                {t("activities.scopeOccurrence")}
+              </Button>
+              <Button
+                variant="outline"
+                disabled={updateActivity.isPending}
+                onClick={() => save(pending, "following")}
+              >
+                {t("activities.scopeFollowing")}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );
