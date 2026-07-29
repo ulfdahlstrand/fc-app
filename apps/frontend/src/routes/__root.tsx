@@ -87,6 +87,9 @@ function RootLayout() {
               {canViewMembers && (
                 <NavPill to="/groups">{t("nav.groups")}</NavPill>
               )}
+              {canViewMembers && (
+                <NavPill to="/statistics">{t("nav.statistics")}</NavPill>
+              )}
               {canManageTeam && (
                 <NavPill to="/settings/team">{t("nav.teamSettings")}</NavPill>
               )}

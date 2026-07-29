@@ -42,6 +42,7 @@
     "activities": "Calendar",
     "members": "Members",
     "groups": "Groups",
+    "statistics": "Statistics",
     "teamSettings": "Team settings",
     "clubSettings": "Club settings"
   },
@@ -333,6 +334,29 @@
         "too_small": "The status needs a name."
       }
     }
+  },
+  "statistics": {
+    "heading": "Statistics",
+    "forbidden": "You do not have permission to see this team's statistics.",
+    "member": "Member",
+    "attended": "Attended",
+    "marked": "Marked",
+    "rate": "Rate %",
+    "teamRate": "Team rate",
+    "teamRateHint": "Of every mark made",
+    "sessions": "Sessions",
+    "sessionsHint": "In the current selection",
+    "atRisk": "Worth a word",
+    "atRiskHint": "Under 75% of their marks",
+    "allTime": "All time",
+    "from": "From",
+    "to": "To",
+    "notMarked": "Not marked",
+    "export": "Export CSV",
+    "empty": "Nobody in the roster matches those filters.",
+    "history": "Attendance history",
+    "noHistory": "No activities to show yet.",
+    "loadError": "Could not load statistics."
   },
   "seasons": {
     "heading": "Seasons",

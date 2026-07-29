@@ -15,6 +15,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { GuardiansSection } from "../components/GuardiansSection";
 import { formatFieldValue } from "../components/memberFieldDisplay";
+import { MemberAttendanceSection } from "../components/MemberAttendanceSection";
 import { MemberFieldValuesDialog } from "../components/MemberFieldValuesDialog";
 import { MemberFormDialog } from "../components/MemberFormDialog";
 import { ensureMe } from "../lib/auth";
@@ -174,6 +175,8 @@ function MemberDetail({
       )}
 
       <GuardiansSection teamId={teamId} memberId={m.id} />
+
+      <MemberAttendanceSection teamId={teamId} memberId={m.id} />
 
       {editing && (
         <MemberFormDialog

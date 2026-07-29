@@ -1221,6 +1221,76 @@ export const setAttendanceOutputSchema = z.object({
 });
 
 // ---------------------------------------------------------------------------
+// Attendance statistics (issue #15)
+//
+// The rate is **attended ÷ marked**, not attended ÷ activities held. A session
+// nobody took attendance at is unknown, not an absence, and counting it would
+// quietly punish every member for the coach's forgotten phone. `activities` in
+// the output is what the filters selected, so the gap between it and `marked`
+// is exactly the coverage a coach may want to close.
+//
+// Cancelled activities are excluded everywhere — a called-off training is not
+// a session anyone failed to attend.
+// ---------------------------------------------------------------------------
+
+export const attendanceStatsFilterSchema = z.object({
+  teamId: z.string(),
+  from: isoInstantSchema.optional(),
+  to: isoInstantSchema.optional(),
+  seasonId: z.string().optional(),
+  activityTypeId: z.string().optional(),
+  groupId: z.string().optional(),
+});
+
+export const memberAttendanceStatsSchema = z.object({
+  memberId: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
+  /** Marked with a status whose `countsAsPresent` is set. */
+  attended: z.number().int(),
+  /** Marked with any status — the denominator of `rate`. */
+  marked: z.number().int(),
+  /** null when nothing is marked yet: no rate can be honestly stated. */
+  rate: z.number().nullable(),
+});
+
+export type MemberAttendanceStats = z.infer<typeof memberAttendanceStatsSchema>;
+
+export const attendanceStatsOutputSchema = z.object({
+  members: z.array(memberAttendanceStatsSchema),
+  /** Activities the filters selected, cancelled ones excluded. */
+  activities: z.number().int(),
+  /** Attendance rate across the whole selection. */
+  teamRate: z.number().nullable(),
+});
+
+/** One activity as it appears in a member's attendance history. */
+export const memberAttendanceEntrySchema = z.object({
+  activityId: z.string(),
+  startsAt: isoInstantSchema,
+  title: z.string().nullable(),
+  activityTypeId: z.string(),
+  /** null when the activity was held but this member was never marked. */
+  statusId: z.string().nullable(),
+});
+
+export type MemberAttendanceEntry = z.infer<
+  typeof memberAttendanceEntrySchema
+>;
+
+export const memberAttendanceInputSchema = z.object({
+  teamId: z.string(),
+  memberId: z.string(),
+  /** Most recent first; the member page shows a window, not a career. */
+  limit: z.number().int().min(1).max(200).optional(),
+});
+
+export const memberAttendanceOutputSchema = z.object({
+  entries: z.array(memberAttendanceEntrySchema),
+  stats: memberAttendanceStatsSchema,
+});
+
+// ---------------------------------------------------------------------------
 // Router contract
 //
 // Defines the shape of every procedure (input + output schemas) without any
@@ -1451,6 +1521,14 @@ export const contract = oc.router({
     .route({ method: "POST", path: "/attendance" })
     .input(setAttendanceInputSchema)
     .output(setAttendanceOutputSchema),
+  attendanceStats: oc
+    .route({ method: "GET", path: "/attendance/stats" })
+    .input(attendanceStatsFilterSchema)
+    .output(attendanceStatsOutputSchema),
+  memberAttendance: oc
+    .route({ method: "GET", path: "/attendance/member" })
+    .input(memberAttendanceInputSchema)
+    .output(memberAttendanceOutputSchema),
 });
 
 /** Inferred contract type — used by the frontend to create a typed oRPC client. */

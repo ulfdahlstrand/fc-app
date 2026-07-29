@@ -1,5 +1,4 @@
 import { ORPCError } from "@orpc/server";
-import { addDays } from "date-fns";
 import type { Kysely, Selectable } from "kysely";
 import type { Activity, ActivitySeries } from "@fc-app/contracts";
 import {
@@ -7,6 +6,7 @@ import {
   localTimeOf,
   withLocalTime,
 } from "../activities/recurrence.js";
+import { seasonRange } from "../activities/season-range.js";
 import { getDb } from "../db/client.js";
 import type {
   ActivitiesTable,
@@ -120,29 +120,12 @@ export const listActivitiesHandler = os.listActivities.handler(
 
     // A season is a date range, not a foreign key (#13): membership is decided
     // by where the activity starts, so a corrected season re-answers it for
-    // every activity at once. `ends_on` is inclusive, hence "< the day after".
-    //
-    // The boundaries are read as UTC midnight. Teams do not carry a timezone
-    // yet, and a season is months long, so the only thing this can misplace is
-    // an activity within a couple of hours of midnight on the very first or
-    // last day. Worth revisiting if teams ever gain a zone of their own.
+    // every activity at once. See `seasonRange` for the boundary caveat.
     if (input.seasonId !== undefined) {
-      const season = await db
-        .selectFrom("seasons")
-        .select(["starts_on", "ends_on"])
-        .where("id", "=", input.seasonId)
-        .where("team_id", "=", input.teamId)
-        .executeTakeFirst();
-      if (!season) {
-        throw new ORPCError("NOT_FOUND", { message: "Season not found" });
-      }
+      const range = await seasonRange(db, input.teamId, input.seasonId);
       query = query
-        .where("starts_at", ">=", new Date(`${season.starts_on}T00:00:00Z`))
-        .where(
-          "starts_at",
-          "<",
-          addDays(new Date(`${season.ends_on}T00:00:00Z`), 1)
-        );
+        .where("starts_at", ">=", range.from)
+        .where("starts_at", "<", range.to);
     }
 
     // Cancelled activities are returned too — they stay on the calendar,
