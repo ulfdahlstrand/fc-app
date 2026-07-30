@@ -12,6 +12,10 @@
  * have been asked; a coach sees those *and* the team's numbers. Neither is
  * shown an empty frame belonging to the other — a null widget is not rendered
  * at all, while an empty one states plainly that there is nothing there yet.
+ *
+ * Four widgets: what's next (#12), what this user owes an answer to (#17), how
+ * attendance is trending (#15), and which tracking lists are still outstanding
+ * (#19).
  */
 import { useState } from "react";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
@@ -19,6 +23,7 @@ import { useTranslation } from "react-i18next";
 import type {
   DashboardActivity,
   DashboardAttendance,
+  DashboardTrackingList,
   MyCallup,
 } from "@fc-app/contracts";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -94,6 +99,7 @@ function Dashboard({
   const attendance = dashboard.data?.attendance ?? null;
   const callupsPending = dashboard.data?.callupsPending ?? null;
   const myPending = dashboard.data?.myPendingCallups ?? [];
+  const trackingLists = dashboard.data?.tracking?.lists ?? null;
 
   const [next, ...rest] = upcoming ?? [];
 
@@ -128,6 +134,10 @@ function Dashboard({
               attendance={attendance}
               callupsPending={callupsPending ?? 0}
             />
+          )}
+
+          {trackingLists !== null && trackingLists.length > 0 && (
+            <Tracking lists={trackingLists} />
           )}
 
           {rest.length > 0 && <Upcoming activities={rest} />}
@@ -391,6 +401,65 @@ function StatCard({
         {footnote}
       </span>
     </Link>
+  );
+}
+
+// --- What is still outstanding --------------------------------------------
+
+/**
+ * Tracking lists (#19) with ticks still missing.
+ *
+ * Fully-ticked lists never reach here — the backend drops them — because the
+ * widget exists to name what is left, and a dashboard that lists finished work
+ * buries the rest. Each row is a meter and a plain-words count, never a bare
+ * percentage: "6 kvar" is what a coach acts on, "76%" is not.
+ */
+function Tracking({ lists }: { lists: DashboardTrackingList[] }) {
+  const { t } = useTranslation();
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-baseline justify-between gap-4">
+        <h2 className="font-display text-xl">{t("dashboard.outstanding")}</h2>
+        <Link to="/tracking" className="text-sm font-semibold underline">
+          {t("dashboard.toTracking")}
+        </Link>
+      </div>
+      <div className="flex flex-col gap-[11px]">
+        {lists.map((list) => {
+          const remaining = list.total - list.done;
+          return (
+            <Link
+              key={list.definitionId}
+              to="/tracking"
+              className="bg-card hover:bg-secondary flex items-center gap-4 rounded-md px-4 py-3 transition-colors duration-[120ms] ease-standard"
+            >
+              <span className="min-w-0 flex-1 truncate font-semibold">
+                {list.name}
+              </span>
+              {/* Kit's thin capsule meter, always paired with a count in words. */}
+              <span
+                aria-hidden
+                className="hidden h-[7px] w-40 shrink-0 overflow-hidden rounded-full bg-[var(--neutral-250)] sm:block"
+              >
+                <span
+                  className="bg-brand block h-full"
+                  style={{
+                    width: `${list.total === 0 ? 0 : (list.done / list.total) * 100}%`,
+                  }}
+                />
+              </span>
+              <span className="text-muted-foreground w-24 shrink-0 text-right text-sm font-semibold tabular-nums">
+                {list.done}/{list.total}
+              </span>
+              <span className="text-absent w-24 shrink-0 text-right text-sm font-semibold">
+                {t("dashboard.remaining", { count: remaining })}
+              </span>
+            </Link>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 

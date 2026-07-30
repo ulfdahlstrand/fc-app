@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TrackingRouteImport } from './routes/tracking'
 import { Route as StatisticsRouteImport } from './routes/statistics'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
@@ -24,6 +25,11 @@ import { Route as MembersMemberIdRouteImport } from './routes/members_.$memberId
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as ActivitiesActivityIdRouteImport } from './routes/activities_.$activityId'
 
+const TrackingRoute = TrackingRouteImport.update({
+  id: '/tracking',
+  path: '/tracking',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StatisticsRoute = StatisticsRouteImport.update({
   id: '/statistics',
   path: '/statistics',
@@ -105,6 +111,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof OnboardingRoute
   '/profile': typeof ProfileRoute
   '/statistics': typeof StatisticsRoute
+  '/tracking': typeof TrackingRoute
   '/activities/$activityId': typeof ActivitiesActivityIdRoute
   '/invite/$token': typeof InviteTokenRoute
   '/members/$memberId': typeof MembersMemberIdRoute
@@ -121,6 +128,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
   '/profile': typeof ProfileRoute
   '/statistics': typeof StatisticsRoute
+  '/tracking': typeof TrackingRoute
   '/activities/$activityId': typeof ActivitiesActivityIdRoute
   '/invite/$token': typeof InviteTokenRoute
   '/members/$memberId': typeof MembersMemberIdRoute
@@ -138,6 +146,7 @@ export interface FileRoutesById {
   '/onboarding': typeof OnboardingRoute
   '/profile': typeof ProfileRoute
   '/statistics': typeof StatisticsRoute
+  '/tracking': typeof TrackingRoute
   '/activities_/$activityId': typeof ActivitiesActivityIdRoute
   '/invite/$token': typeof InviteTokenRoute
   '/members_/$memberId': typeof MembersMemberIdRoute
@@ -156,6 +165,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/profile'
     | '/statistics'
+    | '/tracking'
     | '/activities/$activityId'
     | '/invite/$token'
     | '/members/$memberId'
@@ -172,6 +182,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/profile'
     | '/statistics'
+    | '/tracking'
     | '/activities/$activityId'
     | '/invite/$token'
     | '/members/$memberId'
@@ -188,6 +199,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/profile'
     | '/statistics'
+    | '/tracking'
     | '/activities_/$activityId'
     | '/invite/$token'
     | '/members_/$memberId'
@@ -205,6 +217,7 @@ export interface RootRouteChildren {
   OnboardingRoute: typeof OnboardingRoute
   ProfileRoute: typeof ProfileRoute
   StatisticsRoute: typeof StatisticsRoute
+  TrackingRoute: typeof TrackingRoute
   ActivitiesActivityIdRoute: typeof ActivitiesActivityIdRoute
   InviteTokenRoute: typeof InviteTokenRoute
   MembersMemberIdRoute: typeof MembersMemberIdRoute
@@ -214,6 +227,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/tracking': {
+      id: '/tracking'
+      path: '/tracking'
+      fullPath: '/tracking'
+      preLoaderRoute: typeof TrackingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/statistics': {
       id: '/statistics'
       path: '/statistics'
@@ -325,6 +345,7 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingRoute: OnboardingRoute,
   ProfileRoute: ProfileRoute,
   StatisticsRoute: StatisticsRoute,
+  TrackingRoute: TrackingRoute,
   ActivitiesActivityIdRoute: ActivitiesActivityIdRoute,
   InviteTokenRoute: InviteTokenRoute,
   MembersMemberIdRoute: MembersMemberIdRoute,

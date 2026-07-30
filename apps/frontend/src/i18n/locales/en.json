@@ -28,7 +28,11 @@
     "yourCallups_one": "You have {{count}} question to answer",
     "yourCallups_other": "You have {{count}} questions to answer",
     "toCallups": "To the call-ups",
-    "allClear": "Nothing needs you right now."
+    "allClear": "Nothing needs you right now.",
+    "outstanding": "Still outstanding",
+    "toTracking": "To tracking",
+    "remaining_one": "{{count}} left",
+    "remaining_other": "{{count}} left"
   },
   "login": {
     "heading": "Sign in",
@@ -64,7 +68,8 @@
     "callups": "Call-ups",
     "statistics": "Statistics",
     "teamSettings": "Team settings",
-    "clubSettings": "Club settings"
+    "clubSettings": "Club settings",
+    "tracking": "Tracking"
   },
   "members": {
     "heading": "Members",
@@ -199,7 +204,14 @@
         "name": {
           "too_small": "The activity type needs a name."
         }
-      }
+      },
+      "tracking": "Tracking lists",
+      "newTracking": "New tracking list",
+      "editTracking": "Edit tracking list",
+      "trackingEmpty": "No tracking lists yet.",
+      "trackingPlaceholder": "Grönt kort",
+      "trackingTypeLabel": "Type",
+      "trackingTypeFixed": "cannot be changed once created"
     }
   },
   "invitations": {
@@ -378,6 +390,28 @@
     "history": "Attendance history",
     "noHistory": "No activities to show yet.",
     "loadError": "Could not load statistics."
+  },
+  "tracking": {
+    "heading": "Tracking",
+    "forbidden": "You do not have permission to see this team's tracking lists.",
+    "wholeSquad": "Whole squad",
+    "member": "Member",
+    "noLists": "No tracking lists yet",
+    "noListsHint": "Tracking lists replace the spreadsheet: “Grönt kort”, “Discount booklet picked up”, “Fee paid”.",
+    "toSettings": "Set one up in team settings",
+    "noMembers": "Nobody in the roster matches that filter.",
+    "notYet": "Nobody has said yet",
+    "done": "Done",
+    "someone": "Someone",
+    "tickedBy": "Ticked by {{name}}",
+    "notePlaceholder": "Note",
+    "loadError": "Could not load the tracking lists.",
+    "saveError": "Could not save that."
+  },
+  "trackingType": {
+    "done": "Done / not done",
+    "date": "Date",
+    "text": "Text"
   },
   "callups": {
     "draft": "Draft — nobody has been told yet",

@@ -4,6 +4,7 @@ import {
   type ActivityColour,
   type DashboardActivity,
   type DashboardAttendance,
+  type DashboardTrackingList,
 } from "@fc-app/contracts";
 import { summariseAttendance } from "../attendance/summarise.js";
 import { getDb } from "../db/client.js";
@@ -228,6 +229,80 @@ async function loadAttendance(
   };
 }
 
+/**
+ * Tracking lists (#19) with ticks still outstanding.
+ *
+ * Only `done` definitions are counted. A date or a note column is information,
+ * not a box to tick, so a blank one is not work anybody is failing to do —
+ * counting it would make this widget nag forever. The rule is
+ * `isTrackingComplete` in the contract; here it is expressed as SQL, which is
+ * why only ticks equal to "true" are summed.
+ *
+ * Fully-ticked lists are dropped rather than shown at 100%: the widget exists to
+ * name what is left, and a dashboard that lists finished work buries the rest.
+ */
+async function loadTracking(
+  db: Kysely<Database>,
+  teamId: string
+): Promise<{ lists: DashboardTrackingList[] }> {
+  const definitions = await db
+    .selectFrom("tracking_definitions")
+    .select(["id", "name"])
+    .where("team_id", "=", teamId)
+    .where("archived", "=", false)
+    .where("value_type", "=", "done")
+    .orderBy("sort_order")
+    .execute();
+
+  if (definitions.length === 0) return { lists: [] };
+
+  const [members, ticks] = await Promise.all([
+    // Archived members are left out, matching the matrix — the denominator is
+    // the squad you have, so retiring a player closes the gap they left.
+    db
+      .selectFrom("members")
+      .select((eb) => eb.fn.countAll<string>().as("total"))
+      .where("team_id", "=", teamId)
+      .where("archived", "=", false)
+      .executeTakeFirst(),
+    db
+      .selectFrom("tracking_entries")
+      .innerJoin("members", "members.id", "tracking_entries.member_id")
+      .select((eb) => [
+        "tracking_entries.definition_id as definition_id",
+        eb.fn.countAll<string>().as("done"),
+      ])
+      .where(
+        "tracking_entries.definition_id",
+        "in",
+        definitions.map((definition) => definition.id)
+      )
+      .where("tracking_entries.value", "=", "true")
+      .where("members.archived", "=", false)
+      .groupBy("tracking_entries.definition_id")
+      .execute(),
+  ]);
+
+  const total = Number(members?.total ?? 0);
+  const doneByDefinition = new Map(
+    ticks.map((tick) => [tick.definition_id, Number(tick.done)])
+  );
+
+  const lists = definitions
+    .map((definition) => ({
+      definitionId: definition.id,
+      name: definition.name,
+      done: doneByDefinition.get(definition.id) ?? 0,
+      total,
+    }))
+    .filter((list) => list.done < list.total);
+
+  // Most outstanding first — the longest list is the one worth a Sunday.
+  lists.sort((a, b) => b.total - b.done - (a.total - a.done));
+
+  return { lists };
+}
+
 export const dashboardHandler = os.dashboard.handler(
   async ({ input, context }) => {
     const user = requireUser(context);
@@ -237,7 +312,7 @@ export const dashboardHandler = os.dashboard.handler(
 
     // Every widget at once. This is the "single round of queries" the issue
     // asks for: nothing here waits on anything else's result.
-    const [myPendingCallups, upcoming, callupsPending, attendance] =
+    const [myPendingCallups, upcoming, callupsPending, attendance, tracking] =
       await Promise.all([
         loadMyCallups(db, user.id, {
           teamId: input.teamId,
@@ -246,8 +321,15 @@ export const dashboardHandler = os.dashboard.handler(
         canView ? loadUpcoming(db, input.teamId) : null,
         canView ? countPendingCallups(db, input.teamId) : null,
         canView ? loadAttendance(db, input.teamId) : null,
+        canView ? loadTracking(db, input.teamId) : null,
       ]);
 
-    return { myPendingCallups, upcoming, callupsPending, attendance };
+    return {
+      myPendingCallups,
+      upcoming,
+      callupsPending,
+      attendance,
+      tracking,
+    };
   }
 );

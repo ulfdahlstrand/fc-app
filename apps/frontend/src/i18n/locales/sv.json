@@ -28,7 +28,11 @@
     "yourCallups_one": "Du har {{count}} fråga att svara på",
     "yourCallups_other": "Du har {{count}} frågor att svara på",
     "toCallups": "Till kallelserna",
-    "allClear": "Inget behöver dig just nu."
+    "allClear": "Inget behöver dig just nu.",
+    "outstanding": "Kvar att göra",
+    "toTracking": "Till uppföljning",
+    "remaining_one": "{{count}} kvar",
+    "remaining_other": "{{count}} kvar"
   },
   "login": {
     "heading": "Logga in",
@@ -64,7 +68,8 @@
     "callups": "Kallelser",
     "statistics": "Statistik",
     "teamSettings": "Laginställningar",
-    "clubSettings": "Klubbinställningar"
+    "clubSettings": "Klubbinställningar",
+    "tracking": "Uppföljning"
   },
   "members": {
     "heading": "Medlemmar",
@@ -199,7 +204,14 @@
         "name": {
           "too_small": "Aktivitetstypen behöver ett namn."
         }
-      }
+      },
+      "tracking": "Uppföljningslistor",
+      "newTracking": "Ny uppföljningslista",
+      "editTracking": "Redigera uppföljningslista",
+      "trackingEmpty": "Inga uppföljningslistor än.",
+      "trackingPlaceholder": "Grönt kort",
+      "trackingTypeLabel": "Typ",
+      "trackingTypeFixed": "kan inte ändras efter att listan skapats"
     }
   },
   "invitations": {
@@ -378,6 +390,28 @@
     "history": "Närvarohistorik",
     "noHistory": "Inga aktiviteter att visa ännu.",
     "loadError": "Kunde inte ladda statistiken."
+  },
+  "tracking": {
+    "heading": "Uppföljning",
+    "forbidden": "Du har inte behörighet att se lagets uppföljningslistor.",
+    "wholeSquad": "Hela truppen",
+    "member": "Medlem",
+    "noLists": "Inga uppföljningslistor än",
+    "noListsHint": "Uppföljningslistor ersätter kalkylbladet: “Grönt kort”, “Rabatthäfte hämtat”, “Avgift betald”.",
+    "toSettings": "Skapa en i laginställningarna",
+    "noMembers": "Ingen i truppen matchar det filtret.",
+    "notYet": "Ingen har sagt än",
+    "done": "Klart",
+    "someone": "Någon",
+    "tickedBy": "Markerad av {{name}}",
+    "notePlaceholder": "Anteckning",
+    "loadError": "Kunde inte ladda uppföljningslistorna.",
+    "saveError": "Kunde inte spara det."
+  },
+  "trackingType": {
+    "done": "Klart / inte klart",
+    "date": "Datum",
+    "text": "Text"
   },
   "callups": {
     "draft": "Utkast – ingen är meddelad än",
