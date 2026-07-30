@@ -246,6 +246,26 @@ export interface ActivitiesTable {
   updated_at: ColumnType<Date, never, Date>;
 }
 
+export interface TrackingDefinitionsTable {
+  id: Generated<string>;
+  team_id: string;
+  name: string;
+  /** done | date | text — see `trackingValueTypeSchema`. */
+  value_type: string;
+  sort_order: Generated<number>;
+  archived: Generated<boolean>;
+  created_at: Timestamp;
+}
+
+export interface TrackingEntriesTable {
+  definition_id: string;
+  member_id: string;
+  value: string;
+  /** Null once the account that ticked it is gone; the entry itself stays. */
+  updated_by: string | null;
+  updated_at: ColumnType<Date, Date | undefined, Date>;
+}
+
 export interface Database {
   users: UsersTable;
   identities: IdentitiesTable;
@@ -270,4 +290,6 @@ export interface Database {
   attendance_records: AttendanceRecordsTable;
   callups: CallupsTable;
   callup_invitations: CallupInvitationsTable;
+  tracking_definitions: TrackingDefinitionsTable;
+  tracking_entries: TrackingEntriesTable;
 }

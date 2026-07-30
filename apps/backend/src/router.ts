@@ -90,6 +90,15 @@ import {
   listRolesHandler,
   updateRoleHandler,
 } from "./procedures/roles.js";
+import {
+  archiveTrackingDefinitionHandler,
+  createTrackingDefinitionHandler,
+  listTrackingDefinitionsHandler,
+  memberTrackingHandler,
+  setTrackingEntryHandler,
+  trackingMatrixHandler,
+  updateTrackingDefinitionHandler,
+} from "./procedures/tracking.js";
 import { os } from "./orpc.js";
 
 /**
@@ -165,6 +174,13 @@ export const router = os.router({
   respondToCallup: respondToCallupHandler,
   myCallups: myCallupsHandler,
   listCallups: listCallupsHandler,
+  listTrackingDefinitions: listTrackingDefinitionsHandler,
+  createTrackingDefinition: createTrackingDefinitionHandler,
+  updateTrackingDefinition: updateTrackingDefinitionHandler,
+  archiveTrackingDefinition: archiveTrackingDefinitionHandler,
+  trackingMatrix: trackingMatrixHandler,
+  setTrackingEntry: setTrackingEntryHandler,
+  memberTracking: memberTrackingHandler,
   dashboard: dashboardHandler,
 });
 

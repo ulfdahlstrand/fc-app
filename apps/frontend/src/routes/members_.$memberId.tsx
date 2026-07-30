@@ -18,6 +18,7 @@ import { formatFieldValue } from "../components/memberFieldDisplay";
 import { MemberAttendanceSection } from "../components/MemberAttendanceSection";
 import { MemberFieldValuesDialog } from "../components/MemberFieldValuesDialog";
 import { MemberFormDialog } from "../components/MemberFormDialog";
+import { MemberTrackingSection } from "../components/MemberTrackingSection";
 import { ensureMe } from "../lib/auth";
 import { ensureMyClubs, useHasPermission, useSelectedTeam } from "../lib/clubs";
 import { useMemberGroups } from "../lib/groups";
@@ -175,6 +176,8 @@ function MemberDetail({
       )}
 
       <GuardiansSection teamId={teamId} memberId={m.id} />
+
+      <MemberTrackingSection teamId={teamId} memberId={m.id} />
 
       <MemberAttendanceSection teamId={teamId} memberId={m.id} />
 
