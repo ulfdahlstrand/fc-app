@@ -1,16 +1,4 @@
-/**
- * Call-ups (issue #17) — two audiences on one page.
- *
- * **Your call-ups** comes first: the questions this user has been asked, for
- * every member they are linked to (#9), across every team. A guardian with
- * two children answers twice, separately.
- *
- * **The team's call-ups** follows for anyone who can see the roster: every
- * upcoming squad with its tally, and a way through to the squad itself.
- *
- * Most people see exactly one of the two. A coach whose own child plays sees
- * both, which is the ordinary case in a grassroots club.
- */
+/** Call-ups (issue #17) — two audiences on one page. */
 import { useMemo, useState } from "react";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";

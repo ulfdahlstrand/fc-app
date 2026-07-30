@@ -1,3 +1,4 @@
+/** Club creation: seeds roles and defaults, makes the creator admin (ADR-005). */
 import type { Kysely } from "kysely";
 import type { Club, Team } from "@fc-app/contracts";
 import { getDb } from "../db/client.js";

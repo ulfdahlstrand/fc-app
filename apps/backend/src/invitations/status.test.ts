@@ -1,3 +1,4 @@
+/** Invitation status: used, revoked and expired take precedence in that order. */
 import { describe, expect, it } from "vitest";
 import { invitationStatus } from "./status.js";
 

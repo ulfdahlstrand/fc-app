@@ -1,19 +1,7 @@
+/** Migration — see ADR-006 for why schema changes only happen here. */
 import { sql, type Kysely } from "kysely";
 
-/**
- * Activity types (issue #11, ADR-005): activity types are data, not code.
- * Every team is seeded with Training and Match and may add its own (cup, team
- * party, parent meeting…).
- *
- * `colour` stores a Kit palette token name — "green", "ink", … — not a hex
- * value. The Kit design system allows three colour families and nothing else,
- * so a free-form colour would let teams design outside the system; storing the
- * token also means the palette can be re-themed without a data migration.
- *
- * `supports_call_ups` is read by #16 to decide which activities get a call-up
- * tab. Types are archived, never hard-deleted, so activities that reference a
- * retired type keep rendering.
- */
+/** Activity types (issue #11, ADR-005): activity types are data, not code. */
 export async function up(db: Kysely<unknown>): Promise<void> {
   await db.schema
     .createTable("activity_types")

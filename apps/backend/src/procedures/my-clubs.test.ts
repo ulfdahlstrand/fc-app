@@ -1,3 +1,4 @@
+/** Club listing folds several memberships into one club entry. */
 import { describe, expect, it, vi } from "vitest";
 import type { Kysely } from "kysely";
 import type { Database } from "../db/types.js";
@@ -41,9 +42,6 @@ function buildDbMock(specs: MembershipSpec[]) {
 
   const selectFrom = vi.fn((table: string) => {
     if (table === "memberships") {
-      // Two shapes: distinct club_id list, and the innerJoin+select in
-      // getClubMemberships. A single chain serves both; execute returns the
-      // distinct ids unless innerJoin was called.
       let joined = false;
       const chain: Record<string, unknown> = {
         innerJoin: vi.fn(() => {

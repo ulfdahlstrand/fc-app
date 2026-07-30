@@ -1,3 +1,4 @@
+/** Club creation seeds roles, a first team and its defaults, in one transaction. */
 import { describe, expect, it, vi } from "vitest";
 import type { Kysely } from "kysely";
 import {
@@ -13,11 +14,7 @@ const CLUB_ID = "550e8400-e29b-41d4-a716-446655440002";
 const TEAM_ID = "550e8400-e29b-41d4-a716-446655440003";
 const ADMIN_ROLE_ID = "550e8400-e29b-41d4-a716-446655440010";
 
-/**
- * Mock transaction. Each roles insert returns an id derived from the role's
- * system_key so seedClubRoles can capture the admin role id; other inserts
- * return their fixed rows. Inserted values are captured for assertions.
- */
+/** Mock transaction. */
 function buildDbMock() {
   const insertedValues: Record<string, unknown[]> = {};
 

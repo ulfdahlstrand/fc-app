@@ -1,22 +1,4 @@
-/**
- * Dashboard (issue #20) — the landing page inside a team context.
- *
- * Everything here already has a page of its own. This one exists to answer
- * "what needs me today?" in a glance, and then get out of the way: every
- * number links to the page that can act on it.
- *
- * One query feeds the whole screen (`useDashboard`), so the page arrives in
- * one piece rather than as a stack of boxes settling one after another.
- *
- * Widgets appear by permission, not by role. A parent sees the questions they
- * have been asked; a coach sees those *and* the team's numbers. Neither is
- * shown an empty frame belonging to the other — a null widget is not rendered
- * at all, while an empty one states plainly that there is nothing there yet.
- *
- * Four widgets: what's next (#12), what this user owes an answer to (#17), how
- * attendance is trending (#15), and which tracking lists are still outstanding
- * (#19).
- */
+/** Dashboard (issue #20) — the landing page inside a team context. */
 import { useState } from "react";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
@@ -155,11 +137,7 @@ function Dashboard({
 
 // --- What's next -----------------------------------------------------------
 
-/**
- * Kit's matchday hero: an ink panel with the loudest number on the page. The
- * time is that number — it is what someone opening the app before training
- * actually came to check.
- */
+/** Kit's matchday hero: an ink panel with the loudest number on the page. */
 function Hero({ activity }: { activity: DashboardActivity }) {
   const { t } = useTranslation();
   const locale = useDateLocale();
@@ -406,14 +384,7 @@ function StatCard({
 
 // --- What is still outstanding --------------------------------------------
 
-/**
- * Tracking lists (#19) with ticks still missing.
- *
- * Fully-ticked lists never reach here — the backend drops them — because the
- * widget exists to name what is left, and a dashboard that lists finished work
- * buries the rest. Each row is a meter and a plain-words count, never a bare
- * percentage: "6 kvar" is what a coach acts on, "76%" is not.
- */
+/** Tracking lists (#19) with ticks still missing. */
 function Tracking({ lists }: { lists: DashboardTrackingList[] }) {
   const { t } = useTranslation();
 

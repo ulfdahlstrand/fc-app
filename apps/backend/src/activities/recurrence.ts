@@ -1,15 +1,4 @@
-/**
- * Occurrence generation for recurring activities (issue #13, ADR-008).
- *
- * A series is stored as local wall time — a weekday set, a time of day, a date
- * range and an IANA zone — and this turns it into concrete instants.
- *
- * Doing it this way rather than adding 7×24h per step is the whole point:
- * Sweden moves its clocks twice a year, and a training that drifts to 17:00
- * every spring is a bug a coach notices before the developer does. Each
- * occurrence is built from *its own* local date, then resolved through the
- * zone, so 18:00 stays 18:00 across the change.
- */
+/** Occurrence generation for recurring activities (ADR-008, ADR-009). */
 import { eachDayOfInterval, getISODay, parseISO } from "date-fns";
 import { fromZonedTime } from "date-fns-tz";
 import { MAX_SERIES_OCCURRENCES } from "@fc-app/contracts";
@@ -31,12 +20,7 @@ export interface Occurrence {
   endsAt: Date | null;
 }
 
-/**
- * Every date in the range whose weekday is in the set, as instants.
- *
- * Throws when the rule would generate more than `MAX_SERIES_OCCURRENCES` — an
- * end date decades out is a typo, and materialising it would bury the calendar.
- */
+/** Every date in the range whose weekday is in the set, as instants. */
 export function generateOccurrences(rule: RecurrenceRule): Occurrence[] {
   const days = eachDayOfInterval({
     start: parseISO(rule.startsOn),
@@ -64,11 +48,7 @@ export function generateOccurrences(rule: RecurrenceRule): Occurrence[] {
   });
 }
 
-/**
- * `eachDayOfInterval` returns dates in the *host's* zone. Only the calendar
- * date is wanted from them, so it is read back with the local getters rather
- * than through `toISOString()`, which would shift the day west of UTC.
- */
+/** `eachDayOfInterval` returns dates in the *host's* zone. */
 function toLocalDate(day: Date): string {
   const year = String(day.getFullYear()).padStart(4, "0");
   const month = String(day.getMonth() + 1).padStart(2, "0");
@@ -84,12 +64,7 @@ function toInstant(date: string, time: string, timeZone: string): Date {
   return instant;
 }
 
-/**
- * The local wall time an instant falls on in a zone, "HH:mm".
- *
- * Used by "this and following" to decide whether an edit moved the time of
- * day, which is the part that carries over to later occurrences.
- */
+/** The local wall time an instant falls on in a zone, "HH:mm". */
 export function localTimeOf(instant: Date, timeZone: string): string {
   const parts = new Intl.DateTimeFormat("en-GB", {
     timeZone,

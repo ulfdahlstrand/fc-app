@@ -1,14 +1,4 @@
-/**
- * Attendance statistics (issue #15) — who is actually turning up.
- *
- * Requires members.view in the selected team. Filters narrow by period,
- * season, activity type and group, and they combine: each one is another
- * `where`, not a replacement.
- *
- * The table is sorted by the backend, lowest rate first. The page exists to
- * surface who is drifting away, and that name should not be somewhere in the
- * middle of an alphabet.
- */
+/** Attendance statistics (issue #15) — who is actually turning up. */
 import { useMemo, useState, type ReactNode } from "react";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";

@@ -1,12 +1,4 @@
-/**
- * The post body's markdown subset (issue #18).
- *
- * Two things matter here. The first is that a coach's text survives verbatim
- * when it is not formatting — a parser that swallows characters is worse than
- * one that formats nothing. The second is the link scheme allowlist: a body is
- * user input rendered to every family in the team, and `javascript:` in a link
- * is the one way it could otherwise become executable.
- */
+/** The post body's markdown subset (issue #18). */
 import { describe, expect, it } from "vitest";
 import { parseInline, parseRichText, plainSummary } from "./rich-text";
 
@@ -45,10 +37,6 @@ describe("parseInline", () => {
     expect(tokens.at(-1)).toEqual({ type: "text", text: ")" });
   });
 
-  // The security cases: a refused scheme must not become a link, and the text
-  // must survive verbatim rather than quietly disappearing. How the fallback
-  // happens to split into text tokens is not the point, so this asserts the two
-  // things that are.
   it("refuses a javascript: link and keeps the source visible", () => {
     const source = "[klicka](javascript:alert(1))";
     const tokens = parseInline(source);

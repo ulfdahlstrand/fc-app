@@ -1,19 +1,8 @@
+/** The security surface of call-up responses (ADR-016). */
 import { ORPCError } from "@orpc/server";
 import type { Kysely } from "kysely";
 import type { Database } from "../db/types.js";
 
-/**
- * The whole security surface of call-up responses (issue #17).
- *
- * A user may answer only for members they are **linked** to — themselves, or a
- * child they are guardian for (#9). Everything else in this feature is a list;
- * this is the part that must not be got wrong, so it lives on its own with
- * tests rather than inline in a handler.
- *
- * Holding `callups.respond` in the team is necessary but nowhere near
- * sufficient: every player in a squad holds it, and none of them may answer
- * for each other.
- */
 export async function isLinkedMember(
   db: Kysely<Database>,
   userId: string,

@@ -1,3 +1,4 @@
+/** Invitation CRUD and acceptance (ADR-004). */
 import { randomBytes } from "node:crypto";
 import { ORPCError } from "@orpc/server";
 import type { Kysely } from "kysely";
@@ -262,9 +263,6 @@ export const acceptInvitationHandler = os.acceptInvitation.handler(
       }
 
       if (invitation.member_id != null) {
-        // Guardian invitation: the point is the member link. The user may
-        // already be a club member, so don't fail on a duplicate membership —
-        // just ensure it exists, then create the link.
         await trx
           .insertInto("memberships")
           .values({

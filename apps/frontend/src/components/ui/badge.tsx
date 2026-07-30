@@ -1,16 +1,11 @@
+/** A shadcn/ui primitive, re-themed to Kit's tokens (ADR-007, DDR-001). */
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 
-/**
- * Kit badge: a full pill, semibold, no border by default.
- *
- * `present` / `absent` / `late` are the attendance states — one word each
- * (Here / Out / Late), tinted surface with the matching ink. `unset` is the
- * dashed ring Kit uses for "not decided yet"; dashed never means anything else.
- */
+/** Kit badge: a full pill, semibold, no border by default. */
 const badgeVariants = cva(
   "inline-flex items-center justify-center rounded-pill px-2.5 py-0.5 text-xs font-semibold w-fit whitespace-nowrap shrink-0 gap-1 [&>svg]:size-3 [&>svg]:pointer-events-none focus-visible:ring-ring/60 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 transition-colors duration-[120ms] ease-standard overflow-hidden",
   {

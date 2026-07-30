@@ -1,13 +1,4 @@
-/**
- * Dashboard (issue #20).
- *
- * One query for the whole page. Every widget arrives together, so the landing
- * page never renders a stack of independently-loading boxes — which is what
- * asking each feature's own endpoint would have produced.
- *
- * A null widget means the caller may not see it; an empty one means there is
- * nothing there yet. See `dashboardOutputSchema` for why the two differ.
- */
+/** Dashboard (issue #20). */
 import { useQuery } from "@tanstack/react-query";
 import type { DashboardAttendance } from "@fc-app/contracts";
 import { orpcQuery } from "./orpc-query";

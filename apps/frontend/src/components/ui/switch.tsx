@@ -1,3 +1,4 @@
+/** A shadcn/ui primitive, re-themed to Kit's tokens (ADR-007, DDR-001). */
 import * as React from "react";
 import * as SwitchPrimitive from "@radix-ui/react-switch";
 

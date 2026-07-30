@@ -1,11 +1,4 @@
-/**
- * The dashboard's trend arithmetic (issue #20).
- *
- * The widget's whole job is to say whether attendance is going up or down, so
- * the case that matters most is the one where it must refuse to say anything:
- * a team with no history to compare against has no trend, and inventing one
- * would be the first number on the page that is not true.
- */
+/** The dashboard's trend arithmetic (issue #20). */
 import { describe, expect, it } from "vitest";
 import { attendanceDelta } from "./dashboard";
 

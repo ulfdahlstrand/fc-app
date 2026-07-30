@@ -1,3 +1,4 @@
+/** Query-string booleans arrive as strings and must coerce. */
 import { describe, expect, it } from "vitest";
 import { queryBooleanSchema } from "@fc-app/contracts";
 

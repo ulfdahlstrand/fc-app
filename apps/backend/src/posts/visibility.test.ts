@@ -1,11 +1,4 @@
-/**
- * Post visibility (issue #18).
- *
- * The acceptance criterion asks for this explicitly: "a guardian whose members
- * are not in the targeted group does not see the targeted post (tested)". A
- * targeted announcement leaking to the wrong family is a privacy failure, so
- * every branch of the rule is pinned down here.
- */
+/** Post visibility (issue #18). */
 import { describe, expect, it } from "vitest";
 import { canSeePost, type PostViewer, type VisiblePost } from "./visibility.js";
 

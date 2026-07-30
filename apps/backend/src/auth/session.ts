@@ -1,14 +1,7 @@
+/** Opaque session tokens, stored hashed (ADR-004). */
 import { createHash, randomBytes } from "node:crypto";
 import type { Kysely } from "kysely";
 import type { Database } from "../db/types.js";
-
-// ---------------------------------------------------------------------------
-// Backend-managed sessions (ADR-004)
-//
-// The raw session token lives only in the user's HTTP-only cookie; the
-// database stores a SHA-256 hash, so a leaked database dump cannot be
-// replayed as live sessions.
-// ---------------------------------------------------------------------------
 
 export const SESSION_COOKIE = "fc_session";
 export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days

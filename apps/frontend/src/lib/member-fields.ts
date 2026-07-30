@@ -1,10 +1,4 @@
-/**
- * Custom member field data hooks (issue #8).
- *
- * Definitions are team-scoped and read with members.view (needed to render the
- * roster/detail); managing them requires settings.team. Field values are
- * written per member with members.manage.
- */
+/** Custom member field data hooks (issue #8). */
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   createMemberFieldInputSchema,

@@ -1,3 +1,4 @@
+/** An invitation's status, derived from its timestamps rather than stored. */
 import type { InvitationStatus } from "@fc-app/contracts";
 
 export interface InvitationLifecycle {
@@ -6,10 +7,7 @@ export interface InvitationLifecycle {
   revokedAt: Date | null;
 }
 
-/**
- * Derives an invitation's status. Precedence: revoked > used > expired >
- * active, so a revoked-then-expired link still reads as "revoked".
- */
+/** Derives an invitation's status. */
 export function invitationStatus(
   invitation: InvitationLifecycle,
   now: Date = new Date()

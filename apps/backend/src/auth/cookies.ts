@@ -1,7 +1,5 @@
-// ---------------------------------------------------------------------------
 // Minimal cookie helpers — enough for the session and OAuth-state cookies,
 // avoiding an extra dependency.
-// ---------------------------------------------------------------------------
 
 export function parseCookies(
   header: string | undefined
@@ -24,10 +22,7 @@ export interface CookieOptions {
   maxAgeSeconds?: number;
 }
 
-/**
- * Serializes an HTTP-only, SameSite=Lax cookie. `Secure` is added when
- * COOKIE_SECURE=true (production behind HTTPS); localhost dev works without.
- */
+/** Serializes an HTTP-only, SameSite=Lax cookie. */
 export function serializeCookie(
   name: string,
   value: string,

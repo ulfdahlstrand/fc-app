@@ -1,15 +1,9 @@
+/** Resolving an OAuth identity to a user, creating one on first sign-in. */
 import type { Kysely } from "kysely";
 import type { Database } from "../db/types.js";
 import type { OAuthProfile } from "./google.js";
 
-/**
- * Resolves an OAuth profile to a user id, creating rows as needed:
- *
- * 1. Known identity (provider + subject) → its user.
- * 2. Unknown identity but a user exists with the same email → link the new
- *    identity to that user (account linking by verified email, ADR-004).
- * 3. Otherwise → create a new user and link the identity.
- */
+/** Resolves an OAuth profile to a user id, creating rows as needed: 1. */
 export async function signInWithProfile(
   db: Kysely<Database>,
   profile: OAuthProfile

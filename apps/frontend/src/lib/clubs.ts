@@ -1,11 +1,4 @@
-/**
- * Club/team helpers for the frontend.
- *
- * `myClubs` (cached under ["myClubs"]) drives the onboarding redirect and
- * the club/team switcher. The selected team is kept in a tiny external
- * store backed by localStorage so any component can subscribe via
- * useSelectedTeam() and the choice survives reloads.
- */
+/** Club/team helpers for the frontend. */
 import { useSyncExternalStore } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createClubInputSchema } from "@fc-app/contracts";
@@ -89,10 +82,7 @@ export function useSelectedTeam(): SelectedTeam | null {
   return resolveSelectedTeam(clubs.data.clubs, storedTeamId);
 }
 
-/**
- * True when the caller holds `permission` in the selected team. Components use
- * it to gate UI actions; the backend enforces the same permission server-side.
- */
+/** True when the caller holds `permission` in the selected team. */
 export function useHasPermission(permission: Permission): boolean {
   const selected = useSelectedTeam();
   return selected?.team.permissions.includes(permission) ?? false;

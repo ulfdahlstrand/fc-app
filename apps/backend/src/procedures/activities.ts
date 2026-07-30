@@ -1,3 +1,4 @@
+/** The calendar: activities and series (ADR-008, ADR-009). */
 import { ORPCError } from "@orpc/server";
 import type { Kysely, Selectable } from "kysely";
 import type { Activity, ActivitySeries } from "@fc-app/contracts";
@@ -16,14 +17,7 @@ import type {
 import { os, requireUser } from "../orpc.js";
 import { requireTeamPermission } from "../tenancy/membership.js";
 
-/**
- * Activities (issue #12).
- *
- * Reading is gated on `members.view`, the same permission the calendar's
- * activity types (#11) need — a role that can see the team's people can see
- * its calendar, and a role granted only one of the two would render a calendar
- * it cannot label. Writing needs `activities.manage`.
- */
+/** Activities (issue #12). */
 function toActivity(row: Selectable<ActivitiesTable>): Activity {
   return {
     id: row.id,
@@ -118,9 +112,6 @@ export const listActivitiesHandler = os.listActivities.handler(
       query = query.where("activity_type_id", "=", input.activityTypeId);
     }
 
-    // A season is a date range, not a foreign key (#13): membership is decided
-    // by where the activity starts, so a corrected season re-answers it for
-    // every activity at once. See `seasonRange` for the boundary caveat.
     if (input.seasonId !== undefined) {
       const range = await seasonRange(db, input.teamId, input.seasonId);
       query = query
@@ -228,19 +219,7 @@ export const updateActivityHandler = os.updateActivity.handler(
   }
 );
 
-/**
- * Carries an edit forward through the rest of a series (#13).
- *
- * What travels: the type, title, location and notes, and — if the edit moved
- * the *time of day* — the new start and end times. What does not: the dates.
- * Each later occurrence keeps the day the coach put it on; only the clock
- * changes, which is what "every Tuesday, but from 18:30 now" means. Cancelling
- * stays per-occurrence, so a single called-off training is never resurrected
- * by a later edit.
- *
- * The series template is rewritten too, so the record of "what this series is"
- * matches what its remaining occurrences say.
- */
+/** Carries an edit forward through the rest of a series (#13). */
 async function applyToFollowing(
   db: Kysely<Database>,
   args: {

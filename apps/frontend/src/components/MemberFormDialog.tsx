@@ -1,11 +1,4 @@
-/**
- * Create/edit dialog for a member (issue #7).
- *
- * Reference implementation of the form pattern from ADR-007: react-hook-form
- * with a Zod schema derived from the API contract (`memberFormSchema`), shadcn
- * dialog/form primitives, and translated validation messages. New forms should
- * follow this shape — see `lib/form.ts`.
- */
+/** Create/edit dialog for a member (issue #7). */
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import type { Member } from "@fc-app/contracts";

@@ -1,3 +1,4 @@
+/** Squad selection. A squad is a draft until published (ADR-013). */
 import { ORPCError } from "@orpc/server";
 import type { Kysely, Selectable } from "kysely";
 import type {
@@ -14,13 +15,7 @@ import type {
 import { os, requireUser } from "../orpc.js";
 import { requireTeamPermission } from "../tenancy/membership.js";
 
-/**
- * Call-ups (issue #16) — the matchtrupp.
- *
- * Reading needs `members.view`; picking and publishing need `callups.manage`.
- * Responding is #17 and needs `callups.respond`, which is why the response
- * columns are read-only here.
- */
+/** Call-ups (issue #16) — the matchtrupp. */
 function toCallup(row: Selectable<CallupsTable>): Callup {
   return {
     id: row.id,

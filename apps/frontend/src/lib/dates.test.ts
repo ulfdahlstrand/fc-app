@@ -1,11 +1,4 @@
-/**
- * The calendar's date maths (issue #12). These pin the two things a month grid
- * gets wrong most easily: which day a week starts on, and whether the window
- * asked of the API covers exactly the cells being drawn.
- *
- * Assertions stay timezone-independent — the suite runs wherever the developer
- * happens to be.
- */
+/** The calendar's date maths (issue #12). */
 import { describe, expect, it } from "vitest";
 import {
   fromDateTimeInput,

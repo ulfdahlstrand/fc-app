@@ -1,13 +1,4 @@
-/**
- * Call-up responses (issue #17).
- *
- * Two audiences, one file: "what am I being asked" for players and guardians,
- * and "who has answered" for coaches.
- *
- * `myCallups` is driven by the guardian links (#9), not by the selected team —
- * a guardian with children in two teams is asked about both, and picking a
- * team in the switcher should not hide one of their questions.
- */
+/** Call-up responses (issue #17). */
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { CallupAnswer, MyCallup } from "@fc-app/contracts";
 import { orpc } from "../orpc-client";
@@ -34,9 +25,6 @@ export function useRespondToCallup() {
       note?: string | null;
     }) => orpc.respondToCallup(input),
     onSuccess: async (_data, input) => {
-      // The answer moves four views: my own list, the coach's overview, the
-      // squad on the activity page, and the dashboard that counts what is
-      // still unanswered.
       await queryClient.invalidateQueries({
         queryKey: orpcQuery.myCallups.key({ input: {} }),
       });

@@ -1,10 +1,4 @@
-/**
- * Activity type data hooks (issue #11).
- *
- * Types are team-scoped and read with members.view (the calendar needs them);
- * managing them requires settings.team. Types are archived, never deleted, so
- * activities that reference a retired type keep rendering.
- */
+/** Activity type hooks, and the colour-dot lookup Tailwind must see statically (ADR-018). */
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   activityColourSchema,
@@ -33,18 +27,10 @@ export type ActivityTypeFormValues = z.input<typeof activityTypeFormSchema>;
 /** What the API accepts, after parsing. */
 export type ActivityTypeFormOutput = z.output<typeof activityTypeFormSchema>;
 
-/**
- * The selectable colours, in the order the swatch row renders them.
- *
- * Kit allows three colour families and nothing else, so this is the whole
- * palette — see `activityColourSchema` in the contract.
- */
+/** The selectable colours, in the order the swatch row renders them. */
 export const ACTIVITY_COLOURS = activityColourSchema.options;
 
-/**
- * Kit swatch/dot classes per colour token. Kept as a lookup rather than an
- * interpolated class name so Tailwind can see every class at build time.
- */
+/** Kit swatch/dot classes per colour token. */
 export const ACTIVITY_COLOUR_DOT: Record<ActivityColour, string> = {
   green: "bg-brand",
   ink: "bg-ink",
@@ -53,12 +39,7 @@ export const ACTIVITY_COLOUR_DOT: Record<ActivityColour, string> = {
   neutral: "bg-[var(--neutral-450)]",
 };
 
-/**
- * Kit surface/text pairs per colour token, for the chips an activity gets on
- * the calendar (#12). The tints are the ones Kit already assigns to states —
- * present green, absent orange, late amber — plus solid ink, which Kit uses
- * for the "next fixture" card and therefore for matches.
- */
+/** Kit surface/text pairs per colour token, for the chips an activity gets on the calendar (#12). */
 export const ACTIVITY_COLOUR_CHIP: Record<ActivityColour, string> = {
   green: "bg-surface-present text-ink",
   ink: "bg-ink text-white",

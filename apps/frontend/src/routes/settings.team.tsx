@@ -1,9 +1,4 @@
-/**
- * Team settings — every piece of per-team configuration (ADR-005).
- *
- * Requires settings.team. Each section is its own component; they all follow the
- * same define/rename/archive shape (ADR-014).
- */
+/** Team settings — every piece of per-team configuration (ADR-005). */
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { Alert, AlertDescription } from "@/components/ui/alert";

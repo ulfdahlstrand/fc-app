@@ -1,3 +1,4 @@
+/** Tracking lists: definitions, the matrix, and one cell per write (ADR-014, ADR-019). */
 import { ORPCError } from "@orpc/server";
 import type { Kysely, Selectable } from "kysely";
 import {
@@ -11,22 +12,6 @@ import type { Database, TrackingDefinitionsTable } from "../db/types.js";
 import { os, requireUser } from "../orpc.js";
 import { requireTeamPermission } from "../tenancy/membership.js";
 
-/**
- * Tracking lists (issue #19).
- *
- * Three permissions, three different jobs:
- *
- *  - `members.view`   — read the definitions and the matrix. Whoever can see
- *                       the roster can see how far along it is.
- *  - `tracking.manage` — tick a box. The permission exists so a team can hand
- *                       "chase the paperwork" to someone who is not allowed to
- *                       edit the roster itself.
- *  - `settings.team`  — define or retire a list, like every other piece of team
- *                       configuration (ADR-005).
- *
- * Archiving a definition hides its column and preserves its entries: the point
- * of retiring "Grönt kort 2025" is to stop asking, not to forget who had one.
- */
 
 function toDefinition(
   row: Selectable<TrackingDefinitionsTable>
@@ -78,11 +63,7 @@ async function loadDefinition(
   return row;
 }
 
-/**
- * Turns the partial unique index into a sentence a coach can act on. The
- * constraint is still the thing that guarantees it — this only gets there first
- * so the message says what is wrong instead of naming an index.
- */
+/** Turns the partial unique index into a sentence a coach can act on. */
 async function assertNameAvailable(
   db: Kysely<Database>,
   teamId: string,
@@ -177,9 +158,6 @@ export const updateTrackingDefinitionHandler =
 
     const existing = await loadDefinition(db, input.teamId, input.definitionId);
 
-    // The value type is deliberately not editable. Flipping "Grönt kort" from a
-    // tick to a date would leave every stored "true" meaning nothing, and there
-    // is no honest way to convert them.
     if (input.name !== undefined && input.name !== existing.name) {
       await assertNameAvailable(
         db,
@@ -281,9 +259,6 @@ export const trackingMatrixHandler = os.trackingMatrix.handler(
             definitions.map((definition) => definition.id)
           ).execute();
 
-    // Cells for members outside the filtered rows are dropped here rather than
-    // in SQL: the row set may be a group, and an extra `in` on a list that is
-    // already in memory buys nothing.
     const visible = new Set(members.map((member) => member.id));
 
     return {
@@ -327,9 +302,6 @@ export const setTrackingEntryHandler = os.setTrackingEntry.handler(
       throw new ORPCError("NOT_FOUND", { message: "Member not found" });
     }
 
-    // Clearing deletes the row rather than storing a blank. A cell with no
-    // entry means "nobody has said yet", and that is exactly what unticking a
-    // box should put it back to.
     if (input.value === null || input.value.trim() === "") {
       await db
         .deleteFrom("tracking_entries")
@@ -397,9 +369,6 @@ export const memberTrackingHandler = os.memberTracking.handler(
       throw new ORPCError("NOT_FOUND", { message: "Member not found" });
     }
 
-    // Archived definitions are included here, unlike in the matrix: a value
-    // recorded before a list was retired is still part of this member's record,
-    // and the page is where someone goes to ask "did they ever have one?".
     const definitions = await db
       .selectFrom("tracking_definitions")
       .selectAll()

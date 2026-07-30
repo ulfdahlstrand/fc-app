@@ -1,12 +1,4 @@
-/**
- * shadcn/ui form primitives (ADR-007).
- *
- * Thin bindings between react-hook-form and the base components: `FormField`
- * wires a field to the form context, and `FormItem`/`FormLabel`/`FormControl`/
- * `FormDescription`/`FormMessage` render it with the right ids and aria wiring.
- * `FormMessage` shows the resolver's error text — see `lib/form.ts` for how
- * those messages are derived from the API contract and translated.
- */
+/** shadcn/ui form primitives (ADR-007). */
 import * as React from "react";
 import * as LabelPrimitive from "@radix-ui/react-label";
 import { Slot } from "@radix-ui/react-slot";

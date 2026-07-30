@@ -1,10 +1,4 @@
-/**
- * Login route — the only page a signed-out user sees.
- *
- * Sign-in is a full-page redirect to the backend's /auth/google endpoint;
- * after the OAuth dance the backend sets the session cookie and redirects
- * back to the app root. A failed attempt redirects here with ?error=auth_failed.
- */
+/** Login route — the only page a signed-out user sees. */
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { Alert, AlertDescription } from "@/components/ui/alert";

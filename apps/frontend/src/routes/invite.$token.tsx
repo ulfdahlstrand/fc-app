@@ -1,12 +1,4 @@
-/**
- * Invite acceptance route (issue #6).
- *
- * Works signed out: resolves the token to show which club/team and role the
- * invitation grants, plus its status. Signed-out visitors stash the token and
- * sign in with Google (returning here via the index redirect). Signed-in
- * visitors with an active invitation get an Accept button that joins them and
- * selects the new team.
- */
+/** Invite acceptance route (issue #6). */
 import { Loader2 } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";

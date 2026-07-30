@@ -1,3 +1,4 @@
+/** Migration — see ADR-006 for why schema changes only happen here. */
 import { sql, type Kysely } from "kysely";
 
 /**
@@ -25,9 +26,6 @@ export async function up(db: Kysely<unknown>): Promise<void> {
       col.notNull().references("teams.id").onDelete("cascade")
     )
     .addColumn("name", "text", (col) => col.notNull())
-    // done | date | text — see `trackingValueTypeSchema`. Stored as text for
-    // the same reason activity type colours are: the set grows by migration,
-    // not by an enum type that needs altering.
     .addColumn("value_type", "text", (col) => col.notNull())
     .addColumn("sort_order", "integer", (col) => col.notNull().defaultTo(0))
     .addColumn("archived", "boolean", (col) => col.notNull().defaultTo(false))
@@ -42,9 +40,6 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     .column("team_id")
     .execute();
 
-  // Two live definitions may not share a name — "Grönt kort" twice in the
-  // matrix is two columns nobody can tell apart. Partial, so an archived one
-  // never blocks reusing its name.
   await db.schema
     .createIndex("tracking_definitions_team_id_name_key")
     .on("tracking_definitions")

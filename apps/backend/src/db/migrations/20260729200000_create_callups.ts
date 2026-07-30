@@ -1,21 +1,7 @@
+/** Migration — see ADR-006 for why schema changes only happen here. */
 import { sql, type Kysely } from "kysely";
 
-/**
- * Call-ups (issue #16) — the matchtrupp.
- *
- * One call-up per activity, hence the unique index on `activity_id`: a squad
- * is the answer to "who is playing this match", and an activity can only have
- * one of those.
- *
- * `published` separates picking the squad from telling it. Selecting fourteen
- * names has to be possible without anyone's phone buzzing on each tap, so a
- * call-up stays a draft until a coach says otherwise.
- *
- * An invitation starts as `pending` — not decided yet, which Kit draws as a
- * dashed ring. #17 lets players and guardians answer for themselves; the
- * columns for their answer exist from the start so that issue adds behaviour
- * rather than a migration.
- */
+/** Call-ups (issue #16) — the matchtrupp. */
 export async function up(db: Kysely<unknown>): Promise<void> {
   await db.schema
     .createTable("callups")

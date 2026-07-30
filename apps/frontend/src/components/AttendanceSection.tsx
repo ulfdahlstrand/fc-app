@@ -1,15 +1,4 @@
-/**
- * Attendance registration (issue #14) — the screen Kit was designed for.
- *
- * The whole interaction is one tap per exception: "All here" marks everyone
- * unmarked, then the coach taps the two or three who aren't. Marks live in
- * local state and go to the API in one bulk save, because this happens at the
- * side of a pitch on a connection that may not be there.
- *
- * Statuses are team configuration (#14), so the fixed present/absent/late of
- * the source design becomes a cycle through whatever the team defined, keyed
- * on each status's Kit colour token.
- */
+/** Attendance registration (issue #14) — the screen Kit was designed for. */
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Activity, AttendanceStatus, Member } from "@fc-app/contracts";

@@ -1,13 +1,4 @@
-/**
- * A member's attendance history (issue #15) on the member detail page.
- *
- * Shows the most recent activities with what this member was marked as, and
- * the rate over exactly that window — so the numbers on screen always add up
- * to the percentage next to them.
- *
- * An activity with no mark is a gap, not an absence: attendance was never
- * taken, and Kit draws "not decided yet" as a dashed ring.
- */
+/** A member's attendance history (issue #15) on the member detail page. */
 import { useMemo } from "react";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";

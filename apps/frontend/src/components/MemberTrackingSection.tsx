@@ -1,15 +1,4 @@
-/**
- * A member's tracking status (issue #19) on the member detail page.
- *
- * The same facts as one row of the /tracking matrix, laid out to be read rather
- * than filled in — this is where someone comes to ask "has this one got their
- * Grönt kort?" and, if it is ticked, who signed off on it.
- *
- * Archived definitions appear here when the member has an entry against them,
- * unlike in the matrix: a value recorded before a list was retired is still part
- * of this person's record. An empty cell is Kit's dashed ring — nobody has said
- * yet, which is not the same as "no".
- */
+/** A member's tracking status (issue #19) on the member detail page. */
 import { useTranslation } from "react-i18next";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";

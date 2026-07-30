@@ -1,3 +1,4 @@
+/** First sign-in creates a user; a returning identity reuses one. */
 import { describe, expect, it, vi } from "vitest";
 import type { Kysely } from "kysely";
 import type { Database } from "../db/types.js";
@@ -14,10 +15,7 @@ const PROFILE: OAuthProfile = {
 
 const USER_ID = "550e8400-e29b-41d4-a716-446655440000";
 
-/**
- * Mock Kysely instance covering the three query shapes used by
- * signInWithProfile. Behaviour is controlled per test via the arguments.
- */
+/** Mock Kysely instance covering the three query shapes used by signInWithProfile. */
 function buildDbMock(options: {
   identityRow?: { user_id: string } | undefined;
   userRow?: { id: string } | undefined;

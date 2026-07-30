@@ -1,3 +1,4 @@
+/** `me` returns null rather than throwing when unauthenticated. */
 import { call } from "@orpc/server";
 import { describe, expect, it } from "vitest";
 import { meHandler } from "./me.js";

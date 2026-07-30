@@ -1,20 +1,10 @@
+/** A season's date range as instants. Boundaries are UTC midnight (ADR-008). */
 import { ORPCError } from "@orpc/server";
 import { addDays } from "date-fns";
 import type { Kysely } from "kysely";
 import type { Database } from "../db/types.js";
 
-/**
- * The half-open instant range a season covers (#13), for narrowing an
- * activity query. `ends_on` is inclusive, hence "< the day after".
- *
- * The boundaries are read as UTC midnight. Teams do not carry a timezone yet,
- * and a season is months long, so the only thing this can misplace is an
- * activity within a couple of hours of midnight on the very first or last day.
- * Worth revisiting if teams ever gain a zone of their own.
- *
- * Shared by the calendar (#12) and the statistics page (#15) so the two can
- * never disagree about which activities a season contains.
- */
+/** The half-open instant range a season covers (#13), for narrowing an activity query. */
 export async function seasonRange(
   db: Kysely<Database>,
   teamId: string,

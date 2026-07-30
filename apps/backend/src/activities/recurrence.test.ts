@@ -1,8 +1,4 @@
-/**
- * Occurrence generation (issue #13). The cases that matter are the calendar
- * ones: the right weekdays, the right count, and 18:00 staying 18:00 when the
- * clocks move.
- */
+/** Occurrence generation (issue #13). */
 import { describe, expect, it } from "vitest";
 import { MAX_SERIES_OCCURRENCES } from "@fc-app/contracts";
 import {

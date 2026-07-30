@@ -1,3 +1,4 @@
+/** The noticeboard. Reading needs team access only (ADR-011, ADR-016). */
 import { ORPCError } from "@orpc/server";
 import type { Kysely } from "kysely";
 import type { Post } from "@fc-app/contracts";
@@ -10,17 +11,7 @@ import {
   requireTeamPermission,
 } from "../tenancy/membership.js";
 
-/**
- * Posts and announcements (issue #18).
- *
- * Writing needs `posts.manage`. Reading needs only team access — being
- * announced to is not a permission, it is what belonging to a team means — and
- * *what* a reader gets back is decided by `canSeePost` in `posts/visibility.ts`,
- * which is where the rule and its tests live.
- *
- * Targeting is stored as absence: no rows in `post_targets` means the whole
- * team. Nothing here ever writes a row per group to mean "everyone".
- */
+/** Posts and announcements (issue #18). */
 
 interface PostRow {
   id: string;
@@ -130,10 +121,7 @@ async function reload(
   return toPost(row, targets.get(postId) ?? []);
 }
 
-/**
- * Every target must be a group in *this* team. Without this, a valid group id
- * from another team would silently widen who a post reaches.
- */
+/** Every target must be a group in *this* team. */
 async function assertGroupsInTeam(
   db: Kysely<Database>,
   teamId: string,
@@ -171,11 +159,7 @@ async function replaceTargets(
   });
 }
 
-/**
- * Pinned first, then newest. Drafts sort by when they were written, since they
- * have no publication date yet — they only ever appear to their own author's
- * role, at the top, which is where unfinished work belongs.
- */
+/** Pinned first, then newest. */
 function feedOrder(a: Post, b: Post): number {
   if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
   const aTime = new Date(a.publishedAt ?? a.createdAt).getTime();
@@ -241,9 +225,6 @@ export const getPostHandler = os.getPost.handler(async ({ input, context }) => {
     ? new Set<string>()
     : await viewerGroupIds(db, user.id, input.teamId);
 
-  // NOT_FOUND rather than FORBIDDEN: that a post exists is itself part of what
-  // targeting withholds, so a reader must not be able to tell the difference
-  // between "no such post" and "not for you".
   if (
     !canSeePost(
       {
@@ -358,10 +339,6 @@ export const deletePostHandler = os.deletePost.handler(
 
     await loadPostRow(db, input.teamId, input.postId);
 
-    // Genuinely deleted, unlike activities or members. A post is a message, not
-    // a record: withdrawing one that was wrong is the point, and an archived
-    // announcement nobody can see is just a row nobody will ever read.
-    // `post_targets` goes with it by cascade.
     await db
       .deleteFrom("posts")
       .where("id", "=", input.postId)

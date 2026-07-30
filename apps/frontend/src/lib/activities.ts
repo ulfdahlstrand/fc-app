@@ -1,11 +1,4 @@
-/**
- * Activity data hooks (issue #12) — the calendar's rows.
- *
- * Reading needs members.view (the same permission the calendar's activity
- * types need); creating, editing and cancelling need activities.manage.
- * Activities are cancelled, never deleted, so a called-off training stays on
- * the calendar struck through.
- */
+/** Activity data hooks (issue #12) — the calendar's rows. */
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   activityWriteFields,
@@ -111,12 +104,7 @@ function optionalDateTime<T extends z.ZodType<unknown, string | null>>(
     .pipe(field);
 }
 
-/**
- * Form schema for the create/edit dialog, derived from the contract's write
- * fields (ADR-007). The cross-field rule is restated here rather than reused
- * from the contract because it has to run against the *parsed* instants, and
- * because the form needs the message on the `endsAt` field.
- */
+/** Form schema for the create/edit dialog, derived from the contract's write fields (ADR-007). */
 export const activityFormSchema = z
   .object({
     activityTypeId: requiredText(activityWriteFields.activityTypeId),
@@ -190,11 +178,7 @@ export function toActivityInput(form: ActivityFormOutput): ActivityWriteInput {
   };
 }
 
-/**
- * The series payload. The first occurrence's date becomes the series' start
- * and its time of day becomes the template's — every later occurrence is
- * generated at that wall-clock time, not at a fixed offset from the first.
- */
+/** The series payload. */
 export function toRecurrenceInput(
   form: ActivityFormOutput,
 ): RecurrenceWriteInput {
@@ -234,11 +218,7 @@ export function useUpdateActivity(teamId: string) {
   });
 }
 
-/**
- * Creates a whole series in one call (#13). The browser's IANA zone travels
- * with it: the backend generates each occurrence from its own local date, so
- * 18:00 stays 18:00 when the clocks move.
- */
+/** Creates a whole series in one call (#13). */
 export function useCreateRecurringActivities(teamId: string) {
   return useMutation({
     mutationFn: (input: RecurrenceWriteInput) =>

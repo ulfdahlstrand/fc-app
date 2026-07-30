@@ -1,22 +1,7 @@
+/** Migration — see ADR-006 for why schema changes only happen here. */
 import { sql, type Kysely } from "kysely";
 
-/**
- * Posts and announcements (issue #18).
- *
- * A post is either for the whole team or for particular groups (#10). That is
- * expressed by absence: **no rows in `post_targets` means the whole team.** The
- * alternative — a row per group at creation, or a boolean saying "everyone" —
- * would let the two disagree with each other, and then a post could be both
- * team-wide and targeted at once.
- *
- * `published_at` is nullable: null is a draft, visible only to whoever may
- * manage posts. An announcement written in two sittings should not be half-told
- * to the team in between, the same reason a call-up squad (#17) stays a draft
- * until a coach publishes it.
- *
- * `author_id` survives the account that wrote it (ON DELETE SET NULL) — a
- * notice on the board does not stop being true when its author leaves the club.
- */
+/** Posts and announcements (issue #18). */
 export async function up(db: Kysely<unknown>): Promise<void> {
   await db.schema
     .createTable("posts")

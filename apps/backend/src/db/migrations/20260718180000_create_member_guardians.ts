@@ -1,14 +1,7 @@
+/** Migration — see ADR-006 for why schema changes only happen here. */
 import { sql, type Kysely } from "kysely";
 
-/**
- * Guardians (issue #9): links a user account to a member. `relation` is
- * 'guardian' (parent/carer) or 'self' (the player's own account). A user can
- * link to several members and a member can have several guardians, so the
- * primary key is the (member, user) pair.
- *
- * Invitations gain an optional member reference so a guardian can be invited
- * by link: accepting a member-bound invitation also creates the link.
- */
+/** Guardians (issue #9): links a user account to a member. */
 export async function up(db: Kysely<unknown>): Promise<void> {
   await db.schema
     .createTable("member_guardians")

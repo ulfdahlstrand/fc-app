@@ -1,16 +1,10 @@
+/** Migration runner — the only mechanism that touches schema (ADR-006). */
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import type { Migration, MigrationProvider } from "kysely";
 import { Migrator } from "kysely";
 import { getDb } from "./client.js";
-
-// ---------------------------------------------------------------------------
-// Migration runner CLI
-//
-// Runs all pending Kysely migrations to bring the database schema up to date.
-// Usage: npm run migrate -w apps/backend
-// ---------------------------------------------------------------------------
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 

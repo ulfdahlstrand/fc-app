@@ -1,6 +1,4 @@
-/**
- * Group data hooks (issue #10). All queries are team-scoped.
- */
+/** Group data hooks (issue #10). */
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createGroupInputSchema } from "@fc-app/contracts";
 import { z } from "zod";

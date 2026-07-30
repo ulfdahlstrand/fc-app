@@ -1,10 +1,4 @@
-/**
- * Guardian data hooks (issue #9).
- *
- * Guardian links are read with members.view and managed with members.manage.
- * "My members" is available to any signed-in user (the members they are
- * linked to, across clubs).
- */
+/** Guardian data hooks (issue #9). */
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { GuardianRelation } from "@fc-app/contracts";
 import { orpc } from "../orpc-client";

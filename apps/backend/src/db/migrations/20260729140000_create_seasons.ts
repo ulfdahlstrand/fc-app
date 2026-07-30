@@ -1,19 +1,7 @@
+/** Migration — see ADR-006 for why schema changes only happen here. */
 import { sql, type Kysely } from "kysely";
 
-/**
- * Seasons (issue #13) — the period a team's work is measured in: "Autumn
- * 2026", "Season 2026/27". Statistics (#15) are read per season, and the
- * activity list can be narrowed to one.
- *
- * A season is a named date range and nothing more. Activities are *not* linked
- * to a season by foreign key: membership is derived from the activity's start
- * date falling inside the range. Correcting a season's dates then re-answers
- * the question for every activity at once, instead of leaving a trail of rows
- * pointing at the wrong season.
- *
- * `starts_on`/`ends_on` are DATE, not timestamptz — a season starts on a day,
- * not at an instant.
- */
+/** Seasons (issue #13) — the period a team's work is measured in: "Autumn 2026", "Season 2026/27". */
 export async function up(db: Kysely<unknown>): Promise<void> {
   await db.schema
     .createTable("seasons")

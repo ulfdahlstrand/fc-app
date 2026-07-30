@@ -1,8 +1,4 @@
-/**
- * Guardians section on the member detail page (issue #9). Lists linked user
- * accounts and, with members.manage, lets a manager link an existing club
- * user (as guardian or self) or unlink one.
- */
+/** Guardians section on the member detail page (issue #9). */
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { GuardianRelation } from "@fc-app/contracts";

@@ -1,10 +1,4 @@
-/**
- * Grouping "my call-ups" (issue #17).
- *
- * A guardian with two children in the same squad is asked twice, and the two
- * questions must land in one card as two rows — not as the same match listed
- * twice, which reads like a bug.
- */
+/** Grouping "my call-ups" (issue #17). */
 import { describe, expect, it } from "vitest";
 import type { MyCallup } from "@fc-app/contracts";
 import { groupByActivity } from "./callup-responses";

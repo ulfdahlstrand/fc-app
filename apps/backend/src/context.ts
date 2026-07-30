@@ -1,3 +1,4 @@
+/** Per-request context: the session user, resolved once. */
 import type { IncomingMessage } from "node:http";
 import { parseCookies } from "./auth/cookies.js";
 import {
@@ -7,10 +8,7 @@ import {
 } from "./auth/session.js";
 import { getDb } from "./db/client.js";
 
-/**
- * oRPC request context — available to every procedure handler.
- * `user` is resolved from the session cookie (null when signed out).
- */
+/** oRPC request context — available to every procedure handler. */
 export interface AppContext {
   user: AuthUser | null;
 }

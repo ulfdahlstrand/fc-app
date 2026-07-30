@@ -1,13 +1,4 @@
-/**
- * Posts and announcements (issue #18).
- *
- * Reading needs only team access — being announced to is what belonging to a
- * team means — and the backend decides *what* comes back (`posts/visibility.ts`).
- * Writing needs posts.manage.
- *
- * The feed arrives already ordered, pinned first: the ordering is part of the
- * answer, not something the page re-derives.
- */
+/** Posts and announcements (issue #18). */
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createPostInputSchema } from "@fc-app/contracts";
 import { z } from "zod";
@@ -16,12 +7,7 @@ import { queryClient } from "../query-client";
 import { requiredText } from "./form";
 import { orpcQuery } from "./orpc-query";
 
-/**
- * The editor's form, derived from the contract's create input (ADR-007). The
- * target groups are not here: they are a set of checkboxes held as local state,
- * and "empty means the whole team" is a rule the form states in words rather
- * than something a validator can express.
- */
+/** The editor's form, derived from the contract's create input (ADR-007). */
 export const postFormSchema = z.object({
   title: requiredText(createPostInputSchema.shape.title),
   body: requiredText(createPostInputSchema.shape.body),

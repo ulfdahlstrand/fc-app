@@ -1,10 +1,4 @@
-/**
- * Invitation data hooks (issue #6).
- *
- * Admin-side hooks (list/create/revoke) are club-scoped and gated server-side
- * by settings.club. The public getInvitation resolves a token before sign-in;
- * acceptInvitation joins the caller to the club/team.
- */
+/** Invitation data hooks (issue #6). */
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createInvitationInputSchema, type Permission } from "@fc-app/contracts";
 import { z } from "zod";
@@ -13,14 +7,7 @@ import { queryClient } from "../query-client";
 import { optionalText } from "./form";
 import { orpcQuery } from "./orpc-query";
 
-/**
- * Form schema for creating an invitation, derived from the contract's input
- * (ADR-007). `roleId` comes from a required `<Select>` rather than free text,
- * so it's validated with a plain non-empty check instead of the contract's
- * bare `z.string()` (an id reference has no length rule to restate); `teamId`
- * and `email` are optional selects/inputs, each `""` mapped to `null`. See
- * `lib/form.ts`.
- */
+/** Form schema for creating an invitation, derived from the contract's input (ADR-007). */
 export const invitationFormSchema = z.object({
   roleId: z.string().trim().min(1),
   teamId: optionalText(createInvitationInputSchema.shape.teamId.unwrap()),
@@ -71,12 +58,6 @@ export function useRevokeInvitation(clubId: string) {
 export function invitationLink(token: string): string {
   return `${window.location.origin}/invite/${token}`;
 }
-
-// --- Pending invite across the OAuth redirect -------------------------------
-//
-// Google sign-in returns to the app root, losing the invite context. The
-// invite page stashes its token here before starting sign-in; the index
-// route reads it back and redirects the freshly signed-in user to the invite.
 
 const PENDING_INVITE_KEY = "fc-app.pending-invite";
 

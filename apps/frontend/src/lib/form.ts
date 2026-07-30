@@ -1,24 +1,4 @@
-/**
- * Form foundation: react-hook-form + Zod derived from the API contract (ADR-007).
- *
- * The pattern every form in this app follows:
- *
- * 1. Build a *form schema* from `@fc-app/contracts` write fields, wrapping each
- *    one with the helpers below. HTML inputs always produce strings, so the
- *    helpers trim, map "" to null and coerce numbers, then `.pipe()` into the
- *    contract field — the rules (lengths, ranges, email format) live in the
- *    contract only, never restated here.
- * 2. Type the form with `z.input<typeof schema>` (what the inputs hold) and
- *    `z.output<typeof schema>` (what the API takes). `handleSubmit` receives
- *    the parsed output, so no manual trimming/parsing at the call site.
- * 3. Create the resolver with `useZodResolver(schema, "<i18n prefix>")` and
- *    render fields with the `components/ui/form` primitives.
- *
- * Error messages are translated in the resolver, looked up in this order:
- *   `<prefix>.<field>.<zod issue code>` → `validation.<zod issue code>` →
- *   Zod's own English message (last-resort fallback).
- * That keeps validation rules in the contract and their wording in i18n.
- */
+/** Form foundation: react-hook-form with Zod derived from the contract (ADR-007, ADR-010). */
 import { useMemo } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { FieldErrors, FieldValues, Resolver } from "react-hook-form";
@@ -54,10 +34,7 @@ export function optionalNumber<T extends z.ZodType<unknown, number | null>>(
 
 type Translate = (key: string, options: { defaultValue: string }) => string;
 
-/**
- * Rewrites the resolver's messages to translated ones. Zod's issue code is
- * exposed by `zodResolver` as the error's `type`, which is what we key on.
- */
+/** Rewrites the resolver's messages to translated ones. */
 function translateErrors<TFieldValues extends FieldValues>(
   errors: FieldErrors<TFieldValues>,
   t: Translate,
@@ -84,13 +61,7 @@ function translateErrors<TFieldValues extends FieldValues>(
   return translated as FieldErrors<TFieldValues>;
 }
 
-/**
- * A `zodResolver` that validates against `schema` and translates the messages.
- *
- * `messagePrefix` scopes field-specific wording, e.g. `"members.validation"`
- * resolves `members.validation.birthYear.too_small` before falling back to the
- * generic `validation.too_small`.
- */
+/** A `zodResolver` that validates against `schema` and translates the messages. */
 export function useZodResolver<
   TSchema extends z.ZodType<FieldValues, FieldValues>,
 >(

@@ -1,3 +1,4 @@
+/** Answering a call-up, and the coach's overview (ADR-013, ADR-016). */
 import { ORPCError } from "@orpc/server";
 import type { CallupResponse, CallupSummary, MyCallup } from "@fc-app/contracts";
 import {
@@ -12,16 +13,7 @@ import {
 } from "../tenancy/membership.js";
 import { toInvitation } from "./callups.js";
 
-/**
- * Call-up responses (issue #17).
- *
- * Answering needs `callups.respond` in the team **and** a link to the member
- * (#9) — every player in a squad holds the permission, and none of them may
- * answer for each other. See `callups/linked-members.ts`.
- *
- * The coach's overview needs `members.view`, the same permission the calendar
- * and roster need.
- */
+/** Call-up responses (issue #17). */
 export const respondToCallupHandler = os.respondToCallup.handler(
   async ({ input, context }) => {
     const user = requireUser(context);
@@ -90,16 +82,7 @@ export const respondToCallupHandler = os.respondToCallup.handler(
   }
 );
 
-/**
- * The call-ups a user has been asked about, for every member they are linked
- * to (#9). Shared with the dashboard (#20), which asks the same question
- * narrowed to one team.
- *
- * Driven by the guardian links, not by team membership: this is "what am I
- * being asked", and by default it spans every club and team the user is linked
- * into. Because the links *are* the authorisation, no permission check belongs
- * here — a user can only ever reach members they are attached to.
- */
+/** The call-ups a user has been asked about, for every member they are linked to (#9). */
 export async function loadMyCallups(
   db: ReturnType<typeof getDb>,
   userId: string,
@@ -148,10 +131,6 @@ export async function loadMyCallups(
     // What is still to come. A call-up for last Tuesday is not a question.
     .where("activities.starts_at", ">=", new Date());
 
-  // The dashboard (#20) is a team page, so it narrows to the selected team —
-  // the standalone page deliberately does not, because a guardian with
-  // children in two teams should not have half their questions hidden by the
-  // team switcher.
   if (options.teamId !== undefined) {
     query = query.where("activities.team_id", "=", options.teamId);
   }
@@ -264,9 +243,6 @@ export const listCallupsHandler = os.listCallups.handler(
 
     return {
       callups,
-      // Only published squads have questions outstanding; a draft is nobody's
-      // to answer yet, so counting it would make the dashboard nag about work
-      // the coach has not finished.
       pending: callups
         .filter((one) => one.published)
         .reduce((sum, one) => sum + one.pending, 0),

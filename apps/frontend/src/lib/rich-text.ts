@@ -1,23 +1,4 @@
-/**
- * The small markdown subset a post body understands (issue #18).
- *
- * Parsed to a token tree here and rendered as React elements by `RichText`.
- * Deliberately **not** an HTML pipeline: nothing this produces is ever handed to
- * `dangerouslySetInnerHTML`, so a body containing `<script>` is text, exactly as
- * typed, and there is no sanitiser to get wrong. It also needs no dependency.
- *
- * What it supports is what a club announcement actually uses:
- *
- *   Blank line          — new paragraph
- *   Single newline      — line break inside a paragraph
- *   `- item`            — bullet list
- *   `**bold**`          — bold
- *   `[text](url)`       — link
- *   bare https://…      — link
- *
- * Anything else stays literal. A body that renders `**` as two asterisks is a
- * small disappointment; a half-parsed one that swallows a coach's text is worse.
- */
+/** The markdown subset a post body understands. Parsed to tokens, never HTML (ADR-017). */
 
 export type Inline =
   | { type: "text"; text: string }
@@ -28,11 +9,7 @@ export type Block =
   | { type: "paragraph"; lines: Inline[][] }
   | { type: "list"; items: Inline[][] };
 
-/**
- * Only http and https survive. `javascript:` in a link is the one way a body
- * could otherwise become executable, and a scheme allowlist is the check that
- * cannot be talked around — not a blocklist of the schemes we thought of.
- */
+/** Only http and https survive. */
 function safeHref(raw: string): string | null {
   const trimmed = raw.trim();
   // Reject anything with whitespace or control characters rather than trying to

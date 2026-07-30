@@ -1,3 +1,4 @@
+/** The signed-in user, or null. */
 import { os } from "../orpc.js";
 
 /**
