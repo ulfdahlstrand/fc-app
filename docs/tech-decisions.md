@@ -267,3 +267,361 @@ wrong season.
   season's first or last day can land on the wrong side; revisit if teams ever
   gain a zone.
 - New backend dependencies: `date-fns`, `date-fns-tz`.
+
+---
+
+## ADR-009 — 2026-07-30 — Time: instants on the wire, local wall time on screen
+
+**Status:** Accepted
+
+**Context:**
+Three representations of time are in play and mixing them produces bugs that only
+show up twice a year or west of UTC: ISO instants in the API, the viewer's local
+wall time on screen, and `<input type="datetime-local">`, which has no zone at
+all and holds `"2026-08-01T17:30"` meaning "17:30 where I am".
+
+**Decision:**
+- The API speaks **ISO instants with an offset** (`isoInstantSchema`). Postgres
+  columns are `timestamptz`.
+- A **date** that is a day rather than a moment is a `date` column and a
+  `"YYYY-MM-DD"` string: `seasons.starts_on`, `activity_series.starts_on`,
+  tracking `date` values. A season starts on a day, not at an instant.
+- Both conversions live in `frontend/src/lib/dates.ts` **and nowhere else**.
+  `toDateTimeInput` / `fromDateTimeInput` are the only bridge to and from the
+  zone-less input; `toISOString()` slicing is never used for it.
+- Series templates store local wall time plus an IANA zone (ADR-008), and
+  occurrences are resolved per calendar date through `date-fns-tz`.
+- Ranges are **half-open**: `to` is the first instant *after* the window, so two
+  adjacent month grids never both claim the same activity.
+- Weeks start on Monday.
+
+**Consequences:**
+- A new date field must be classified as instant-or-day before it is added.
+- `browserTimeZone()` falls back to `Europe/Stockholm`: a series that is
+  wrong by an hour beats one that fails to be created.
+- The season filter reads its boundaries as UTC midnight because teams carry no
+  timezone (see ADR-008's consequences).
+
+---
+
+## ADR-010 — 2026-07-30 — Shared rules live in the contract, not on both sides of the wire
+
+**Status:** Accepted
+
+**Context:**
+Several rules are needed by the backend to enforce and by the frontend to render:
+what makes a field value valid, what counts as "at risk", whether a tracking box
+is settled. Implemented twice, they drift — and the visible symptom is a number
+on one screen contradicting the screen it links to.
+
+**Decision:**
+Rules that both sides need are **pure functions and constants exported from
+`@fc-app/contracts`**, alongside the schemas they belong to:
+
+- `validateMemberFieldValue`, `validateTrackingValue` — validate and normalise.
+- `isAtRisk`, `AT_RISK_RATE`, `AT_RISK_MIN_MARKED` — the attendance threshold.
+- `isTrackingComplete` — whether a definition is settled for a member.
+- `postWriteFields`, `memberWriteFields` and friends — the field rules a form
+  builds its schema from (ADR-007), so lengths and formats are stated once.
+
+Frontend `lib/*` re-exports rather than reimplements
+(`export { AT_RISK_RATE, isAtRisk } from "@fc-app/contracts"`).
+
+**Consequences:**
+- The contract package holds a little logic, not only schemas. That is the point.
+- These functions are the ones most worth testing, and they are tested from the
+  backend suite (the contracts package has no test runner of its own).
+- A rule expressed as SQL for performance must cite the function it mirrors, so
+  the two are found together.
+
+---
+
+## ADR-011 — 2026-07-30 — Read and write gates are chosen per question, not per feature
+
+**Status:** Accepted
+
+**Context:**
+It is tempting to give each feature one permission. That produces either a role
+that can see a calendar it cannot label, or a permission granted so widely it
+means nothing.
+
+**Decision:**
+Permissions gate *questions*, and a feature may use several:
+
+| Question | Gate |
+|---|---|
+| Can I see the team's people, calendar, statistics, matrix? | `members.view` |
+| Can I change team configuration? | `settings.team` |
+| Can I record attendance / tick tracking / manage squads / write posts? | `attendance.record` / `tracking.manage` / `callups.manage` / `posts.manage` |
+| Can I answer for a member I am linked to? | `callups.respond` **plus** a guardian link (#9) |
+| Can I read the noticeboard? | **team access alone** |
+
+Two consequences of that last row are deliberate: being announced to is what
+belonging to a team means, so reading posts needs no permission; and holding
+`members.view` grants no sight of a *targeted* post, because seeing the roster
+and being addressed by an announcement are different questions.
+
+Reads that render a composite page use `requireTeamAccess` and then decide
+**per widget** (ADR-015), so nobody is shown an empty frame belonging to someone
+else's role.
+
+**Consequences:**
+- `tracking.manage` exists separately from `members.manage` so a club can hand
+  out "chase the paperwork" without handing over the roster.
+- A new procedure must state which question it answers before picking a gate.
+
+---
+
+## ADR-012 — 2026-07-30 — Attendance rate is attended ÷ marked
+
+**Status:** Accepted
+
+**Context:**
+The intuitive denominator is "sessions held". Using it makes every member's rate
+fall whenever a coach forgets to take attendance, which punishes the squad for
+the coach's phone.
+
+**Decision:**
+The rate is **attended ÷ marked**. A session nobody was marked at is *unknown*,
+not an absence, and contributes to neither side. `activities` is reported
+alongside so the gap between it and `marked` is visible as coverage a coach may
+want to close. `null` is returned when nothing is marked — no rate can be
+honestly stated.
+
+The team rate is computed from the **totals**, not as an average of member rates,
+so someone marked once at 100% does not weigh as much as someone marked twenty
+times. Cancelled activities are excluded everywhere: a called-off training is not
+a session anyone failed to attend. Archived *statuses* still count — a record
+made under "Late" before it was retired was a presence then and stays one now.
+
+The arithmetic is a pure function (`attendance/summarise.ts`) over rows the
+handler has already fetched, rather than SQL. A team-season is hundreds of rows,
+and this is the part a coach will check by hand.
+
+**Consequences:**
+- Members with nothing marked have no rate and sort last; the list is ordered
+  lowest-rate-first, because the page exists to surface who is drifting away.
+- "At risk" is a shared threshold (ADR-010), not a per-screen judgement.
+
+---
+
+## ADR-013 — 2026-07-30 — Draft until told
+
+**Status:** Accepted
+
+**Context:**
+Picking a squad and telling people are different acts, and so are writing an
+announcement and publishing it. Without a draft state, half-finished work is
+already visible to the team.
+
+**Decision:**
+Anything the team is *told* has an explicit published state:
+
+- `callups.published` — a boolean; a squad is a draft until a coach publishes.
+- `posts.published_at` — nullable; `null` is a draft, and the timestamp doubles
+  as the publication date.
+
+Unpublished records are visible only to callers who may manage them, and are
+excluded from every count and notification. Re-publishing **keeps the original
+date**: a corrected typo does not make an announcement new and must not jump
+back to the top of the feed.
+
+**Consequences:**
+- Dashboard and overview counts ignore drafts, so they never nag a coach about
+  work they have not finished.
+- A reader passing `includeDrafts` gets nothing extra; the flag narrows a
+  manager's own view, it does not widen a reader's.
+
+---
+
+## ADR-014 — 2026-07-30 — Archive configuration, delete messages, and let absence mean something
+
+**Status:** Accepted
+
+**Context:**
+"Delete" means different things for a definition, a record and a message, and
+getting it wrong either loses history or leaves rows nobody can act on.
+
+**Decision:**
+Three rules:
+
+1. **Configuration archives, never deletes.** Activity types, attendance
+   statuses, member field definitions and tracking definitions get an `archived`
+   flag. The records made under them survive: retiring "Grönt kort 2025" stops
+   the asking, it does not forget who had one. Archived definitions are hidden
+   from the pickers but still resolve for display.
+2. **Domain records are cancelled, not removed.** A cancelled activity stays on
+   the calendar struck through so nobody turns up at the pitch.
+3. **Messages are genuinely deleted.** A post is a message, not a record —
+   withdrawing one that was wrong is the point, and an archived announcement
+   nobody can see is a row nobody will ever read.
+
+Two supporting mechanisms:
+
+- **Clearing a value deletes its row** rather than writing a falsy one, so
+  "nobody has said yet" is representable (DDR-006). A tracking `done` entry only
+  ever stores `"true"`.
+- **Absence carries meaning where a flag would let two truths disagree.** No rows
+  in `post_targets` means the whole team; a boolean "for everyone" alongside a
+  target list could contradict it, and then a post would be both team-wide and
+  targeted at once.
+- Uniqueness on a name is a **partial unique index** `WHERE archived = false`, so
+  two live definitions cannot share a name but a retired one never blocks reusing
+  its own. Un-archiving re-checks the name.
+
+**Consequences:**
+- Handlers turn constraint violations into sentences before the database does
+  (DDR-007).
+- Value types on a definition are immutable once created: flipping a tick list
+  to a date would leave every stored `"true"` meaning nothing.
+
+---
+
+## ADR-015 — 2026-07-30 — Composite pages get one aggregate procedure, and null ≠ empty
+
+**Status:** Accepted
+
+**Context:**
+The dashboard shows four features that each already have a page. Calling four
+procedures means four round trips that each re-resolve the caller's membership
+before doing any work, and a page that arrives as a stack of settling boxes.
+
+**Decision:**
+A page that aggregates features gets **one procedure** that gathers every widget
+in a single `Promise.all`, and denormalises what it needs (an activity carries
+its type's name and colour) so the page needs no second call to label itself.
+
+Every widget field is nullable, and the two empties mean different things:
+
+- **`null`** — the caller may not see this. The widget is **not rendered**.
+- **`[]` / `0`** — they may, and there is nothing there yet. The widget renders
+  its **empty state**.
+
+That distinction is what lets a parent and a coach share one page without the
+parent being shown an empty coach's dashboard.
+
+**Consequences:**
+- Adding a widget means one more element in the `Promise.all`, not one more
+  request. Verified: the dashboard renders on a single `GET /dashboard`.
+- Widgets whose feature has not shipped yet are simply absent from the contract,
+  and arrive with it.
+
+---
+
+## ADR-016 — 2026-07-30 — Security-critical rules are pure functions with their own tests
+
+**Status:** Accepted
+
+**Context:**
+Two features turn on a single access question, and in both the rest of the
+feature is a list and a form. Buried in a query, such a rule is untestable and
+easy to widen by accident.
+
+**Decision:**
+When a feature's correctness rests on one access decision, that decision is a
+**pure function in its own module with its own test file**:
+
+- `callups/linked-members.ts` — a user may answer only for members they are
+  linked to; `decideResponder` also decides whether it counts as answering on
+  someone's behalf, once, at write time.
+- `posts/visibility.ts` — `canSeePost`, plus `viewerGroupIds` which resolves a
+  viewer's reachable groups **scoped to the team**, because relying on group ids
+  being unguessable would be relying on the wrong thing.
+
+Withholding is expressed as **`NOT_FOUND`, not `FORBIDDEN`**, where the existence
+of the record is itself part of what is withheld: a reader must not be able to
+tell "no such post" from "not for you". `FORBIDDEN` is used where the record's
+existence is not secret and only the action is refused.
+
+**Consequences:**
+- These are the highest-value tests in the repo and are written first.
+- A handler that needs the rule imports it; it never restates the condition.
+
+---
+
+## ADR-017 — 2026-07-30 — Rich text without an HTML pipeline
+
+**Status:** Accepted
+
+**Context:**
+Post bodies (#18) needed formatting. Rendering user-authored markdown as HTML
+means a sanitiser, and a sanitiser is a thing to get wrong on content shown to
+every family in the team.
+
+**Decision:**
+A **small markdown subset parsed to a token tree and rendered as React
+elements**. Nothing is ever passed to `dangerouslySetInnerHTML`, so a body
+containing `<script>` is text exactly as typed and there is nothing to sanitise.
+No dependency is added.
+
+Supported: blank line for a paragraph, single newline for a break, `- ` for a
+bullet, `**bold**`, `[text](url)`, and bare `http(s)` URLs. Anything else stays
+literal — a body that renders `**` as two asterisks is a small disappointment; a
+half-parsed one that swallows a coach's text is worse.
+
+Link hrefs go through an **allowlist of `http:` and `https:`** resolved with
+`new URL()`. `javascript:` is the one way a body could otherwise become
+executable, and an allowlist cannot be talked around the way a blocklist can. A
+refused scheme falls back to the **literal source text**, so the reader still
+sees what was written rather than a link that silently lost its target. Links
+render with `rel="noreferrer noopener"`.
+
+**Consequences:**
+- The parser is pure and tested, including every refused scheme.
+- Extending the subset means extending the tokeniser, never reaching for an HTML
+  renderer.
+
+---
+
+## ADR-018 — 2026-07-30 — Tailwind v4 theme colours: static lookups, and states that never coexist
+
+**Status:** Accepted
+
+**Context:**
+Two traps in Tailwind v4 with a CSS-first theme, both of which have already cost
+debugging time:
+
+1. Class names built by interpolation are invisible to the build, so the CSS is
+   never emitted.
+2. `tailwind-merge` (inside `cn()`) resolves conflicts only for classes it
+   recognises. A custom `@theme` colour such as `text-ink` is not in its table,
+   so `cn("text-white/85", "text-ink")` keeps **both** and CSS source order
+   decides — which is how an active nav pill rendered white-on-white.
+
+**Decision:**
+- Design-token classes are **static lookups keyed by token name**, declared as an
+  explicit `Record<Token, string>` (`ACTIVITY_COLOUR_DOT`, `ATTENDANCE_TOGGLE`,
+  `RESPONSE_DISC`). Never interpolated.
+- Mutually exclusive visual states must **never be passed to `cn()` together**.
+  For router links this means putting the colours in `activeProps` /
+  `inactiveProps` so only one set exists at a time; elsewhere it means a ternary
+  choosing one complete class string, not two overlapping ones.
+- `--ease-standard` and other values needed as utilities are declared inside
+  `@theme`, not only `:root`, or the utility does not exist.
+
+**Consequences:**
+- Any new token-driven styling adds a row to a lookup table.
+- This will recur with every custom colour added to `@theme`; it is a property of
+  the setup, not a one-off bug.
+
+---
+
+## ADR-019 — 2026-07-30 — Write granularity follows the hand using it
+
+**Status:** Accepted
+
+**Context:**
+Two grid-shaped screens have opposite needs. Attendance is marked standing at the
+side of a pitch on a connection that may not be there. The tracking matrix is
+filled in a tick at a time, sometimes by two people at once.
+
+**Decision:**
+- **Attendance saves in bulk.** The coach marks the roster and saves once, rather
+  than firing a request per tap.
+- **Tracking saves one cell per request.** A whole-row save would make two
+  coaches working down different columns overwrite each other.
+
+**Consequences:**
+- The attendance screen owns a dirty-state buffer; the matrix does not.
+- The matrix invalidates and refetches after each cell, which is affordable
+  because the payload is small; it disables only the cell in flight.
