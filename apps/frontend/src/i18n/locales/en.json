@@ -69,7 +69,8 @@
     "statistics": "Statistics",
     "teamSettings": "Team settings",
     "clubSettings": "Club settings",
-    "tracking": "Tracking"
+    "tracking": "Tracking",
+    "posts": "Noticeboard"
   },
   "members": {
     "heading": "Members",
@@ -452,6 +453,50 @@
     "upcomingOnly": "Upcoming only",
     "noneYet": "No call-ups yet.",
     "empty": "You have no call-ups to answer."
+  },
+  "posts": {
+    "heading": "Noticeboard",
+    "subtitle": "What the team needs to know",
+    "new": "New post",
+    "newHeading": "New post",
+    "editHeading": "Edit post",
+    "title": "Title",
+    "body": "Body",
+    "bodyHint": "Blank line for a new paragraph, “- ” for a bullet, **bold**, [text](https://…) for a link.",
+    "targets": "Who it reaches",
+    "targetsAll": "Nobody picked — this goes to the whole team.",
+    "targetsSome_one": "{{count}} group picked.",
+    "targetsSome_other": "{{count}} groups picked.",
+    "noGroups": "This team has no groups yet, so posts go to everyone.",
+    "wholeTeam": "Whole team",
+    "pinLabel": "Keep at the top",
+    "pinned": "Pinned",
+    "pin": "Pin",
+    "unpin": "Unpin",
+    "draft": "Draft",
+    "draftCount_one": "{{count}} draft not told yet",
+    "draftCount_other": "{{count}} drafts not told yet",
+    "showDrafts": "Show drafts",
+    "hideDrafts": "As the team sees it",
+    "publish": "Publish",
+    "unpublish": "Unpublish",
+    "saveDraft": "Save as draft",
+    "confirmDelete": "Delete for good",
+    "keep": "Keep it",
+    "unknownAuthor": "A former coach",
+    "empty": "Nothing on the board",
+    "emptyHint": "Write the first post — it goes to the whole team unless you pick groups.",
+    "emptyReader": "Your coaches haven't posted anything yet.",
+    "loadError": "Could not load the noticeboard.",
+    "saveError": "Could not save that.",
+    "validation": {
+      "title": {
+        "too_small": "Give the post a title."
+      },
+      "body": {
+        "too_small": "Write something in the body."
+      }
+    }
   },
   "seasons": {
     "heading": "Seasons",

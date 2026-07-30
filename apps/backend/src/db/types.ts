@@ -266,6 +266,25 @@ export interface TrackingEntriesTable {
   updated_at: ColumnType<Date, Date | undefined, Date>;
 }
 
+export interface PostsTable {
+  id: Generated<string>;
+  team_id: string;
+  /** Null once the account that wrote it is gone; the post itself stays. */
+  author_id: string | null;
+  title: string;
+  body: string;
+  /** Null = draft. Set = published, at that instant. */
+  published_at: ColumnType<Date | null, Date | null, Date | null>;
+  pinned: Generated<boolean>;
+  created_at: Timestamp;
+  updated_at: ColumnType<Date, never, Date>;
+}
+
+export interface PostTargetsTable {
+  post_id: string;
+  group_id: string;
+}
+
 export interface Database {
   users: UsersTable;
   identities: IdentitiesTable;
@@ -292,4 +311,6 @@ export interface Database {
   callup_invitations: CallupInvitationsTable;
   tracking_definitions: TrackingDefinitionsTable;
   tracking_entries: TrackingEntriesTable;
+  posts: PostsTable;
+  post_targets: PostTargetsTable;
 }

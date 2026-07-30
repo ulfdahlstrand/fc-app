@@ -69,7 +69,8 @@
     "statistics": "Statistik",
     "teamSettings": "Laginställningar",
     "clubSettings": "Klubbinställningar",
-    "tracking": "Uppföljning"
+    "tracking": "Uppföljning",
+    "posts": "Anslagstavla"
   },
   "members": {
     "heading": "Medlemmar",
@@ -452,6 +453,50 @@
     "upcomingOnly": "Bara kommande",
     "noneYet": "Inga kallelser ännu.",
     "empty": "Du har inga kallelser att svara på."
+  },
+  "posts": {
+    "heading": "Anslagstavla",
+    "subtitle": "Det laget behöver veta",
+    "new": "Nytt inlägg",
+    "newHeading": "Nytt inlägg",
+    "editHeading": "Redigera inlägg",
+    "title": "Rubrik",
+    "body": "Text",
+    "bodyHint": "Tom rad för nytt stycke, ”- ” för punktlista, **fet**, [text](https://…) för länk.",
+    "targets": "Vilka det når",
+    "targetsAll": "Ingen vald — det här går till hela laget.",
+    "targetsSome_one": "{{count}} grupp vald.",
+    "targetsSome_other": "{{count}} grupper valda.",
+    "noGroups": "Laget har inga grupper än, så inlägg går till alla.",
+    "wholeTeam": "Hela laget",
+    "pinLabel": "Behåll längst upp",
+    "pinned": "Fäst",
+    "pin": "Fäst",
+    "unpin": "Lossa",
+    "draft": "Utkast",
+    "draftCount_one": "{{count}} utkast inte berättat än",
+    "draftCount_other": "{{count}} utkast inte berättade än",
+    "showDrafts": "Visa utkast",
+    "hideDrafts": "Som laget ser den",
+    "publish": "Publicera",
+    "unpublish": "Avpublicera",
+    "saveDraft": "Spara som utkast",
+    "confirmDelete": "Ta bort för gott",
+    "keep": "Behåll",
+    "unknownAuthor": "En tidigare tränare",
+    "empty": "Inget på tavlan",
+    "emptyHint": "Skriv det första inlägget — det går till hela laget om du inte väljer grupper.",
+    "emptyReader": "Dina tränare har inte lagt upp något än.",
+    "loadError": "Kunde inte ladda anslagstavlan.",
+    "saveError": "Kunde inte spara det.",
+    "validation": {
+      "title": {
+        "too_small": "Ge inlägget en rubrik."
+      },
+      "body": {
+        "too_small": "Skriv något i texten."
+      }
+    }
   },
   "seasons": {
     "heading": "Säsonger",
