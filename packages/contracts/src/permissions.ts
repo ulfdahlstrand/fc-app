@@ -1,11 +1,6 @@
-import { z } from "zod";
+/** The permission catalog (ADR-005, ADR-011). Fixed in code; which role holds which is data. */
 
-// Permission catalog (ADR-005)
-//
-// The catalog is fixed in code — adding a permission is a code change — while
-// which permissions a role has is club-configurable data. Shared here so the
-// frontend can gate UI on the same identifiers the backend enforces.
-// ---------------------------------------------------------------------------
+import { z } from "zod";
 
 export const PERMISSIONS = [
   "members.view",
@@ -24,4 +19,3 @@ export const permissionSchema = z.enum(PERMISSIONS);
 
 export type Permission = z.infer<typeof permissionSchema>;
 
-// ---------------------------------------------------------------------------

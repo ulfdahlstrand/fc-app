@@ -1,18 +1,7 @@
+/** The calendar: activities and the recurring series they come from (ADR-008, ADR-009). */
+
 import { z } from "zod";
-
 import { isoInstantSchema } from "./common.js";
-
-// Activities (issue #12)
-//
-// The calendar is the team's hub: trainings, matches and whatever else a team
-// invents, all typed by a team-configured activity type (#11).
-//
-// Instants cross the wire as ISO 8601 strings with an offset — the client
-// composes them from local wall time, the database stores timestamptz, and
-// nothing in between has to agree on a timezone. Activities are cancelled,
-// never deleted: a cancelled training still has to show up (struck through) so
-// nobody turns up at the pitch for it.
-// ---------------------------------------------------------------------------
 
 export const activitySchema = z.object({
   id: z.string(),
@@ -77,11 +66,7 @@ export const getActivityOutputSchema = z.object({
   activity: activitySchema,
 });
 
-/**
- * Fields accepted when creating or updating an activity. Exported so the
- * frontend derives its form validation from the same rules the API enforces
- * (ADR-007) instead of restating them.
- */
+/** Fields accepted when creating or updating an activity. */
 export const activityWriteFields = {
   activityTypeId: z.string().min(1),
   title: z.string().max(100).nullable(),
@@ -112,13 +97,7 @@ export const createActivityOutputSchema = z.object({
  * here — a request may change only one of them. The handler validates the
  * merged row instead.
  */
-/**
- * Which occurrences an edit reaches (#13).
- *
- * `occurrence` is the default and the only meaningful value for a one-off.
- * `following` also rewrites every later occurrence in the same series *and*
- * the series template — see `updateActivity` for exactly what carries over.
- */
+/** Which occurrences an edit reaches (#13). */
 export const activityEditScopeSchema = z.enum(["occurrence", "following"]);
 
 export type ActivityEditScope = z.infer<typeof activityEditScopeSchema>;
@@ -149,16 +128,6 @@ export const setActivityCancelledOutputSchema = z.object({
   activity: activitySchema,
 });
 
-// ---------------------------------------------------------------------------
-// Recurring activities (issue #13, ADR-008)
-//
-// A series is a **template**; the occurrences it generates are ordinary
-// activities carrying `seriesId`. The template holds **local wall time**, not
-// instants — a training is at 18:00 in the club's own timezone on both sides
-// of a DST change — so it stores a time-of-day, a set of weekdays, a date
-// range, and the IANA zone those are read in.
-// ---------------------------------------------------------------------------
-
 /** ISO weekday: 1 = Monday … 7 = Sunday, matching date-fns' `getISODay`. */
 export const isoWeekdaySchema = z.number().int().min(1).max(7);
 
@@ -185,10 +154,7 @@ export const activitySeriesSchema = z.object({
 
 export type ActivitySeries = z.infer<typeof activitySeriesSchema>;
 
-/**
- * A ceiling on one series. "Every Tuesday until 2099" is a typo, not a plan,
- * and generating it would put a hundred thousand rows on the calendar.
- */
+/** A ceiling on one series. */
 export const MAX_SERIES_OCCURRENCES = 400;
 
 export const createRecurringActivitiesInputSchema = z
@@ -223,4 +189,3 @@ export const createRecurringActivitiesOutputSchema = z.object({
   activities: z.array(activitySchema),
 });
 
-// ---------------------------------------------------------------------------

@@ -1,13 +1,7 @@
+/** The roster, and the custom fields a team defines for it (ADR-005, ADR-014). */
+
 import { z } from "zod";
-
 import { queryBooleanSchema } from "./common.js";
-
-// Members — Zod schemas (issue #7)
-//
-// A member is a roster person (usually a player), scoped to one team, distinct
-// from a user account. Core fields are kept minimal; team-specific fields come
-// via custom field definitions (#8). Members are archived, never hard-deleted.
-// ---------------------------------------------------------------------------
 
 export const memberSchema = z.object({
   id: z.string(),
@@ -23,13 +17,6 @@ export const memberSchema = z.object({
 });
 
 export type Member = z.infer<typeof memberSchema>;
-
-// ---------------------------------------------------------------------------
-// Custom member fields (issue #8, ADR-005)
-//
-// Teams define their own typed member fields; values are stored per member.
-// The catalog of field *types* is fixed in code; which fields exist is data.
-// ---------------------------------------------------------------------------
 
 export const memberFieldTypeSchema = z.enum([
   "text",
@@ -57,11 +44,7 @@ export type MemberFieldDefinition = z.infer<
   typeof memberFieldDefinitionSchema
 >;
 
-/**
- * Validates and normalizes a raw value against a field definition. Returns the
- * canonical string to store, or an error message. Shared by the backend
- * (enforcement) and the frontend (inline feedback) so the rules never drift.
- */
+/** Validates and normalizes a raw value against a field definition. */
 export function validateMemberFieldValue(
   field: Pick<MemberFieldDefinition, "fieldType" | "options">,
   raw: string
@@ -105,11 +88,7 @@ export function validateMemberFieldValue(
 const MIN_BIRTH_YEAR = 1900;
 const MAX_BIRTH_YEAR = 2100;
 
-/**
- * Fields accepted when creating or updating a member. Exported so the frontend
- * can derive its form validation from the same rules the API enforces (ADR-007)
- * instead of restating them.
- */
+/** Fields accepted when creating or updating a member. */
 export const memberWriteFields = {
   firstName: z.string().min(1).max(100),
   lastName: z.string().min(1).max(100),
@@ -233,4 +212,3 @@ export const setMemberFieldValuesOutputSchema = z.object({
   member: memberSchema,
 });
 
-// ---------------------------------------------------------------------------

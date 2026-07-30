@@ -1,5 +1,6 @@
-import { oc } from "@orpc/contract";
+/** The procedure router: every input/output pair, with no implementation (ADR-001). */
 
+import { oc } from "@orpc/contract";
 import { createActivityInputSchema, createActivityOutputSchema, createRecurringActivitiesInputSchema, createRecurringActivitiesOutputSchema, getActivityInputSchema, getActivityOutputSchema, listActivitiesInputSchema, listActivitiesOutputSchema, setActivityCancelledInputSchema, setActivityCancelledOutputSchema, updateActivityInputSchema, updateActivityOutputSchema } from "./activities.js";
 import { archiveAttendanceStatusInputSchema, archiveAttendanceStatusOutputSchema, attendanceStatsFilterSchema, attendanceStatsOutputSchema, createAttendanceStatusInputSchema, createAttendanceStatusOutputSchema, listAttendanceInputSchema, listAttendanceOutputSchema, listAttendanceStatusesInputSchema, listAttendanceStatusesOutputSchema, memberAttendanceInputSchema, memberAttendanceOutputSchema, setAttendanceInputSchema, setAttendanceOutputSchema, updateAttendanceStatusInputSchema, updateAttendanceStatusOutputSchema } from "./attendance.js";
 import { meInputSchema, meOutputSchema } from "./auth.js";
@@ -16,12 +17,6 @@ import { createRoleInputSchema, createRoleOutputSchema, deleteRoleInputSchema, d
 import { createSeasonInputSchema, createSeasonOutputSchema, deleteSeasonInputSchema, deleteSeasonOutputSchema, listSeasonsInputSchema, listSeasonsOutputSchema, updateSeasonInputSchema, updateSeasonOutputSchema } from "./seasons.js";
 import { archiveTrackingDefinitionInputSchema, archiveTrackingDefinitionOutputSchema, createTrackingDefinitionInputSchema, createTrackingDefinitionOutputSchema, listTrackingDefinitionsInputSchema, listTrackingDefinitionsOutputSchema, memberTrackingInputSchema, memberTrackingOutputSchema, setTrackingEntryInputSchema, setTrackingEntryOutputSchema, trackingMatrixInputSchema, trackingMatrixOutputSchema, updateTrackingDefinitionInputSchema, updateTrackingDefinitionOutputSchema } from "./tracking.js";
 
-// Router contract
-//
-// Defines the shape of every procedure (input + output schemas) without any
-// implementation. The backend imports this contract and attaches handlers;
-// the frontend imports the inferred AppRouter type for a fully-typed client.
-// ---------------------------------------------------------------------------
 export const contract = oc.router({
   // Explicit GET route so plain `curl /health` (e.g. the Docker Compose
   // healthcheck) works; the `echo` input is passed as a query parameter.

@@ -1,13 +1,7 @@
+/** Clubs and teams — the tenant root and its children (ADR-003). */
+
 import { z } from "zod";
-
 import { permissionSchema } from "./permissions.js";
-
-// Clubs & teams — Zod schemas (ADR-003 multi-tenancy)
-//
-// A club is the tenant root; teams belong to a club. `myClubs` returns only
-// clubs the caller is a member of — the frontend's club/team switcher and
-// onboarding redirect are driven by it.
-// ---------------------------------------------------------------------------
 
 export const teamSchema = z.object({
   id: z.string(),

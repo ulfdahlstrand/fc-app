@@ -1,14 +1,7 @@
+/** Custom member groups, used for filtering, call-ups and post targeting. */
+
 import { z } from "zod";
-
 import { queryBooleanSchema } from "./common.js";
-
-// Groups — Zod schemas (issue #10)
-//
-// Custom member groups ("A squad", "born 2014") reusable anywhere a "who" is
-// selected: roster filtering, call-up squad selection (#16), and post
-// targeting (#18). A member can belong to several groups; deleting a group
-// never touches its members.
-// ---------------------------------------------------------------------------
 
 export const groupSchema = z.object({
   id: z.string(),
@@ -85,14 +78,7 @@ export const listMemberGroupsOutputSchema = z.object({
   groups: z.array(groupSchema),
 });
 
-/**
- * Activity type colours are Kit palette token names, never hex.
- *
- * The Kit design system allows three colour families and nothing else, so a
- * free-form colour picker would let a team design its way out of the system.
- * Storing the token (rather than the resolved value) also means the palette
- * can be re-themed without touching stored data.
- */
+/** Activity type colours are Kit palette token names, never hex. */
 export const activityColourSchema = z.enum([
   "green", // the brand — training, the everyday session
   "ink", // the near-black — matches and other headline fixtures
@@ -116,10 +102,7 @@ export const activityTypeSchema = z.object({
 
 export type ActivityType = z.infer<typeof activityTypeSchema>;
 
-/**
- * The types every new team starts with (ADR-005). Seeded on team creation and
- * editable afterwards — they are ordinary rows, not protected system records.
- */
+/** The types every new team starts with (ADR-005). */
 export const DEFAULT_ACTIVITY_TYPES: readonly {
   name: string;
   colour: ActivityColour;
@@ -172,4 +155,3 @@ export const archiveActivityTypeOutputSchema = z.object({
   activityType: activityTypeSchema,
 });
 
-// ---------------------------------------------------------------------------

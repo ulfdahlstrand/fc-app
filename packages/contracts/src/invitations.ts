@@ -1,13 +1,7 @@
+/** Invitations granting a preset role in a club or team (ADR-004). */
+
 import { z } from "zod";
-
 import { guardianRelationSchema } from "./guardians.js";
-
-// Invitations — Zod schemas (ADR-004, issue #6)
-//
-// An invitation grants a preset role in a club — club-wide (teamId null) or
-// scoped to one team — via a shareable link. Optionally restricted to a
-// single email. Status is derived: active | expired | revoked | used.
-// ---------------------------------------------------------------------------
 
 export const invitationStatusSchema = z.enum([
   "active",
@@ -95,4 +89,3 @@ export const acceptInvitationOutputSchema = z.object({
   teamId: z.string().nullable(),
 });
 
-// ---------------------------------------------------------------------------

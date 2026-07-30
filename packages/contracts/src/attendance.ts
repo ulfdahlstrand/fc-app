@@ -1,18 +1,8 @@
-import { z } from "zod";
+/** Attendance statuses, records and statistics. The rate is attended ÷ marked (ADR-012). */
 
+import { z } from "zod";
 import { isoInstantSchema, queryBooleanSchema } from "./common.js";
 import { ActivityColour, activityColourSchema } from "./groups.js";
-
-// Attendance statuses (issue #14, ADR-005)
-//
-// Statuses are team configuration, not code: seeded with Present, Absent and
-// Ill, and a team adds its own ("Late", "Injured"). They share the Kit palette
-// tokens with activity types — three colour families and nothing else.
-//
-// `countsAsPresent` is what statistics (#15) sums. It is a separate flag
-// rather than an inference from the name, because a team may well decide that
-// "Late" counts and "Injured" does not, and neither name says so.
-// ---------------------------------------------------------------------------
 
 export const attendanceStatusSchema = z.object({
   id: z.string(),
@@ -26,10 +16,7 @@ export const attendanceStatusSchema = z.object({
 
 export type AttendanceStatus = z.infer<typeof attendanceStatusSchema>;
 
-/**
- * The statuses every new team starts with (ADR-005). Ordinary rows, editable
- * afterwards — the order here is the order a coach taps through.
- */
+/** The statuses every new team starts with (ADR-005). */
 export const DEFAULT_ATTENDANCE_STATUSES: readonly {
   name: string;
   colour: ActivityColour;
@@ -83,18 +70,6 @@ export const archiveAttendanceStatusOutputSchema = z.object({
   attendanceStatus: attendanceStatusSchema,
 });
 
-// ---------------------------------------------------------------------------
-// Attendance records (issue #14)
-//
-// One record per member per activity, or none at all — an unmarked member is
-// the absence of a row, not a status called "unknown". In Kit that state is a
-// dashed ring, and dashed always means "not decided yet".
-//
-// Recording is a bulk write: the coach marks the roster standing at the side
-// of the pitch and saves once, rather than firing a request per tap on a
-// connection that may not be there.
-// ---------------------------------------------------------------------------
-
 export const attendanceRecordSchema = z.object({
   activityId: z.string(),
   memberId: z.string(),
@@ -129,19 +104,6 @@ export const setAttendanceInputSchema = z.object({
 export const setAttendanceOutputSchema = z.object({
   records: z.array(attendanceRecordSchema),
 });
-
-// ---------------------------------------------------------------------------
-// Attendance statistics (issue #15)
-//
-// The rate is **attended ÷ marked**, not attended ÷ activities held. A session
-// nobody took attendance at is unknown, not an absence, and counting it would
-// quietly punish every member for the coach's forgotten phone. `activities` in
-// the output is what the filters selected, so the gap between it and `marked`
-// is exactly the coverage a coach may want to close.
-//
-// Cancelled activities are excluded everywhere — a called-off training is not
-// a session anyone failed to attend.
-// ---------------------------------------------------------------------------
 
 export const attendanceStatsFilterSchema = z.object({
   teamId: z.string(),
@@ -224,4 +186,3 @@ export function isAtRisk(member: {
   );
 }
 
-// ---------------------------------------------------------------------------

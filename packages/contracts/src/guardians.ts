@@ -1,23 +1,11 @@
+/** Links between user accounts and members — who may answer for whom (ADR-016). */
+
 import { z } from "zod";
 
-/**
- * Guardian relation (#9). Declared here (ahead of the guardians section) so
- * member-bound invitations below can reference it.
- */
+/** Guardian relation (#9). */
 export const guardianRelationSchema = z.enum(["guardian", "self"]);
 
 export type GuardianRelation = z.infer<typeof guardianRelationSchema>;
-
-// ---------------------------------------------------------------------------
-// Guardians — Zod schemas (issue #9)
-//
-// Links a user account to a member. `self` = the member is the user (a player
-// with their own account); `guardian` = a parent/carer. A user can be linked
-// to several members (siblings); a member can have several guardians.
-//
-// (guardianRelationSchema is declared earlier — before the invitations
-// section — because member-bound invitations reference it.)
-// ---------------------------------------------------------------------------
 
 /** A user linked to a member, as shown on the member detail page. */
 export const memberGuardianSchema = z.object({
@@ -95,4 +83,3 @@ export const myMembersOutputSchema = z.object({
   members: z.array(linkedMemberSchema),
 });
 
-// ---------------------------------------------------------------------------

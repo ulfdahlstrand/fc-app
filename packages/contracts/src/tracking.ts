@@ -1,23 +1,7 @@
+/** Configurable checklists per member. A missing entry means "not decided yet" (ADR-014, DDR-006). */
+
 import { z } from "zod";
-
 import { isoInstantSchema, queryBooleanSchema } from "./common.js";
-
-// Tracking lists (issue #19, ADR-005)
-//
-// The configurable replacement for the spreadsheets a club keeps on the side:
-// "Grönt kort", "Rabatthäfte hämtat", "Medlemsavgift betald". A team defines
-// typed definitions; each member gets at most one entry per definition.
-//
-// Three value types, and no more, because a tracking list answers one of three
-// questions: is it done, when was it done, or what was noted. Anything richer
-// is a custom member field (#8), which describes the person rather than the
-// club's progress in chasing them.
-//
-// A missing entry is **not** a "no". It is "nobody has said yet", which is what
-// the matrix draws with a dashed ring and what the dashboard (#20) counts as
-// outstanding. Only a `done` definition can be complete or incomplete at all —
-// see `isTrackingComplete`.
-// ---------------------------------------------------------------------------
 
 export const trackingValueTypeSchema = z.enum(["done", "date", "text"]);
 
@@ -87,14 +71,7 @@ export function validateTrackingValue(
   }
 }
 
-/**
- * Whether a definition counts as settled for one member.
- *
- * Only `done` definitions have a notion of completeness: a date or a note is
- * information, not a box to tick, and counting a blank "Comment" column as work
- * outstanding would make the dashboard nag forever. Shared so the dashboard's
- * count and the matrix's own rendering cannot disagree.
- */
+/** Whether a definition counts as settled for one member. */
 export function isTrackingComplete(
   definition: Pick<TrackingDefinition, "valueType">,
   entry: { value: string } | undefined
@@ -163,11 +140,7 @@ export const trackingMatrixOutputSchema = z.object({
   entries: z.array(trackingEntrySchema),
 });
 
-/**
- * Sets or clears one cell. One cell at a time because that is how the matrix is
- * used — a tick at a time, at the pitch side — and a whole-row save would make
- * two coaches editing different columns overwrite each other.
- */
+/** Sets or clears one cell. */
 export const setTrackingEntryInputSchema = z.object({
   teamId: z.string(),
   definitionId: z.string(),
@@ -192,4 +165,3 @@ export const memberTrackingOutputSchema = z.object({
   entries: z.array(trackingEntrySchema),
 });
 
-// ---------------------------------------------------------------------------

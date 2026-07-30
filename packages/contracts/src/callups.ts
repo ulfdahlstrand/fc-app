@@ -1,17 +1,7 @@
+/** Squad selection and the answers to it (ADR-013, ADR-016). */
+
 import { z } from "zod";
-
 import { isoInstantSchema, queryBooleanSchema } from "./common.js";
-
-// Call-ups (issue #16) — the matchtrupp.
-//
-// One call-up per activity, holding the squad. An invitation exists for every
-// selected member and starts as `pending`; #17 lets players and guardians
-// answer it themselves.
-//
-// A call-up has a draft and a published state. Publishing is what tells the
-// squad they are in it, so selecting fourteen names must be possible without
-// anyone's phone buzzing on each tap.
-// ---------------------------------------------------------------------------
 
 export const callupResponseSchema = z.enum([
   "pending", // not decided yet — Kit's dashed ring
@@ -30,15 +20,7 @@ export const callupSchema = z.object({
 
 export type Callup = z.infer<typeof callupSchema>;
 
-/**
- * Who put the answer there (#17). A coach may answer on a member's behalf —
- * "he phoned to say he can't make it" — and when they do, the squad has to be
- * able to see that it came from the coach, and from which one.
- *
- * `onBehalf` is false when the responder was answering for themselves or for
- * a child they are guardian to, *including* when that person is also the
- * coach: answering for your own child is nobody's behalf but your own.
- */
+/** Who put the answer there (#17). */
 export const callupResponderSchema = z.object({
   userId: z.string().nullable(),
   name: z.string().nullable(),
@@ -71,11 +53,7 @@ export const getCallupOutputSchema = z.object({
   invitations: z.array(callupInvitationSchema),
 });
 
-/**
- * The squad, as a whole. Members not in the list are removed; members already
- * in it keep the answer they gave, so saving a squad again never silently
- * discards a reply.
- */
+/** The squad, as a whole. */
 export const setCallupSquadInputSchema = z.object({
   teamId: z.string(),
   activityId: z.string(),
@@ -97,18 +75,6 @@ export const updateCallupInputSchema = z.object({
 export const updateCallupOutputSchema = z.object({
   callup: callupSchema,
 });
-
-// ---------------------------------------------------------------------------
-// Call-up responses (issue #17)
-//
-// Players and guardians answer for themselves. A user may respond only for
-// members they are *linked* to — themselves, or a child they are guardian for
-// (#9). That check is the whole security surface of this feature: everything
-// else here is a list.
-//
-// Only `accepted` and `declined` can be sent. `pending` is where an invitation
-// starts, not somewhere a person can put it back to.
-// ---------------------------------------------------------------------------
 
 export const callupAnswerSchema = z.enum(["accepted", "declined"]);
 
@@ -185,4 +151,3 @@ export const listCallupsOutputSchema = z.object({
   pending: z.number().int(),
 });
 
-// ---------------------------------------------------------------------------

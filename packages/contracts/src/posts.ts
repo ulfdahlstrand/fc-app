@@ -1,22 +1,7 @@
+/** The noticeboard. Targeting is stored as absence (ADR-014); visibility is ADR-016. */
+
 import { z } from "zod";
-
 import { isoInstantSchema, queryBooleanSchema } from "./common.js";
-
-// Posts and announcements (issue #18)
-//
-// A post reaches either the whole team or particular groups (#10), and that is
-// expressed by absence: an empty `targetGroupIds` means everyone. There is no
-// separate "everyone" flag that could contradict the target list.
-//
-// `publishedAt` is nullable, and null means draft — visible only to whoever may
-// manage posts. Writing an announcement in two sittings should not half-tell it
-// to the team in between, the same reason a squad (#17) stays a draft until a
-// coach publishes it.
-//
-// Who may see what is decided by one function, `canSeePost` in the backend's
-// `posts/visibility.ts`. It is the whole security surface of this feature, so it
-// lives on its own with tests rather than inline in a query.
-// ---------------------------------------------------------------------------
 
 export const postSchema = z.object({
   id: z.string(),
@@ -102,4 +87,3 @@ export const deletePostInputSchema = z.object({
 
 export const deletePostOutputSchema = z.object({ deleted: z.boolean() });
 
-// ---------------------------------------------------------------------------

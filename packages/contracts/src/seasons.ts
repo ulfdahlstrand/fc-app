@@ -1,14 +1,7 @@
+/** Seasons: a named date range, with no foreign key from activities (ADR-008). */
+
 import { z } from "zod";
-
 import { localDateSchema } from "./activities.js";
-
-// Seasons (issue #13)
-//
-// A season is a named date range and nothing more. Activities are not linked
-// to one by foreign key — membership is derived from the start date falling
-// inside the range, so correcting a season's dates re-answers the question for
-// every activity at once.
-// ---------------------------------------------------------------------------
 
 export const seasonSchema = z.object({
   id: z.string(),
@@ -72,4 +65,3 @@ export const deleteSeasonOutputSchema = z.object({
   deleted: z.literal(true),
 });
 
-// ---------------------------------------------------------------------------

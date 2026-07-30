@@ -1,12 +1,6 @@
-import { z } from "zod";
+/** Accounts and the current session. Sign-in itself is a browser redirect flow (ADR-004). */
 
-// Auth — Zod schemas
-//
-// `me` returns the signed-in user derived from the session cookie, or null.
-// Sign-in itself is a browser redirect flow (GET /auth/google →
-// /auth/google/callback) and logout is POST /auth/logout — plain HTTP
-// endpoints on the backend, since they set/clear cookies and redirect.
-// ---------------------------------------------------------------------------
+import { z } from "zod";
 
 export const userSchema = z.object({
   id: z.string(),
@@ -23,4 +17,3 @@ export const meOutputSchema = z.object({
   user: userSchema.nullable(),
 });
 
-// ---------------------------------------------------------------------------
