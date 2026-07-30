@@ -91,6 +91,14 @@ import {
   updateRoleHandler,
 } from "./procedures/roles.js";
 import {
+  createPostHandler,
+  deletePostHandler,
+  getPostHandler,
+  listPostsHandler,
+  setPostPublishedHandler,
+  updatePostHandler,
+} from "./procedures/posts.js";
+import {
   archiveTrackingDefinitionHandler,
   createTrackingDefinitionHandler,
   listTrackingDefinitionsHandler,
@@ -174,6 +182,12 @@ export const router = os.router({
   respondToCallup: respondToCallupHandler,
   myCallups: myCallupsHandler,
   listCallups: listCallupsHandler,
+  listPosts: listPostsHandler,
+  getPost: getPostHandler,
+  createPost: createPostHandler,
+  updatePost: updatePostHandler,
+  setPostPublished: setPostPublishedHandler,
+  deletePost: deletePostHandler,
   listTrackingDefinitions: listTrackingDefinitionsHandler,
   createTrackingDefinition: createTrackingDefinitionHandler,
   updateTrackingDefinition: updateTrackingDefinitionHandler,

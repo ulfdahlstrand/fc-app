@@ -93,6 +93,9 @@ function RootLayout() {
               {(canViewMembers || canRespond) && (
                 <NavPill to="/callups">{t("nav.callups")}</NavPill>
               )}
+              {/* The noticeboard is for everyone in the team, not just whoever
+                  can see the roster — being announced to needs no permission. */}
+              <NavPill to="/posts">{t("nav.posts")}</NavPill>
               {canViewMembers && (
                 <NavPill to="/statistics">{t("nav.statistics")}</NavPill>
               )}

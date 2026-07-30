@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TrackingRouteImport } from './routes/tracking'
 import { Route as StatisticsRouteImport } from './routes/statistics'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as PostsRouteImport } from './routes/posts'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as MembersRouteImport } from './routes/members'
 import { Route as LoginRouteImport } from './routes/login'
@@ -38,6 +39,11 @@ const StatisticsRoute = StatisticsRouteImport.update({
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PostsRoute = PostsRouteImport.update({
+  id: '/posts',
+  path: '/posts',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OnboardingRoute = OnboardingRouteImport.update({
@@ -109,6 +115,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
   '/onboarding': typeof OnboardingRoute
+  '/posts': typeof PostsRoute
   '/profile': typeof ProfileRoute
   '/statistics': typeof StatisticsRoute
   '/tracking': typeof TrackingRoute
@@ -126,6 +133,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
   '/onboarding': typeof OnboardingRoute
+  '/posts': typeof PostsRoute
   '/profile': typeof ProfileRoute
   '/statistics': typeof StatisticsRoute
   '/tracking': typeof TrackingRoute
@@ -144,6 +152,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
   '/onboarding': typeof OnboardingRoute
+  '/posts': typeof PostsRoute
   '/profile': typeof ProfileRoute
   '/statistics': typeof StatisticsRoute
   '/tracking': typeof TrackingRoute
@@ -163,6 +172,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/members'
     | '/onboarding'
+    | '/posts'
     | '/profile'
     | '/statistics'
     | '/tracking'
@@ -180,6 +190,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/members'
     | '/onboarding'
+    | '/posts'
     | '/profile'
     | '/statistics'
     | '/tracking'
@@ -197,6 +208,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/members'
     | '/onboarding'
+    | '/posts'
     | '/profile'
     | '/statistics'
     | '/tracking'
@@ -215,6 +227,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   MembersRoute: typeof MembersRoute
   OnboardingRoute: typeof OnboardingRoute
+  PostsRoute: typeof PostsRoute
   ProfileRoute: typeof ProfileRoute
   StatisticsRoute: typeof StatisticsRoute
   TrackingRoute: typeof TrackingRoute
@@ -246,6 +259,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/posts': {
+      id: '/posts'
+      path: '/posts'
+      fullPath: '/posts'
+      preLoaderRoute: typeof PostsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/onboarding': {
@@ -343,6 +363,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   MembersRoute: MembersRoute,
   OnboardingRoute: OnboardingRoute,
+  PostsRoute: PostsRoute,
   ProfileRoute: ProfileRoute,
   StatisticsRoute: StatisticsRoute,
   TrackingRoute: TrackingRoute,
