@@ -1,10 +1,4 @@
-/**
- * The link check behind call-up responses (issue #17).
- *
- * "A user cannot respond for a member they are not linked to" is an explicit
- * acceptance criterion, and it is the one thing here that would be a real
- * problem if it broke: every player in a squad holds `callups.respond`.
- */
+/** The link check behind call-up responses (issue #17). */
 import { ORPCError } from "@orpc/server";
 import { describe, expect, it, vi } from "vitest";
 import type { Kysely } from "kysely";

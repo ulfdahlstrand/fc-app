@@ -1,3 +1,4 @@
+/** HTTP entry point: oRPC over the OpenAPI handler, plus the auth routes. */
 import { createServer } from "node:http";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { OpenAPIGenerator } from "@orpc/openapi";
@@ -29,14 +30,7 @@ type PlainHandler = (
   res: ServerResponse
 ) => Promise<void>;
 
-/**
- * Loads the dev-only sign-in handler, or null when it must not exist.
- *
- * Double-gated: disabled outright in production, and otherwise only active when
- * ENABLE_DEV_LOGIN=true. The module lives in a `*.dev.ts` file that the
- * production build excludes (tsconfig.build.json); the specifier is a widened
- * string so the build never tries to resolve the excluded module.
- */
+/** Loads the dev-only sign-in handler, or null when it must not exist. */
 async function loadDevLogin(): Promise<PlainHandler | null> {
   if (process.env["NODE_ENV"] === "production") return null;
   if (process.env["ENABLE_DEV_LOGIN"] !== "true") return null;

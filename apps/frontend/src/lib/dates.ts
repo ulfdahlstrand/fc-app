@@ -1,18 +1,4 @@
-/**
- * Date handling for the calendar (issue #12), on top of date-fns.
- *
- * Two conversions run through here and nowhere else:
- *
- *  - **Wire ↔ screen.** The API speaks ISO instants with an offset; the UI
- *    speaks the viewer's local wall time. `new Date(iso)` and the formatters
- *    below do that translation in the browser's own zone.
- *  - **Wire ↔ `<input type="datetime-local">`.** That input has no zone at
- *    all: it holds "2026-08-01T17:30" and means "17:30 where I am". So it is
- *    parsed and rendered as local time, never with `toISOString()` slicing.
- *
- * Weeks start on Monday — this is a Swedish football club, and the sketches
- * run Mon–Sun.
- */
+/** Date handling: instants on the wire, local wall time on screen (ADR-009). */
 import {
   addDays,
   addMonths,
@@ -89,10 +75,7 @@ export function formatTime(iso: string, locale: Locale): string {
   return format(new Date(iso), "HH:mm", { locale });
 }
 
-/**
- * "17:30–19:00", or just the start when the activity is open-ended. An en
- * dash, unspaced — the sketches set time ranges that way.
- */
+/** "17:30–19:00", or just the start when the activity is open-ended. */
 export function formatTimeRange(
   startsAt: string,
   endsAt: string | null,
@@ -140,11 +123,6 @@ export function defaultActivitySlot(day: Date = new Date()): {
     endsAt: format(end, "yyyy-MM-dd'T'HH:mm"),
   };
 }
-
-// --- Recurring activities (#13) -------------------------------------------
-//
-// A series is stored as local wall time, so these deal in "YYYY-MM-DD",
-// "HH:mm" and ISO weekday numbers rather than instants.
 
 /** ISO weekday numbers in display order, Monday first. */
 export const ISO_WEEKDAYS = [1, 2, 3, 4, 5, 6, 7] as const;

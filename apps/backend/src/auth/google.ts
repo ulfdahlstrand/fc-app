@@ -1,15 +1,5 @@
+/** Google OAuth: the redirect flow and token exchange (ADR-004). */
 import { z } from "zod";
-
-// ---------------------------------------------------------------------------
-// Google OAuth / OpenID Connect provider (ADR-004)
-//
-// Standard authorization-code flow. The id_token is fetched directly from
-// Google's token endpoint over TLS, so its payload can be trusted without a
-// separate JWKS signature verification step.
-//
-// The exported OAuthProfile is provider-neutral — Apple (and others) plug in
-// later by producing the same shape.
-// ---------------------------------------------------------------------------
 
 const AUTHORIZATION_ENDPOINT = "https://accounts.google.com/o/oauth2/v2/auth";
 const TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";

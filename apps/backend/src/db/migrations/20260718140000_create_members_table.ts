@@ -1,10 +1,7 @@
+/** Migration — see ADR-006 for why schema changes only happen here. */
 import { sql, type Kysely } from "kysely";
 
-/**
- * Members (issue #7): roster persons scoped to a team. Core fields only —
- * team-specific fields arrive via custom field definitions (#8). Members are
- * archived (archived flag), never hard-deleted, so historical data is kept.
- */
+/** Members (issue #7): roster persons scoped to a team. */
 export async function up(db: Kysely<unknown>): Promise<void> {
   await db.schema
     .createTable("members")

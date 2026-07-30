@@ -1,10 +1,4 @@
-/**
- * Auth helpers for the frontend.
- *
- * The single source of truth for "who am I" is the backend `me` procedure,
- * cached under the ["me"] query key. Route guards call ensureMe() in
- * beforeLoad; components subscribe with useQuery(meQueryOptions).
- */
+/** Auth helpers for the frontend. */
 import type { User } from "@fc-app/contracts";
 import { queryClient } from "../query-client";
 import { orpcQuery } from "./orpc-query";

@@ -1,8 +1,4 @@
-/**
- * Attendance arithmetic (issue #15). The acceptance criterion is that the
- * percentage matches what a coach works out by hand, so these check the
- * counting against numbers that are easy to verify on paper.
- */
+/** Attendance arithmetic (issue #15). */
 import { describe, expect, it } from "vitest";
 import { rateOf, summariseAttendance } from "./summarise.js";
 

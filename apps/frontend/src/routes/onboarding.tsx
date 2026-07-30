@@ -1,7 +1,4 @@
-/**
- * Onboarding route — shown after first sign-in when the user has no club
- * membership. Creates a club with its first team; the creator becomes Admin.
- */
+/** Onboarding route — shown after first sign-in when the user has no club membership. */
 import { useForm } from "react-hook-form";
 import { useMutation } from "@tanstack/react-query";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
@@ -55,12 +52,6 @@ function OnboardingPage() {
     mutationFn: (input: CreateClubInput) => orpc.createClub(input),
     onSuccess: async ({ team }) => {
       selectTeam(team.id);
-      // Force a fresh fetch (staleTime: 0) before navigating. The onboarding
-      // guard already cached an empty [] this session, which is still within
-      // the default staleTime — a plain fetchQuery would return that stale []
-      // without refetching, so the "/" guard would see no clubs and bounce
-      // straight back here. staleTime: 0 makes it actually refetch and update
-      // the cache the guard reads.
       await queryClient.fetchQuery({ ...myClubsQueryOptions, staleTime: 0 });
       await navigate({ to: "/" });
     },

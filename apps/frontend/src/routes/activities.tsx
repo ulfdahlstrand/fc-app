@@ -1,14 +1,4 @@
-/**
- * Calendar & activities (issue #12) — the team's hub.
- *
- * Requires members.view in the selected team (the same permission the activity
- * types need); activities.manage unlocks creating, editing and cancelling.
- *
- * Month and list views read the *same* query — one month window, one type
- * filter — so the two can never disagree. Cancelled activities stay on the
- * calendar, struck through: a called-off training is information, not an
- * absence of it.
- */
+/** Calendar & activities (issue #12) — the team's hub. */
 import { useMemo, useState, type ReactNode } from "react";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { ChevronLeftIcon, ChevronRightIcon, PlusIcon } from "lucide-react";

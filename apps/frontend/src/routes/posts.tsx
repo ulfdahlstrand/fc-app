@@ -1,15 +1,4 @@
-/**
- * Posts and announcements (issue #18) — the team's noticeboard.
- *
- * Reading needs no permission beyond belonging to the team: being announced to
- * is what membership means. What a reader gets is decided server-side
- * (`posts/visibility.ts`), so this page renders whatever arrives and never
- * filters for privacy itself — a client-side check would be a check an
- * inspector could turn off.
- *
- * Writing needs posts.manage, which also unlocks drafts and the "as the team
- * sees it" toggle, so a coach can check their own targeting before publishing.
- */
+/** Posts and announcements (issue #18) — the team's noticeboard. */
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { createFileRoute, redirect } from "@tanstack/react-router";

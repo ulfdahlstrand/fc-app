@@ -1,3 +1,4 @@
+/** Team access resolution: the team-scoped role wins over the club-wide one. */
 import { ORPCError } from "@orpc/server";
 import { describe, expect, it, vi } from "vitest";
 import type { Kysely } from "kysely";

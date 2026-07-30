@@ -1,3 +1,4 @@
+/** Custom field definitions and values (ADR-005, ADR-010). */
 import { ORPCError } from "@orpc/server";
 import type { Kysely, Selectable } from "kysely";
 import {

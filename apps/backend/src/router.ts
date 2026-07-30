@@ -1,3 +1,4 @@
+/** The oRPC router — one handler per contract procedure (ADR-001). */
 import {
   createActivityHandler,
   createRecurringActivitiesHandler,
@@ -109,15 +110,7 @@ import {
 } from "./procedures/tracking.js";
 import { os } from "./orpc.js";
 
-/**
- * The oRPC router — implements every procedure defined in the @fc-app/contracts
- * package. Adding a new procedure requires: (1) adding it to the contract, and
- * (2) adding its handler here.
- *
- * Handlers that need the database use getDb() internally at request time (not
- * at module-load time), keeping unit tests that import individual handler
- * files free from DATABASE_URL requirements.
- */
+/** The oRPC router — implements every procedure defined in the @fc-app/contracts package. */
 export const router = os.router({
   health: healthHandler,
   me: meHandler,

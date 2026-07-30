@@ -1,25 +1,8 @@
+/** Tenant scoping: every procedure resolves membership before touching data (ADR-003, ADR-011). */
 import { ORPCError } from "@orpc/server";
 import type { Kysely } from "kysely";
 import type { Permission } from "@fc-app/contracts";
 import type { Database } from "../db/types.js";
-
-// ---------------------------------------------------------------------------
-// Tenant scoping (ADR-003 + ADR-005)
-//
-// Every domain procedure resolves the caller's memberships before touching
-// tenant data — the club/team context comes from membership rows, never
-// from client-supplied ids alone.
-//
-// Membership cardinality: a user holds either one club-wide row (team_id
-// null) and/or several team-scoped rows in the same club (e.g. player in
-// Team A, coach in Team B). Access to a team requires the club-wide row or
-// that team's own row; for role resolution the team-scoped row wins over
-// the club-wide one.
-//
-// Each membership carries its role's permission set (ADR-005), loaded from
-// role_permissions, so procedures can gate on permissions rather than role
-// names.
-// ---------------------------------------------------------------------------
 
 export interface Membership {
   id: string;
@@ -157,10 +140,7 @@ export async function requireTeamAccess(
   return { teamId: team.id, clubId: team.club_id, membership };
 }
 
-/**
- * Like requireTeamAccess, but also requires the granting membership's role
- * to hold `permission`.
- */
+/** Like requireTeamAccess, but also requires the granting membership's role to hold `permission`. */
 export async function requireTeamPermission(
   db: Kysely<Database>,
   userId: string,

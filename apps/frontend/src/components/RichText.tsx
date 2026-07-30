@@ -1,11 +1,4 @@
-/**
- * Renders a post body (issue #18) from the token tree `parseRichText` produces.
- *
- * Every token becomes a React element, so the body is never HTML and there is
- * nothing to sanitise: a coach who types `<script>` gets those characters on the
- * page. Links are already restricted to http/https by the parser; `rel` here is
- * about not handing the destination a reference back to the app.
- */
+/** Renders a post body (issue #18) from the token tree `parseRichText` produces. */
 import { Fragment } from "react";
 import type { Inline } from "@/lib/rich-text";
 import { parseRichText } from "@/lib/rich-text";

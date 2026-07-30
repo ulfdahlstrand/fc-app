@@ -1,3 +1,4 @@
+/** A shadcn/ui primitive, re-themed to Kit's tokens (ADR-007, DDR-001). */
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 

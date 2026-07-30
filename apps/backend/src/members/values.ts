@@ -1,3 +1,4 @@
+/** Custom field values for a set of members, in one query. */
 import type { Kysely } from "kysely";
 import type { Database } from "../db/types.js";
 

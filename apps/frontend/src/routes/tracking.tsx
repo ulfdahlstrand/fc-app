@@ -1,16 +1,4 @@
-/**
- * Tracking lists (issue #19) — the matrix that replaces the spreadsheet.
- *
- * Rows are members, columns are definitions, and one cell is one fact: has this
- * person got their Grönt kort, when did they pick up the discount booklets, what
- * was noted about the fee. Reading needs members.view; ticking needs
- * tracking.manage, so a club can hand out "chase the paperwork" without handing
- * over the roster.
- *
- * An empty cell means **nobody has said yet**, not "no" — which is why an
- * unticked box is Kit's dashed ring rather than an empty square, and why
- * clearing a cell deletes the entry instead of storing a false.
- */
+/** Tracking lists (issue #19) — the matrix that replaces the spreadsheet. */
 import { useMemo, useState } from "react";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
@@ -161,12 +149,7 @@ function NoDefinitions() {
   );
 }
 
-/**
- * The matrix itself. The member column is sticky so a name never scrolls out of
- * reach of its own row — with six definitions the table is wider than a phone,
- * and a tick against the wrong person is the one mistake this page must not make
- * easy.
- */
+/** The matrix itself. */
 function Matrix({
   teamId,
   definitions,
@@ -325,12 +308,7 @@ function Cell({
   );
 }
 
-/**
- * Kit's tick: a green disc when it is done, a dashed ring when nobody has said
- * yet. Dashed always means "not decided", never "no" — so an untouched box and a
- * deliberate "not this one" are the same state here, because the data model has
- * no way to tell them apart and pretending otherwise would be a lie.
- */
+/** Kit's tick: a green disc when it is done, a dashed ring when nobody has said yet. */
 function DoneCell({
   definition,
   entry,

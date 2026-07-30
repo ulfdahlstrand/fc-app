@@ -1,11 +1,4 @@
-/**
- * Tracking list progress (issue #19).
- *
- * The column headers on the matrix and the dashboard's "still outstanding" rows
- * are the same arithmetic computed on two sides of the wire, so what counts as
- * settled is worth pinning down here: a missing entry is "nobody has said yet",
- * and only a done/not-done list can be outstanding at all.
- */
+/** Tracking list progress (issue #19). */
 import { describe, expect, it } from "vitest";
 import type { TrackingEntry } from "@fc-app/contracts";
 import { cellKey, definitionProgress, entriesByCell } from "./tracking";

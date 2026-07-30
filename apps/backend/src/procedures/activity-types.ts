@@ -1,3 +1,4 @@
+/** Activity type CRUD. Archived, never deleted (ADR-014). */
 import { ORPCError } from "@orpc/server";
 import type { Kysely, Selectable } from "kysely";
 import type { ActivityColour, ActivityType } from "@fc-app/contracts";
@@ -35,11 +36,7 @@ async function loadActivityType(
   return row;
 }
 
-/**
- * Rejects a name already used by another *active* type in the same team. The
- * partial unique index enforces this in the database as well; this check turns
- * the constraint violation into a readable message.
- */
+/** Rejects a name already used by another *active* type in the same team. */
 async function assertNameAvailable(
   db: Kysely<Database>,
   teamId: string,

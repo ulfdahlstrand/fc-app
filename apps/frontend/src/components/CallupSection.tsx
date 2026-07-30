@@ -1,16 +1,4 @@
-/**
- * Call-up — squad selection (issue #16).
- *
- * Two things share one row, as they do throughout Kit: the **disc** carries
- * state (the member's reply) and the **toggle** performs the action (in or out
- * of the squad). A pending reply is the dashed ring, because in Kit dashed
- * always means "not decided yet".
- *
- * Picking is separated from telling. The squad stays a draft until a coach
- * publishes it, so choosing fourteen names never makes a phone buzz on each
- * tap. Members can be added or removed after publishing — replacing someone
- * who declined is the ordinary case, not an exception.
- */
+/** Call-up — squad selection (issue #16). */
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type {

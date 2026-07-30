@@ -1,10 +1,4 @@
-/**
- * Attendance status hooks (issue #14) — statuses are team configuration.
- *
- * Mirrors activity types (#11): reading needs members.view (whoever records
- * or reads attendance needs the labels), managing needs settings.team.
- * Statuses are archived, never deleted, so records keep naming their status.
- */
+/** Attendance status hooks (issue #14) — statuses are team configuration. */
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   activityColourSchema,

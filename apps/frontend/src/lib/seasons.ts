@@ -1,13 +1,4 @@
-/**
- * Season data hooks (issue #13).
- *
- * A season is a named date range the team's work is measured in. Listing needs
- * members.view (the activity list offers a season selector to everyone who can
- * see it); managing them is part of team settings.
- *
- * Nothing points at a season by foreign key — membership is derived from an
- * activity's start date — so deleting one removes a lens, never data.
- */
+/** Season data hooks (issue #13). */
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { seasonWriteFields } from "@fc-app/contracts";
 import { z } from "zod";
@@ -34,11 +25,7 @@ async function invalidateSeasons(teamId: string): Promise<void> {
   });
 }
 
-/**
- * Form schema for the season dialog, derived from the contract's write fields
- * (ADR-007). The end-not-before-start rule is restated here so the message
- * lands on the `endsOn` field.
- */
+/** Form schema for the season dialog, derived from the contract's write fields (ADR-007). */
 export const seasonFormSchema = z
   .object({
     name: requiredText(seasonWriteFields.name),

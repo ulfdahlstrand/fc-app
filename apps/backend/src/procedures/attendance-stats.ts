@@ -1,3 +1,4 @@
+/** Attendance statistics. The rate is attended ÷ marked (ADR-012). */
 import type { Kysely } from "kysely";
 import type { MemberAttendanceEntry } from "@fc-app/contracts";
 import { seasonRange } from "../activities/season-range.js";
@@ -7,16 +8,6 @@ import type { Database } from "../db/types.js";
 import { os, requireUser } from "../orpc.js";
 import { requireTeamPermission } from "../tenancy/membership.js";
 
-/**
- * Attendance statistics (issue #15).
- *
- * Reading needs `members.view` — the same permission the roster and calendar
- * need. Nothing here writes.
- *
- * The arithmetic lives in `attendance/summarise.ts` as a pure function, so the
- * numbers a coach checks by hand are covered by tests rather than by a query
- * plan. This handler's job is only to select the right rows.
- */
 
 /** Ids of the in-scope activities: the filters, minus anything cancelled. */
 async function selectActivityIds(

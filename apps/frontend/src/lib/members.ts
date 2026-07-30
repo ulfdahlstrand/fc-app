@@ -1,10 +1,4 @@
-/**
- * Member roster data hooks (issue #7).
- *
- * All queries are team-scoped; the query key includes the team id so switching
- * teams fetches the right roster. Mutations invalidate the team's member
- * queries.
- */
+/** Member roster data hooks (issue #7). */
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { memberWriteFields } from "@fc-app/contracts";
 import { z } from "zod";

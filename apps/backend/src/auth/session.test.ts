@@ -1,3 +1,4 @@
+/** Session token hashing and expiry. */
 import { describe, expect, it, vi } from "vitest";
 import type { Kysely } from "kysely";
 import type { Database } from "../db/types.js";

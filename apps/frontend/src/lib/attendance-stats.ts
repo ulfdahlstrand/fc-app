@@ -1,10 +1,4 @@
-/**
- * Attendance statistics (issue #15).
- *
- * Reading needs members.view. The rate is attended ÷ marked — a session nobody
- * took attendance at is unknown, not an absence — and the backend's pure
- * aggregation is what the numbers come from; nothing is recomputed here.
- */
+/** Attendance statistics (issue #15). */
 import { useQuery } from "@tanstack/react-query";
 import type { MemberAttendanceStats } from "@fc-app/contracts";
 import { orpcQuery } from "./orpc-query";
@@ -84,10 +78,7 @@ export function statsToCsv(
   ]);
 }
 
-/**
- * Hands the file to the browser. The BOM is what makes Excel read it as UTF-8
- * rather than mangling every å, ä and ö in a Swedish roster.
- */
+/** Hands the file to the browser. */
 export function downloadCsv(filename: string, csv: string): void {
   const blob = new Blob([`﻿${csv}`], {
     type: "text/csv;charset=utf-8",

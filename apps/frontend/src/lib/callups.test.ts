@@ -1,7 +1,4 @@
-/**
- * Squad bookkeeping (issue #16). The counts drive the number in the hero and
- * the save button's enabled state, so they are worth pinning.
- */
+/** Squad bookkeeping (issue #16). */
 import { describe, expect, it } from "vitest";
 import { countResponses, squadChanged } from "./callups";
 

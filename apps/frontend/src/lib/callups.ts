@@ -1,13 +1,4 @@
-/**
- * Call-up data hooks (issue #16) — the matchtrupp.
- *
- * Reading needs members.view; picking and publishing need callups.manage.
- * Responding is #17.
- *
- * The squad is saved as a whole, the same shape attendance uses: a coach picks
- * fourteen names standing somewhere with one bar of signal, and one request is
- * more likely to land than fourteen.
- */
+/** Call-up data hooks (issue #16) — the matchtrupp. */
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { CallupResponse } from "@fc-app/contracts";
 import { orpc } from "../orpc-client";
@@ -47,12 +38,7 @@ export function useUpdateCallup(teamId: string, activityId: string) {
   });
 }
 
-/**
- * Kit's state colours, applied to a reply. Accepted is the brand green that
- * also means present; declined is the orange that means someone must act;
- * pending is the dashed ring, because in Kit dashed always means "not decided
- * yet" — which is exactly what an unanswered call-up is.
- */
+/** Kit's state colours, applied to a reply. */
 export const RESPONSE_DISC: Record<CallupResponse, string> = {
   accepted: "bg-brand text-white",
   declined: "bg-[var(--orange-500)] text-white",
@@ -85,11 +71,7 @@ export function countResponses(
   };
 }
 
-/**
- * The line under an answer a coach recorded for someone else. Kit's voice is
- * "reasons, not codes": the who and the when belong together, and the name
- * goes in the tooltip so the row stays one line.
- */
+/** The line under an answer a coach recorded for someone else. */
 export function onBehalfTitle(
   responder: { name: string | null } | null,
   respondedAt: string | null,

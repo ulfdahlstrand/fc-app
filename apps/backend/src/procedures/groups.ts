@@ -1,3 +1,4 @@
+/** Custom member groups. */
 import { ORPCError } from "@orpc/server";
 import type { Kysely } from "kysely";
 import type { Group } from "@fc-app/contracts";

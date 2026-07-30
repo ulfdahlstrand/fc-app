@@ -1,9 +1,4 @@
-/**
- * Kysely database schema types.
- *
- * Each table gets an interface here and a corresponding entry in `Database`.
- * These are maintained by hand alongside each migration (ADR-006).
- */
+/** Kysely database schema types. */
 import type { ColumnType, Generated } from "kysely";
 
 /** timestamptz column with a database-side default — never written by the app. */

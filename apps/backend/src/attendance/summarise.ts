@@ -1,15 +1,4 @@
-/**
- * Attendance aggregation (issue #15).
- *
- * Kept as a pure function over rows the handler has already fetched, rather
- * than as SQL: this is the arithmetic a coach will check by hand against the
- * app, so it is the part that most deserves tests. A team-season is hundreds
- * of rows, not millions, so counting in TypeScript costs nothing.
- *
- * The rate is **attended ÷ marked**. A session nobody took attendance at is
- * unknown, not an absence — counting it in the denominator would punish every
- * member for the coach's forgotten phone.
- */
+/** Attendance aggregation. The rate is attended ÷ marked (ADR-012). */
 import type { MemberAttendanceStats } from "@fc-app/contracts";
 
 export interface SummariseMember {
@@ -68,9 +57,6 @@ export function summariseAttendance(input: SummariseInput): SummariseOutput {
     };
   });
 
-  // Lowest rate first: the page exists to surface who is drifting away, and
-  // that name should not be somewhere in the middle of an alphabet. Members
-  // with nothing marked have no rate to rank on and go last.
   members.sort((a, b) => {
     if (a.rate === null && b.rate === null) {
       return compareNames(a, b);
@@ -80,9 +66,6 @@ export function summariseAttendance(input: SummariseInput): SummariseOutput {
     return a.rate - b.rate || compareNames(a, b);
   });
 
-  // The team rate is computed from the totals, not as an average of the
-  // members' rates — otherwise someone marked once at 100% would weigh as
-  // heavily as someone marked twenty times.
   const totalAttended = members.reduce((sum, m) => sum + m.attended, 0);
   const totalMarked = members.reduce((sum, m) => sum + m.marked, 0);
 

@@ -1,3 +1,4 @@
+/** Season CRUD — a named date range (ADR-008). */
 import { ORPCError } from "@orpc/server";
 import type { Kysely, Selectable } from "kysely";
 import type { Season } from "@fc-app/contracts";
@@ -6,17 +7,6 @@ import type { Database, SeasonsTable } from "../db/types.js";
 import { os, requireUser } from "../orpc.js";
 import { requireTeamPermission } from "../tenancy/membership.js";
 
-/**
- * Seasons (issue #13) — named date ranges a team's work is measured in.
- *
- * Listing needs `members.view` (the activity list and, later, statistics #15
- * offer a season selector to everyone who can see them); managing them is part
- * of team settings and needs `settings.team`.
- *
- * Deleting a season is safe: nothing points at one. Membership is derived from
- * the activity's start date falling inside the range, so removing a season
- * removes a lens, never data.
- */
 function toSeason(row: Selectable<SeasonsTable>): Season {
   return {
     id: row.id,

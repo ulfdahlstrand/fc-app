@@ -1,12 +1,9 @@
+/** A shadcn/ui primitive, re-themed to Kit's tokens (ADR-007, DDR-001). */
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-/**
- * Kit panel: 22px radius (`rounded-xl`), no border, no shadow. Colour
- * separates surfaces here — a white card on the `--surface-app` background is
- * the whole separation mechanism.
- */
+/** Kit panel: 22px radius (`rounded-xl`), no border, no shadow. */
 function Card({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div

@@ -1,11 +1,4 @@
-/**
- * Tracking list values and completeness (issue #19).
- *
- * The completeness rule is the one worth pinning down: a missing entry means
- * "nobody has said yet", and only a `done` definition can be outstanding at
- * all. Get that wrong and the dashboard nags a coach forever about a "Comment"
- * column nobody intended to fill in.
- */
+/** Tracking list values and completeness (issue #19). */
 import { describe, expect, it } from "vitest";
 import { isTrackingComplete, validateTrackingValue } from "@fc-app/contracts";
 

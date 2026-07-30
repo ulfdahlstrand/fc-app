@@ -1,3 +1,4 @@
+/** Seeds a new club and team with their default configuration (ADR-005). */
 import type { Kysely } from "kysely";
 import {
   DEFAULT_ACTIVITY_TYPES,
@@ -53,13 +54,7 @@ export async function seedClubRoles(
   return { adminRoleId };
 }
 
-/**
- * Seeds a newly created team with its default configuration (ADR-005).
- *
- * Seeds the default activity types (#11) and attendance statuses (#14). Both
- * are ordinary rows, not protected system records — a team can rename or
- * retire any of them.
- */
+/** Seeds a newly created team with its default configuration (ADR-005). */
 export async function seedTeamDefaults(
   db: Kysely<Database>,
   teamId: string

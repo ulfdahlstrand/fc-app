@@ -258,9 +258,6 @@ function ActivityDetail({
       {editing && (
         <ActivityFormDialog
           activity={current}
-          // A retired type stays on the activity that already uses it, but the
-          // select only offers active ones — plus this activity's own type, so
-          // an edit does not silently re-file it.
           activityTypes={types.filter(
             (candidate) => !candidate.archived || candidate.id === type?.id,
           )}

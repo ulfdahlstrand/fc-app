@@ -1,12 +1,4 @@
-/**
- * Create/edit dialog for an activity (issue #12).
- *
- * Follows the form pattern from ADR-007 (see `MemberFormDialog`): react-hook-form
- * with a Zod schema derived from the contract, and translated messages.
- *
- * The type select offers active types only — a retired type keeps rendering on
- * the activities that already use it, but nothing new may be filed under it.
- */
+/** Create/edit dialog for an activity (issue #12). */
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import type { Activity, ActivityType } from "@fc-app/contracts";

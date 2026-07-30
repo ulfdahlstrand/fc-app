@@ -1,17 +1,11 @@
+/** A shadcn/ui primitive, re-themed to Kit's tokens (ADR-007, DDR-001). */
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 
-/**
- * Kit buttons: full pill, bold Archivo, no shadow. Hover changes background
- * colour (never opacity), press scales to 0.97, disabled drops to 40%.
- *
- * `default` is ink, not green — Kit reserves green so it can keep meaning
- * "present". Reach for `brand` only when the button *is* the brand moment
- * (a hero call to action), not to make a form's submit louder.
- */
+/** Kit buttons: full pill, bold Archivo, no shadow. */
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-pill font-bold transition-[background-color,color,transform] duration-[120ms] ease-standard active:scale-[0.97] disabled:pointer-events-none disabled:opacity-40 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-ring/60 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 aria-invalid:border-destructive",
   {

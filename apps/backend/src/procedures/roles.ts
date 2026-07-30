@@ -1,3 +1,4 @@
+/** Role CRUD. The admin role is immutable (ADR-005). */
 import { ORPCError } from "@orpc/server";
 import type { Kysely } from "kysely";
 import type { Permission, Role } from "@fc-app/contracts";

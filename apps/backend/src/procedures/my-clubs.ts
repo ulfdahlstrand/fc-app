@@ -1,3 +1,4 @@
+/** The caller's clubs and teams, with the permissions each membership grants. */
 import type { Kysely } from "kysely";
 import type { MyClub, Permission } from "@fc-app/contracts";
 import { getDb } from "../db/client.js";

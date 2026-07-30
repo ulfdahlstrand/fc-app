@@ -1,10 +1,4 @@
-/**
- * Members roster (issue #7) — the team's list of members.
- *
- * Requires members.view in the selected team. Supports search and an
- * archived filter; members.manage unlocks adding members. Rows link to the
- * detail page.
- */
+/** Members roster (issue #7) — the team's list of members. */
 import { useState } from "react";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";

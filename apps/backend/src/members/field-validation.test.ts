@@ -1,3 +1,4 @@
+/** Custom member field value validation (ADR-010). */
 import { describe, expect, it } from "vitest";
 import { validateMemberFieldValue } from "@fc-app/contracts";
 

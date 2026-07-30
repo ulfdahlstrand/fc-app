@@ -1,3 +1,4 @@
+/** Attendance records. Writing is one bulk save (ADR-019). */
 import { ORPCError } from "@orpc/server";
 import type { Kysely, Selectable } from "kysely";
 import type { AttendanceRecord } from "@fc-app/contracts";
@@ -6,15 +7,6 @@ import type { AttendanceRecordsTable, Database } from "../db/types.js";
 import { os, requireUser } from "../orpc.js";
 import { requireTeamPermission } from "../tenancy/membership.js";
 
-/**
- * Attendance records (issue #14).
- *
- * Reading needs `members.view`; recording needs `attendance.record`.
- *
- * Writing is a bulk operation. The coach stands at the side of the pitch,
- * marks the roster and saves once — one request, one transaction — rather
- * than firing a mutation per tap on a connection that may not be there.
- */
 function toRecord(row: Selectable<AttendanceRecordsTable>): AttendanceRecord {
   return {
     activityId: row.activity_id,

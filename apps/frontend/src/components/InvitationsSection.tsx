@@ -1,10 +1,4 @@
-/**
- * Invitations manager for the club settings page (issue #6).
- *
- * Lists a club's invitations with status, lets managers create a new invite
- * (role required, optional team scope and email restriction), copy the link,
- * and revoke active ones.
- */
+/** Invitations manager for the club settings page (issue #6). */
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";

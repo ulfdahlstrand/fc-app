@@ -1,3 +1,4 @@
+/** Auth HTTP routes, outside oRPC because sign-in is a browser redirect (ADR-004). */
 import { randomBytes } from "node:crypto";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { getDb } from "../db/client.js";
@@ -9,14 +10,6 @@ import {
   deleteSessionByToken,
 } from "./session.js";
 import { signInWithProfile } from "./sign-in.js";
-
-// ---------------------------------------------------------------------------
-// Plain HTTP auth endpoints (outside oRPC — they redirect and set cookies):
-//
-//   GET  /auth/google           → redirect to Google's consent screen
-//   GET  /auth/google/callback  → exchange code, create session, redirect to app
-//   POST /auth/logout           → delete session, clear cookie
-// ---------------------------------------------------------------------------
 
 const STATE_COOKIE = "fc_oauth_state";
 
@@ -33,10 +26,7 @@ function corsHeaders(): Record<string, string> {
   };
 }
 
-/**
- * Handles auth routes. Returns true if the request was handled, false if it
- * should fall through to the oRPC handler.
- */
+/** Handles auth routes. */
 export async function handleAuthRequest(
   req: IncomingMessage,
   res: ServerResponse

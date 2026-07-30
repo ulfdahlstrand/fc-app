@@ -1,14 +1,4 @@
-/**
- * Dialog to edit a member's custom field values (issue #8). Renders one input
- * per active field definition, typed by field: text/number/date inputs, a
- * yes/no switch for boolean, and a select for select fields. Client-side
- * validation mirrors the contract; the backend re-validates.
- *
- * Fields are dynamic (defined per-team), so this uses controlled local state
- * rather than react-hook-form/Zod — there's no static schema to derive a form
- * type from. Validation and save behavior are unchanged from the pre-shadcn
- * version.
- */
+/** Dialog to edit a member's custom field values (issue #8). */
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {

@@ -1,11 +1,4 @@
-/**
- * Club settings — roles & permissions (issue #5).
- *
- * Only reachable with the settings.club permission in the selected club.
- * Lists the club's roles, allows creating/renaming custom roles and toggling
- * their permissions, and deleting unused custom roles. The Admin role is
- * shown read-only (it always holds every permission).
- */
+/** Club settings — roles & permissions (issue #5). */
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";

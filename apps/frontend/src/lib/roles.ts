@@ -1,10 +1,4 @@
-/**
- * Role management data hooks (issue #5).
- *
- * Roles are scoped to a club; the query key includes the club id so switching
- * clubs fetches the right set. Mutations invalidate both the roles list and
- * myClubs (a permission change can affect the caller's own gating).
- */
+/** Role management data hooks (issue #5). */
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createRoleInputSchema, type Permission } from "@fc-app/contracts";
 import { z } from "zod";

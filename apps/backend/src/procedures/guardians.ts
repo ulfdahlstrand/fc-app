@@ -1,3 +1,4 @@
+/** Links between accounts and members — who may answer for whom (ADR-016). */
 import { ORPCError } from "@orpc/server";
 import type { Kysely } from "kysely";
 import type {

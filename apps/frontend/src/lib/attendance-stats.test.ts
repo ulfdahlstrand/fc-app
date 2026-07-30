@@ -1,10 +1,4 @@
-/**
- * CSV export and the at-risk rule (issue #15).
- *
- * "Well-formed CSV" is an acceptance criterion, and the field most likely to
- * break it is a Swedish name with a comma in it — which is exactly what the
- * export writes ("Bergström, Alva").
- */
+/** CSV export and the at-risk rule (issue #15). */
 import { describe, expect, it } from "vitest";
 import type { MemberAttendanceStats } from "@fc-app/contracts";
 import { isAtRisk, statsToCsv, toCsv } from "./attendance-stats";

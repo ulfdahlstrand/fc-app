@@ -1,10 +1,7 @@
+/** Formats a custom field value for display, by field type. */
 import type { MemberFieldDefinition } from "@fc-app/contracts";
 import type { TFunction } from "i18next";
 
-/**
- * Formats a stored raw field value for display. Booleans become localized
- * yes/no; everything else shows as-is. Empty/missing renders as an em dash.
- */
 export function formatFieldValue(
   field: MemberFieldDefinition,
   raw: string | undefined,

@@ -1,19 +1,7 @@
+/** Migration — see ADR-006 for why schema changes only happen here. */
 import { sql, type Kysely } from "kysely";
 
-/**
- * Attendance (issue #14, ADR-005): statuses are team configuration, not code.
- * Every team is seeded with Present, Absent and Ill and may add its own
- * ("Late", "Injured"). Mirrors `activity_types` — same colour tokens, same
- * archive-never-delete rule, same partial unique index on active names.
- *
- * `counts_as_present` is what statistics (#15) sums. It is a stored flag
- * rather than something inferred from the name, because a team may decide
- * "Late" counts and "Injured" does not, and neither name says so.
- *
- * A record is one row per member per activity, keyed on the pair: an unmarked
- * member is the *absence* of a row, not a status meaning "unknown". Kit draws
- * that state as a dashed ring, and dashed always means "not decided yet".
- */
+/** Attendance (issue #14, ADR-005): statuses are team configuration, not code. */
 export async function up(db: Kysely<unknown>): Promise<void> {
   await db.schema
     .createTable("attendance_statuses")

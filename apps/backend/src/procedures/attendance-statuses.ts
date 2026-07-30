@@ -1,3 +1,4 @@
+/** Attendance status CRUD (ADR-005, ADR-014). */
 import { ORPCError } from "@orpc/server";
 import type { Kysely, Selectable } from "kysely";
 import type { ActivityColour, AttendanceStatus } from "@fc-app/contracts";
@@ -6,13 +7,6 @@ import type { AttendanceStatusesTable, Database } from "../db/types.js";
 import { os, requireUser } from "../orpc.js";
 import { requireTeamPermission } from "../tenancy/membership.js";
 
-/**
- * Attendance statuses (issue #14, ADR-005) — team configuration, not code.
- *
- * Mirrors activity types (#11): reading needs `members.view` (whoever records
- * or reads attendance needs the labels), managing needs `settings.team`.
- * Statuses are archived, never deleted, so records keep naming their status.
- */
 function toAttendanceStatus(
   row: Selectable<AttendanceStatusesTable>
 ): AttendanceStatus {
@@ -44,11 +38,7 @@ async function loadStatus(
   return row;
 }
 
-/**
- * Rejects a name already used by another *active* status in the same team.
- * The partial unique index enforces this in the database as well; this turns
- * the constraint violation into a readable message.
- */
+/** Rejects a name already used by another *active* status in the same team. */
 async function assertNameAvailable(
   db: Kysely<Database>,
   teamId: string,

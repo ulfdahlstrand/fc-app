@@ -1,13 +1,6 @@
+/** The default roles seeded on club creation (ADR-005). */
 import type { Permission } from "@fc-app/contracts";
 import { PERMISSIONS } from "@fc-app/contracts";
-
-// ---------------------------------------------------------------------------
-// Default role definitions (ADR-005)
-//
-// Seeded on club creation. The `admin` role is immutable and always holds
-// every permission, so a club can never lock itself out of settings.club.
-// Kept in sync with the backfill copy in the roles migration.
-// ---------------------------------------------------------------------------
 
 export const ADMIN_SYSTEM_KEY = "admin";
 

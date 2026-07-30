@@ -1,9 +1,4 @@
-/**
- * shadcn/ui class-name helper.
- *
- * `cn` merges conditional class lists (clsx) and de-duplicates conflicting
- * Tailwind utilities (tailwind-merge) so later classes win predictably.
- */
+/** shadcn/ui class-name helper. */
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 

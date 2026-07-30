@@ -1,8 +1,4 @@
-/**
- * Club/team switcher shown in the app header for signed-in users with at least
- * one team. Teams are grouped per club; picking one updates the shared
- * selected-team store (see lib/clubs.ts).
- */
+/** Club/team switcher shown in the app header for signed-in users with at least one team. */
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import {

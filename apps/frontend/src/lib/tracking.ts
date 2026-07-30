@@ -1,14 +1,4 @@
-/**
- * Tracking lists (issue #19).
- *
- * Definitions are read with members.view (the matrix needs them to draw its
- * columns) and managed with settings.team. Ticking a cell needs tracking.manage,
- * which is a separate permission on purpose: chasing paperwork is a job a club
- * hands out without also handing over the roster.
- *
- * A cell with no entry means "nobody has said yet", never "no". Clearing one
- * sends null, which deletes the row rather than storing a falsehood.
- */
+/** Tracking lists (issue #19). */
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   createTrackingDefinitionInputSchema,
@@ -140,13 +130,7 @@ export function entriesByCell(
   );
 }
 
-/**
- * How many members have settled a definition, and out of how many.
- *
- * Only `done` definitions have a notion of progress; a date or a note column
- * returns null because there is no total to be part of. The dashboard computes
- * the same thing server-side — both go through `isTrackingComplete`.
- */
+/** How many members have settled a definition, and out of how many. */
 export function definitionProgress(
   definition: Pick<TrackingDefinition, "id" | "valueType">,
   memberIds: string[],

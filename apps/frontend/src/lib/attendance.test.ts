@@ -1,9 +1,4 @@
-/**
- * The tap-cycle and diff logic behind attendance registration (issue #14).
- *
- * These are the parts that decide whether marking twenty members takes under a
- * minute: how far one tap gets you, and how little goes over the wire on save.
- */
+/** The tap-cycle and diff logic behind attendance registration (issue #14). */
 import { describe, expect, it } from "vitest";
 import type { AttendanceStatus } from "@fc-app/contracts";
 import { changedEntries, nextMark, statusGlyph } from "./attendance";

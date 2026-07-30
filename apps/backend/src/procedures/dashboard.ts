@@ -1,3 +1,4 @@
+/** One aggregate procedure for the landing page (ADR-015). */
 import type { Kysely } from "kysely";
 import {
   isAtRisk,
@@ -13,20 +14,7 @@ import { os, requireUser } from "../orpc.js";
 import { requireTeamAccess } from "../tenancy/membership.js";
 import { loadMyCallups } from "./callup-responses.js";
 
-/**
- * Dashboard (issue #20) — the landing page inside a team context.
- *
- * One procedure, not four. The page shows four features that each have their
- * own page already, and asking for them separately would mean four round trips
- * that each re-resolve the caller's membership before doing any work.
- *
- * Access is `requireTeamAccess`, deliberately weaker than the `members.view`
- * the widgets need: everyone in the team gets a dashboard, and what is *on* it
- * is decided per widget below. A player is not shown an empty coach's page,
- * and a coach is not denied one because a widget needs a permission they lack.
- * Each widget the caller may not see comes back as null; empty is a different
- * answer, and means "you may see this, and there is nothing here yet".
- */
+/** Dashboard (issue #20) — the landing page inside a team context. */
 
 /** How many activities the "what's next" widget carries. */
 const UPCOMING_LIMIT = 5;
@@ -38,13 +26,7 @@ function daysBefore(from: Date, days: number): Date {
   return new Date(from.getTime() - days * 24 * 60 * 60 * 1000);
 }
 
-/**
- * The next few activities, with their type resolved and their squad tallied.
- *
- * Cancelled activities are included. They stay on the calendar struck through
- * so nobody turns up at the pitch, and the dashboard is exactly where someone
- * checking "what's on tonight" would look.
- */
+/** The next few activities, with their type resolved and their squad tallied. */
 async function loadUpcoming(
   db: Kysely<Database>,
   teamId: string
@@ -139,14 +121,7 @@ async function countPendingCallups(
   return Number(row?.pending ?? 0);
 }
 
-/**
- * The attendance trend: this window's rate and the one before it.
- *
- * Both windows are summarised with the same pure function the statistics page
- * (#15) uses, so the dashboard's percentage is the one the page it links to
- * will show — the rate is attended ÷ marked, and an unmarked session stays
- * unknown rather than counting as an absence.
- */
+/** The attendance trend: this window's rate and the one before it. */
 async function loadAttendance(
   db: Kysely<Database>,
   teamId: string
@@ -229,18 +204,7 @@ async function loadAttendance(
   };
 }
 
-/**
- * Tracking lists (#19) with ticks still outstanding.
- *
- * Only `done` definitions are counted. A date or a note column is information,
- * not a box to tick, so a blank one is not work anybody is failing to do —
- * counting it would make this widget nag forever. The rule is
- * `isTrackingComplete` in the contract; here it is expressed as SQL, which is
- * why only ticks equal to "true" are summed.
- *
- * Fully-ticked lists are dropped rather than shown at 100%: the widget exists to
- * name what is left, and a dashboard that lists finished work buries the rest.
- */
+/** Tracking lists (#19) with ticks still outstanding. */
 async function loadTracking(
   db: Kysely<Database>,
   teamId: string

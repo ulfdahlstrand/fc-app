@@ -1,3 +1,4 @@
+/** Roster CRUD. Members are archived, never deleted (ADR-014). */
 import { ORPCError } from "@orpc/server";
 import type { Kysely, Selectable } from "kysely";
 import type { Member } from "@fc-app/contracts";

@@ -1,9 +1,4 @@
-/**
- * Application entry point.
- *
- * Imports i18n configuration first (as a side-effect) so that the i18next
- * instance is initialised before any component renders and calls `useTranslation`.
- */
+/** Application entry point. */
 import "./i18n/i18n";
 import "./styles/globals.css";
 
