@@ -11,7 +11,9 @@ import { handleAuthRequest } from "./auth/http.js";
 import { resolveContext } from "./context.js";
 import { router } from "./router.js";
 
-const port = Number(process.env["BACKEND_PORT"] ?? 4001);
+// The host platform dictates the port to bind and injects it as PORT (ADR-020);
+// BACKEND_PORT is the name used locally and in Docker Compose.
+const port = Number(process.env["PORT"] ?? process.env["BACKEND_PORT"] ?? 4001);
 const frontendOrigin = new URL(
   process.env["FRONTEND_URL"] ?? "http://localhost:4173"
 ).origin;

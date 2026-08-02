@@ -10,7 +10,8 @@
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "migrate": "node --env-file=../../.env --import tsx/esm src/db/migrate.ts"
+    "migrate": "node --env-file=../../.env --import tsx/esm src/db/migrate.ts",
+    "migrate:deploy": "node --import tsx/esm src/db/migrate.ts"
   },
   "dependencies": {
     "@fc-app/contracts": "*",
