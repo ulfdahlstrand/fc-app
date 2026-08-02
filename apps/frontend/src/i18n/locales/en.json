@@ -62,6 +62,7 @@
     "label": "Select team"
   },
   "nav": {
+    "overview": "Overview",
     "activities": "Calendar",
     "members": "Members",
     "groups": "Groups",
