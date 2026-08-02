@@ -31,6 +31,9 @@ function NavPill({ to, children }: { to: string; children: ReactNode }) {
   return (
     <Link
       to={to}
+      // Without this "/" would count as active on every page, since prefix
+      // matching makes the root a prefix of all of them.
+      activeOptions={{ exact: to === "/" }}
       className={navPillClass}
       activeProps={{ className: cn(navPillClass, navPillActive) }}
       inactiveProps={{ className: cn(navPillClass, navPillIdle) }}
@@ -68,22 +71,25 @@ function RootLayout() {
               {clubName}
             </span>
           </Link>
+          {/* Sketch order: the team's own pages first (overview, roster,
+              calendar, attendance, then the rest), the "Manage" group after a
+              divider, and the team switcher next to the avatar on the right. */}
           {user && (
-            <nav className="ml-auto flex flex-wrap items-center gap-2">
-              <TeamSwitcher />
-              {canViewMembers && (
-                <NavPill to="/activities">{t("nav.activities")}</NavPill>
-              )}
+            <nav className="ml-auto flex flex-wrap items-center justify-end gap-2">
+              <NavPill to="/">{t("nav.overview")}</NavPill>
               {canViewMembers && (
                 <NavPill to="/members">{t("nav.members")}</NavPill>
               )}
               {canViewMembers && (
-                <NavPill to="/groups">{t("nav.groups")}</NavPill>
+                <NavPill to="/activities">{t("nav.activities")}</NavPill>
               )}
               {/* Call-ups are for whoever is asked as well as whoever asks,
                   so this is the one nav item a player also sees. */}
               {(canViewMembers || canRespond) && (
                 <NavPill to="/callups">{t("nav.callups")}</NavPill>
+              )}
+              {canViewMembers && (
+                <NavPill to="/groups">{t("nav.groups")}</NavPill>
               )}
               {/* The noticeboard is for everyone in the team, not just whoever
                   can see the roster — being announced to needs no permission. */}
@@ -94,12 +100,16 @@ function RootLayout() {
               {canViewMembers && (
                 <NavPill to="/tracking">{t("nav.tracking")}</NavPill>
               )}
+              {(canManageTeam || canManageClub) && (
+                <span aria-hidden className="bg-ink-raised mx-1 h-5 w-px" />
+              )}
               {canManageTeam && (
                 <NavPill to="/settings/team">{t("nav.teamSettings")}</NavPill>
               )}
               {canManageClub && (
                 <NavPill to="/settings/club">{t("nav.clubSettings")}</NavPill>
               )}
+              <TeamSwitcher />
               <Link
                 to="/profile"
                 className={cn(navPillClass, "gap-2 pl-1.5")}
