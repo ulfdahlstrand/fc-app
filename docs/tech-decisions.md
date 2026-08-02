@@ -671,15 +671,64 @@ than an afternoon.
   This is accepted, not worked around. Pinging it awake is self-defeating: the
   750 monthly instance hours are pooled per workspace, and exhausting them
   suspends every free web service until the next month.
-- **The split hosts make the session cookie cross-site.** `onrender.com` is on
-  the Public Suffix List, so `SameSite=Lax` would silently stop the browser
-  attaching the cookie to the SPA's fetches — sign-in appearing to work while
-  every subsequent request is anonymous. `serializeCookie` therefore emits
-  `SameSite=None; Secure` whenever `COOKIE_SECURE=true`, both driven by that one
-  flag so they cannot drift into the combination browsers reject.
+- **The split hosts made the session cookie cross-site.** `onrender.com` is on
+  the Public Suffix List, so the two subdomains are different sites. This was
+  first handled with `SameSite=None; Secure`, which works only in browsers that
+  still allow third-party cookies — superseded by ADR-021.
 - Migrating at build time means a build that migrates and then fails to deploy
   leaves the schema ahead of the code. Migrations must stay compatible with the
   previous release — add columns before using them, drop them a release later.
 - `NODE_ENV=production` is set on the service, which makes `npm ci` skip
   devDependencies; the build commands pass `--include=dev` because `typescript`,
   `vite` and `tsx` all live there. Removing that flag breaks the build.
+
+---
+
+## ADR-021 — 2026-08-02 — Proxy the API onto the SPA's origin
+
+**Status:** Accepted (supersedes the cookie handling in ADR-020)
+
+**Context:**
+ADR-020 put the SPA and the API on two `onrender.com` subdomains. Because that
+domain is on the Public Suffix List, the two are different *sites*, so the
+session cookie is third-party from the SPA's point of view and was issued as
+`SameSite=None; Secure`.
+
+That attribute only asks the browser to send a third-party cookie; it does not
+make it willing to. iOS blocks third-party cookies outright — Safari, Chrome and
+Firefox included, since all iOS browsers are WebKit — and desktop Firefox does
+the same. Sign-in on a phone therefore appeared to succeed, the redirect landed
+back on the app, and every request after it was anonymous, bouncing the user
+straight back to `/login`. Desktop Chrome still permits the cookie, so the bug
+was invisible in development.
+
+**Decision:**
+- **A rewrite rule on the static site proxies `/api/*` to the API service.** The
+  browser only ever sees one origin, and the session cookie is first-party.
+- The splat drops the prefix (`/api/me` → `/me`), so no backend route knows it
+  is proxied and local development is unchanged.
+- `VITE_API_URL` becomes the path `/api`, resolved against `location.origin` in
+  `lib/api-url.ts` because oRPC's `OpenAPILink` requires an absolute base URL.
+- `AUTH_CALLBACK_URL` moves to the web origin's `/api/auth/google/callback`. The
+  callback is the response that sets the session cookie, so it has to be served
+  from the origin the cookie belongs to.
+- `serializeCookie` drops the conditional and always emits `SameSite=Lax`.
+
+**Alternatives considered:**
+- **A custom domain** with the SPA and API on sibling subdomains of one apex.
+  Equally correct and one moving part fewer, but it requires owning a domain;
+  the proxy needs nothing.
+- **Bearer tokens in `localStorage`.** Sidesteps cookie policy entirely, but
+  trades an HTTP-only cookie for a token any XSS can read.
+- **Serving the SPA from the API**, rejected in ADR-020 for dragging the
+  frontend into the API's cold start. Still true; the proxy gets the single
+  origin without it, since the static site stays the thing being served.
+
+**Consequences:**
+- `SameSite=Lax` restores the CSRF protection `None` had given up.
+- API traffic takes an extra hop through Render's CDN. The static site draws no
+  instance hours, so this stays free.
+- The API's hostname is now committed in `render.yaml` rather than configured.
+  If Render suffixes the service name, that rule is what has to change.
+- The deployment is verified on a phone, not only on desktop Chrome, which is
+  the most permissive browser about cookies and hides this class of bug.

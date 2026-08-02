@@ -22,13 +22,20 @@ services:
     buildCommand: npm ci --include=dev && npx turbo build --filter=@fc-app/frontend
     staticPublishPath: apps/frontend/dist
     envVars:
-      # Baked into the bundle at build time, so changing it needs a redeploy.
-      # Set to the fc-app-api URL after the first deploy (docs/deployment.md).
+      # A path, not a host: the API is reached through the /api rewrite below,
+      # on this site's own origin. Baked into the bundle at build time.
       - key: VITE_API_URL
-        sync: false
+        value: /api
       - key: VITE_ENABLE_DEV_LOGIN
         value: "false"
     routes:
+      # Proxies the API onto this origin (ADR-021). Calling fc-app-api directly
+      # makes the session cookie third-party, which iOS and Firefox drop
+      # outright — sign-in looks fine, then every request is anonymous.
+      # Must precede the catch-all, which would otherwise swallow /api.
+      - type: rewrite
+        source: /api/*
+        destination: https://fc-app-api.onrender.com/*
       # TanStack Router owns the paths; without this every direct link and
       # reload below / returns the CDN's 404 instead of the app.
       - type: rewrite
@@ -57,8 +64,8 @@ services:
       # Also excludes the dev sign-in route from ever loading (see index.ts).
       - key: NODE_ENV
         value: production
-      # Drives both `Secure` and `SameSite=None` on the session cookie, which
-      # the split-host layout requires — see auth/cookies.ts.
+      # Marks the session cookie `Secure`. SameSite stays `Lax`; the browser
+      # only ever talks to the API through fc-app-web's /api rewrite.
       - key: COOKIE_SECURE
         value: "true"
       # Neon connection string. Use sslmode=verify-full: `require` still
@@ -69,8 +76,10 @@ services:
         sync: false
       - key: GOOGLE_CLIENT_SECRET
         sync: false
-      # https://<this service>/auth/google/callback — must also be registered
-      # as an authorized redirect URI in Google Cloud Console.
+      # https://<fc-app-web>/api/auth/google/callback — the proxied path, not
+      # this service's own host, so the session cookie Google's callback sets
+      # belongs to the SPA's origin. Must also be registered as an authorized
+      # redirect URI in Google Cloud Console.
       - key: AUTH_CALLBACK_URL
         sync: false
       # The fc-app-web URL. Doubles as the allowed CORS origin and the
