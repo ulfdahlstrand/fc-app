@@ -25,29 +25,27 @@ export interface CookieOptions {
 /**
  * Serializes an HTTP-only cookie.
  *
- * SameSite follows the deployment shape (ADR-020). Deployed, the SPA and the
- * API are separate hosts, so the session cookie is cross-site and `Lax` would
- * stop the browser attaching it to the SPA's fetches — sign-in would appear to
- * succeed and every later request would be anonymous. `None` is required, and
- * browsers only honour it alongside `Secure`; the two are therefore driven by
- * the single COOKIE_SECURE flag so they cannot drift apart.
+ * `SameSite=Lax` is unconditional because the browser only ever reaches the API
+ * on the page's own origin: through the static site's `/api` rewrite when
+ * deployed (ADR-021), on `localhost` in development. `None` would be the wrong
+ * trade here — it buys nothing and drops the CSRF protection `Lax` gives.
+ * COOKIE_SECURE adds `Secure` wherever the deployment is HTTPS.
  */
 export function serializeCookie(
   name: string,
   value: string,
   options: CookieOptions = {}
 ): string {
-  const crossSite = process.env["COOKIE_SECURE"] === "true";
   const parts = [
     `${name}=${encodeURIComponent(value)}`,
     "Path=/",
     "HttpOnly",
-    crossSite ? "SameSite=None" : "SameSite=Lax",
+    "SameSite=Lax",
   ];
   if (options.expires) parts.push(`Expires=${options.expires.toUTCString()}`);
   if (options.maxAgeSeconds !== undefined)
     parts.push(`Max-Age=${options.maxAgeSeconds}`);
-  if (crossSite) parts.push("Secure");
+  if (process.env["COOKIE_SECURE"] === "true") parts.push("Secure");
   return parts.join("; ");
 }
 

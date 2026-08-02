@@ -1,11 +1,8 @@
 /** Auth helpers for the frontend. */
 import type { User } from "@fc-app/contracts";
 import { queryClient } from "../query-client";
+import { getApiUrl } from "./api-url";
 import { orpcQuery } from "./orpc-query";
-
-export function getApiUrl(): string {
-  return import.meta.env["VITE_API_URL"] ?? "";
-}
 
 /** URL that starts the Google sign-in redirect flow. */
 export function getGoogleSignInUrl(): string {
