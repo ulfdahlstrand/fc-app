@@ -8,6 +8,7 @@ tracking lists to fit how they work.
 - **Product specification** (pages & features): [`docs/product/product-spec.md`](docs/product/product-spec.md)
 - **Architecture**: [`docs/architecture.md`](docs/architecture.md)
 - **Technical decisions (ADRs)**: [`docs/tech-decisions.md`](docs/tech-decisions.md)
+- **Deployment** (Render + Neon): [`docs/deployment.md`](docs/deployment.md)
 
 ## Stack
 

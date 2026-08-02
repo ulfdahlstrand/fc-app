@@ -1,0 +1,79 @@
+# Render Blueprint — the deployed shape of fc-app (ADR-020).
+# Setup and first-deploy order: docs/deployment.md
+#
+# PostgreSQL is deliberately absent from this file. Render's free database is
+# deleted 30 days after creation, so DATABASE_URL points at an external Neon
+# project instead — see the ADR.
+#
+# `sync: false` means "prompted once, stored in Render, never committed".
+# Everything else here is safe to keep in git.
+
+services:
+  # ---------------------------------------------------------------------------
+  # Frontend — the Vite build served from Render's CDN. Static sites are free
+  # permanently and draw no instance hours, so this half never sleeps.
+  # ---------------------------------------------------------------------------
+  - type: web
+    runtime: static
+    name: fc-app-web
+    # --include=dev is not optional: NODE_ENV=production makes npm skip
+    # devDependencies, and the build needs typescript and vite from there.
+    # turbo (not npm --workspace) so @fc-app/contracts is built first.
+    buildCommand: npm ci --include=dev && npx turbo build --filter=@fc-app/frontend
+    staticPublishPath: apps/frontend/dist
+    envVars:
+      # Baked into the bundle at build time, so changing it needs a redeploy.
+      # Set to the fc-app-api URL after the first deploy (docs/deployment.md).
+      - key: VITE_API_URL
+        sync: false
+      - key: VITE_ENABLE_DEV_LOGIN
+        value: "false"
+    routes:
+      # TanStack Router owns the paths; without this every direct link and
+      # reload below / returns the CDN's 404 instead of the app.
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+  # ---------------------------------------------------------------------------
+  # Backend — the oRPC/node:http server. Free instances sleep after 15 minutes
+  # of no traffic and take about a minute to wake.
+  # ---------------------------------------------------------------------------
+  - type: web
+    runtime: node
+    name: fc-app-api
+    plan: free
+    region: frankfurt
+    # Migrations run here rather than as a pre-deploy command, which Render
+    # offers only on paid instances. Build-time means once per deploy, before
+    # the new code is live, and off the cold-start path.
+    buildCommand: >-
+      npm ci --include=dev &&
+      npx turbo build --filter=@fc-app/backend &&
+      npm run migrate:deploy --workspace @fc-app/backend
+    startCommand: node apps/backend/dist/index.js
+    healthCheckPath: /health
+    envVars:
+      # Also excludes the dev sign-in route from ever loading (see index.ts).
+      - key: NODE_ENV
+        value: production
+      # Drives both `Secure` and `SameSite=None` on the session cookie, which
+      # the split-host layout requires — see auth/cookies.ts.
+      - key: COOKIE_SECURE
+        value: "true"
+      # Neon connection string. Use sslmode=verify-full: `require` still
+      # verifies in pg 8.x but logs a deprecation warning on every boot.
+      - key: DATABASE_URL
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      # https://<this service>/auth/google/callback — must also be registered
+      # as an authorized redirect URI in Google Cloud Console.
+      - key: AUTH_CALLBACK_URL
+        sync: false
+      # The fc-app-web URL. Doubles as the allowed CORS origin and the
+      # post-sign-in redirect target, so a wrong value breaks both.
+      - key: FRONTEND_URL
+        sync: false
