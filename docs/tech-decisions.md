@@ -625,3 +625,61 @@ filled in a tick at a time, sometimes by two people at once.
 - The attendance screen owns a dirty-state buffer; the matrix does not.
 - The matrix invalidates and refetches after each cell, which is affordable
   because the payload is small; it disables only the cell in flight.
+
+---
+
+## ADR-020 — 2026-08-02 — Deploy on Render and Neon, split across two hosts
+
+**Status:** Accepted
+
+**Context:**
+The app needed somewhere to live, with two constraints: free if at all possible,
+and no container pipeline to maintain. The stack forces the issue — the backend
+is a long-lived `node:http` server, which rules out anything that only runs
+serverless functions without rewriting it.
+
+Free tiers were checked rather than assumed, and several widely-cited ones have
+quietly died: Fly.io removed its free allowance in 2024, Railway offers only a
+one-off $5 credit, and Koyeb's free service tier is gone (Pro now starts at
+$29/month) despite blog posts still listing it. Vercel's Hobby plan forbids
+commercial use and would need the backend rewritten. Cloudflare Workers cannot
+run `node:http` at all, and `pg` over TCP would need Hyperdrive or Neon's
+serverless driver — feasible via oRPC's fetch adapter, but days of work rather
+than an afternoon.
+
+**Decision:**
+- **Render** hosts both halves as two separate services, declared in
+  `render.yaml`: a static site for the SPA and a free web service for the API.
+  It builds straight from the GitHub repo with a build and start command, so
+  the existing `docker/` setup stays a local-development tool and never becomes
+  a deployment dependency.
+- **Neon** hosts PostgreSQL, *not* Render's own free database, which is deleted
+  30 days after creation.
+- The **static site is never merged into the API**. Serving the SPA from Node
+  would put both on one origin and avoid the cookie work below, but it would
+  drag the frontend down into the API's cold start, lose the CDN, and add file
+  serving to a file that is currently a clean API entry point.
+- **Migrations run in the API's build command.** Render's pre-deploy hook is
+  paid-only, and the alternative — migrating in the start command — would run
+  on every wake from sleep and sit on the cold-start path.
+
+**Consequences:**
+- The deployment costs nothing, and the only upgrade the project ever needs is
+  the API to Starter (~$7/month) to remove the cold start. The static half is
+  free permanently regardless.
+- **The free API sleeps after 15 minutes idle and takes about a minute to wake.**
+  This is accepted, not worked around. Pinging it awake is self-defeating: the
+  750 monthly instance hours are pooled per workspace, and exhausting them
+  suspends every free web service until the next month.
+- **The split hosts make the session cookie cross-site.** `onrender.com` is on
+  the Public Suffix List, so `SameSite=Lax` would silently stop the browser
+  attaching the cookie to the SPA's fetches — sign-in appearing to work while
+  every subsequent request is anonymous. `serializeCookie` therefore emits
+  `SameSite=None; Secure` whenever `COOKIE_SECURE=true`, both driven by that one
+  flag so they cannot drift into the combination browsers reject.
+- Migrating at build time means a build that migrates and then fails to deploy
+  leaves the schema ahead of the code. Migrations must stay compatible with the
+  previous release — add columns before using them, drop them a release later.
+- `NODE_ENV=production` is set on the service, which makes `npm ci` skip
+  devDependencies; the build commands pass `--include=dev` because `typescript`,
+  `vite` and `tsx` all live there. Removing that flag breaks the build.
