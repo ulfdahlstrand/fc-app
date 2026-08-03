@@ -4,12 +4,13 @@
  * string-input → API-payload conversion the form helpers perform.
  */
 import { describe, expect, it } from "vitest";
-import { memberFormSchema } from "./members";
+import { editablePersonalId, memberFormSchema } from "./members";
 
 const valid = {
   firstName: "Alva",
   lastName: "Nilsson",
   birthYear: "2014",
+  personalId: "",
   email: "alva@example.com",
   phone: "070-123 45 67",
 };
@@ -22,6 +23,7 @@ describe("memberFormSchema", () => {
       firstName: "Alva",
       lastName: "Nilsson",
       birthYear: 2014,
+      personalId: null,
       email: "alva@example.com",
       phone: "070-123 45 67",
     });
@@ -38,6 +40,22 @@ describe("memberFormSchema", () => {
     expect(result.birthYear).toBeNull();
     expect(result.email).toBeNull();
     expect(result.phone).toBeNull();
+    expect(result.personalId).toBeNull();
+  });
+
+  it("checks the personnummer before it becomes a round trip (ADR-022)", () => {
+    const valid1985 = memberFormSchema.safeParse({
+      ...valid,
+      personalId: "19850822-3578",
+    });
+    const badCheckDigit = memberFormSchema.safeParse({
+      ...valid,
+      personalId: "19850822-3579",
+    });
+
+    expect(valid1985.success).toBe(true);
+    expect(badCheckDigit.success).toBe(false);
+    expect(badCheckDigit.error?.issues[0]?.path[0]).toBe("personalId");
   });
 
   it("requires a first and last name", () => {
@@ -67,5 +85,18 @@ describe("memberFormSchema", () => {
     expect(tooEarly.error?.issues[0]?.code).toBe("too_small");
     expect(notANumber.error?.issues[0]?.code).toBe("invalid_type");
     expect(badEmail.error?.issues[0]?.code).toBe("invalid_format");
+  });
+});
+
+describe("editablePersonalId", () => {
+  it("hands back a full number for editing", () => {
+    expect(editablePersonalId("20170314-2412")).toBe("20170314-2412");
+  });
+
+  // A members.view caller sees a masked number; it must never be typed back in
+  // as if it were a real one.
+  it("refuses to prefill a masked number", () => {
+    expect(editablePersonalId("20170314-****")).toBe("");
+    expect(editablePersonalId(null)).toBe("");
   });
 });

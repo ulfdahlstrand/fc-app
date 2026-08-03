@@ -8,6 +8,8 @@ import {
 } from "@fc-app/contracts";
 import { getDb } from "../db/client.js";
 import type { Database, MemberFieldDefinitionsTable } from "../db/types.js";
+import { loadPersonalIds } from "../members/personal-id.js";
+import { toMember } from "../members/to-member.js";
 import { loadMemberValues } from "../members/values.js";
 import { os, requireUser } from "../orpc.js";
 import { requireTeamPermission } from "../tenancy/membership.js";
@@ -165,7 +167,12 @@ export const setMemberFieldValuesHandler = os.setMemberFieldValues.handler(
   async ({ input, context }) => {
     const user = requireUser(context);
     const db = getDb();
-    await requireTeamPermission(db, user.id, input.teamId, "members.manage");
+    const access = await requireTeamPermission(
+      db,
+      user.id,
+      input.teamId,
+      "members.manage"
+    );
 
     // Member must belong to the team.
     const member = await db
@@ -242,18 +249,17 @@ export const setMemberFieldValuesHandler = os.setMemberFieldValues.handler(
     });
 
     const values = await loadMemberValues(db, [input.memberId]);
+    const personalIds = await loadPersonalIds(
+      db,
+      [input.memberId],
+      access.membership.permissions
+    );
     return {
-      member: {
-        id: member.id,
-        teamId: member.team_id,
-        firstName: member.first_name,
-        lastName: member.last_name,
-        birthYear: member.birth_year,
-        email: member.email,
-        phone: member.phone,
-        archived: member.archived,
-        customFields: values.get(input.memberId) ?? {},
-      },
+      member: toMember(
+        member,
+        values.get(input.memberId) ?? {},
+        personalIds.get(input.memberId) ?? null
+      ),
     };
   }
 );

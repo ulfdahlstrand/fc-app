@@ -203,7 +203,7 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
       {creating && (
         <MemberFormDialog
           saving={createMember.isPending}
-          error={createMember.isError}
+          error={createMember.error}
           onSave={async (input) => {
             await createMember.mutateAsync(input);
             setCreating(false);

@@ -80,6 +80,11 @@
     "showArchived": "Visa arkiverade",
     "name": "Namn",
     "birthYear": "Födelseår",
+    "personalId": "Personnummer",
+    "personalIdHint": "Används för att identifiera medlemmen mellan importer. Syns bara för den som får redigera medlemmar.",
+    "showPersonalId": "Visa",
+    "hidePersonalId": "Dölj",
+    "personalIdTaken": "En annan medlem i laget har redan det personnumret.",
     "contact": "Kontakt",
     "firstName": "Förnamn",
     "lastName": "Efternamn",
@@ -117,6 +122,10 @@
       },
       "phone": {
         "too_big": "Telefonnumret är för långt."
+      },
+      "personalId": {
+        "custom": "Ange ett giltigt personnummer.",
+        "too_big": "Det är för långt för att vara ett personnummer."
       }
     }
   },

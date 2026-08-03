@@ -91,11 +91,46 @@ export interface MembersTable {
   first_name: string;
   last_name: string;
   birth_year: number | null;
+  /** DATE column: derived from the personnummer when there is one (ADR-022). */
+  birth_date: ColumnType<string | null, string | null, string | null>;
+  /** The exporting system's own key ("Medlems Nr"), when the file carried one. */
+  external_ref: string | null;
   email: string | null;
   phone: string | null;
   archived: Generated<boolean>;
   created_at: Timestamp;
   updated_at: ColumnType<Date, never, Date>;
+}
+
+/**
+ * The personnummer, deliberately not a column on `members` (ADR-022) — a
+ * `selectAll()` on the roster must not be able to return it. Only
+ * `members/personal-id.ts` touches this table.
+ */
+export interface MemberPersonalIdsTable {
+  member_id: string;
+  /** Denormalised so uniqueness can be per team; a composite FK keeps it true. */
+  team_id: string;
+  /** Twelve digits, no separator. */
+  personal_id: string;
+  created_at: Timestamp;
+}
+
+/**
+ * People attached to a member who may not have an account: the export's
+ * `Målsman` columns. `user_id` is set if and when they sign in (#64).
+ */
+export interface MemberContactsTable {
+  id: Generated<string>;
+  member_id: string;
+  name: string;
+  /** Free text as written ("Mamma", "Pappa") — not the guardian|self enum. */
+  relation: string | null;
+  email: string | null;
+  phone: string | null;
+  user_id: string | null;
+  sort_order: Generated<number>;
+  created_at: Timestamp;
 }
 
 export interface MemberFieldDefinitionsTable {
@@ -291,6 +326,8 @@ export interface Database {
   role_permissions: RolePermissionsTable;
   invitations: InvitationsTable;
   members: MembersTable;
+  member_personal_ids: MemberPersonalIdsTable;
+  member_contacts: MemberContactsTable;
   member_field_definitions: MemberFieldDefinitionsTable;
   member_field_values: MemberFieldValuesTable;
   member_guardians: MemberGuardiansTable;

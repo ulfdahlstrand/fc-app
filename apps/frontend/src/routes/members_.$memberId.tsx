@@ -8,6 +8,7 @@
 import { useState } from "react";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { maskPersonalId } from "@fc-app/contracts";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -128,6 +129,12 @@ function MemberDetail({
 
       <Card>
         <CardContent className="flex flex-col gap-4">
+          {m.personalId !== null && (
+            <>
+              <PersonalIdField value={m.personalId} />
+              <div className="border-t" />
+            </>
+          )}
           <Field label={t("members.birthYear")} value={m.birthYear} />
           <div className="border-t" />
           <Field label={t("members.email")} value={m.email} />
@@ -185,7 +192,7 @@ function MemberDetail({
         <MemberFormDialog
           member={m}
           saving={updateMember.isPending}
-          error={updateMember.isError}
+          error={updateMember.error}
           onSave={async (input) => {
             await updateMember.mutateAsync({ memberId: m.id, ...input });
             setEditing(false);
@@ -206,6 +213,37 @@ function MemberDetail({
           }}
           onClose={() => setEditingFields(false)}
         />
+      )}
+    </div>
+  );
+}
+
+/**
+ * The personnummer arrives already masked unless the caller holds
+ * `members.manage` (ADR-022). This toggle is the second, softer gate: even
+ * someone allowed to see it should have to ask, so it is not sitting on screen
+ * in a clubhouse.
+ */
+function PersonalIdField({ value }: { value: string }) {
+  const { t } = useTranslation();
+  const [revealed, setRevealed] = useState(false);
+  const masked = maskPersonalId(value);
+  const canReveal = masked !== value;
+
+  return (
+    <div className="flex items-start justify-between gap-4">
+      <Field
+        label={t("members.personalId")}
+        value={revealed ? value : masked}
+      />
+      {canReveal && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setRevealed((shown) => !shown)}
+        >
+          {revealed ? t("members.hidePersonalId") : t("members.showPersonalId")}
+        </Button>
       )}
     </div>
   );

@@ -22,6 +22,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useZodResolver } from "@/lib/form";
 import {
+  editablePersonalId,
   memberFormSchema,
   type MemberFormValues,
   type MemberWriteInput,
@@ -32,9 +33,26 @@ function defaultValues(member?: Member): MemberFormValues {
     firstName: member?.firstName ?? "",
     lastName: member?.lastName ?? "",
     birthYear: member?.birthYear != null ? String(member.birthYear) : "",
+    personalId: editablePersonalId(member?.personalId ?? null),
     email: member?.email ?? "",
     phone: member?.phone ?? "",
   };
+}
+
+/**
+ * A rejected save is usually "something went wrong", but one case is worth
+ * naming: two members cannot share a personnummer (ADR-022), and a coach
+ * halfway through a roster needs to know that is what happened.
+ */
+function saveErrorKey(error: unknown): string | null {
+  if (!error) return null;
+  const code =
+    typeof error === "object" && error !== null && "code" in error
+      ? String((error as { code: unknown }).code)
+      : null;
+  return code === "CONFLICT"
+    ? "members.personalIdTaken"
+    : "members.saveError";
 }
 
 export function MemberFormDialog({
@@ -46,11 +64,13 @@ export function MemberFormDialog({
 }: {
   member?: Member;
   saving: boolean;
-  error: boolean;
+  /** The mutation's error, or null/undefined when the last save was fine. */
+  error: unknown;
   onSave: (input: MemberWriteInput) => void;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
+  const errorKey = saveErrorKey(error);
   const form = useForm<MemberFormValues, unknown, MemberWriteInput>({
     resolver: useZodResolver(memberFormSchema, "members.validation"),
     defaultValues: defaultValues(member),
@@ -72,9 +92,9 @@ export function MemberFormDialog({
             onSubmit={form.handleSubmit(onSave)}
             noValidate
           >
-            {error && (
+            {errorKey && (
               <Alert variant="destructive">
-                <AlertDescription>{t("members.saveError")}</AlertDescription>
+                <AlertDescription>{t(errorKey)}</AlertDescription>
               </Alert>
             )}
 
@@ -101,6 +121,29 @@ export function MemberFormDialog({
                   <FormControl>
                     <Input maxLength={100} {...field} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="personalId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("members.personalId")}</FormLabel>
+                  <FormControl>
+                    <Input
+                      inputMode="numeric"
+                      autoComplete="off"
+                      placeholder="ÅÅÅÅMMDD-NNNN"
+                      maxLength={20}
+                      {...field}
+                    />
+                  </FormControl>
+                  <p className="text-xs text-muted-foreground">
+                    {t("members.personalIdHint")}
+                  </p>
                   <FormMessage />
                 </FormItem>
               )}
