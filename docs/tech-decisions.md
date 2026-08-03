@@ -732,3 +732,109 @@ was invisible in development.
   If Render suffixes the service name, that rule is what has to change.
 - The deployment is verified on a phone, not only on desktop Chrome, which is
   the most permissive browser about cookies and hides this class of bug.
+
+---
+
+## ADR-022 — 2026-08-03 — Store the personnummer, and gate reading it
+
+**Status:** Accepted
+
+**Context:**
+The roster's core fields were deliberately kept minimal — name, birth year,
+contact — on the assumption that a member is identified by who they obviously
+are. Importing a real team from SportAdmin (see
+`docs/product/member-import.md`) showed that assumption does not survive
+contact with real data:
+
+- A child's e-mail address in the export is usually a parent's, so two siblings
+  identify as the same person.
+- Names change, and are not unique inside a team to begin with.
+- `Medlems Nr`, SportAdmin's own key, was empty for every row sampled.
+- Birth year alone is worthless in an age-group team, where every member shares
+  it by construction.
+
+The personnummer is the only field in the export that identifies a person
+across the club's systems — the roster, the licence register, and every
+subsequent re-import. A re-import that cannot tell an existing member from a
+new one either duplicates the roster or overwrites the wrong row.
+
+The first design avoided storing it: reduce it to a birth date in the browser
+and discard the rest. That preserved nothing to match on, which pushed the
+problem into fuzzy name matching — a worse outcome for the people in the
+database than storing the number carefully.
+
+Swedish law is specific here rather than merely permissive: 3 kap. 10 §
+dataskyddslagen allows processing a personnummer when *clearly justified* with
+regard to the purpose. Unambiguous identification of members for registration
+and licensing is such a purpose. General convenience is not.
+
+**Decision:**
+- **The number lives in its own table, `member_personal_ids`**, one row per
+  member at most: `member_id` (primary key), `team_id`, `personal_id`,
+  `created_at`. Normalised to twelve digits (`201703142412`), unique on
+  `(team_id, personal_id)` — not globally, because the same person is
+  legitimately a member of two teams. `team_id` is duplicated here so that
+  constraint can exist, and a composite foreign key
+  `(member_id, team_id) → members(id, team_id)` keeps the copy honest; that in
+  turn adds `UNIQUE (id, team_id)` to `members`.
+- **All access goes through `apps/backend/src/members/personal-id.ts`.** Grepping
+  the table name yields the complete list of call sites.
+- **Validation lives in `@fc-app/contracts` as pure functions with their own
+  tests** (ADR-016): length, date validity, and the Luhn check digit. It accepts
+  **samordningsnummer** (day + 60) and every input form a human or an export
+  produces — `YYYYMMDD-NNNN`, `YYMMDD-NNNN`, `YYMMDD+NNNN`, and the same
+  without separators.
+- **Reading the full number requires `members.manage`.** `members.view` gets it
+  masked (`20170314-****`) in the same field, so no caller has to know which
+  shape to expect. The permission check and the masking both live in that one
+  module — a leak should require editing it, not merely forgetting to think
+  about it (ADR-011: the gate is chosen per question, not per feature).
+- **It is never logged** — not in request logging, not in error messages, not in
+  the import report. The import preview reports "personnummer changed" without
+  showing either value.
+- **`birth_date` and `birth_year` are derived from it** when present, and stay
+  independently writable for members who have no Swedish number.
+- **It is shown on purpose only**: behind a reveal toggle on the member detail
+  page for `members.manage`, never in the roster table.
+
+**Alternatives considered:**
+- **A `personal_id` column on `members`.** Rejected, and this is the reason the
+  table exists. `procedures/members.ts` reads rows with `.selectAll()`; masking
+  in `toMember()` protects every path that goes through it, but the next
+  aggregate, search endpoint or export that selects a member row and returns it
+  directly would carry the number along. A separate table makes that impossible
+  by construction: what you did not join, you cannot leak. The cost is a join at
+  four call sites.
+- **Encrypting the column with `pgcrypto`.** Rejected for now. The key would sit
+  in the same environment as `DATABASE_URL`, so it defends against a stolen
+  backup and very little else. The separate table makes it addable later without
+  touching `members`.
+- **Store a hash instead.** Rejected. The keyspace is about 10^11 — a full
+  rainbow table is minutes of work on a laptop — so a hash of a personnummer is
+  still a personnummer, with the added harm of *looking* protected.
+- **Store only the birth date.** Rejected: it is not an identifier. In a
+  single-age team it is close to a coin flip between two members.
+- **Keep it out of the database and match on names.** Rejected: it moves the
+  risk from "a stored identifier needs a read gate" to "the import silently
+  merges two children", which is the worse failure.
+
+**Consequences:**
+- This is the first field with a read gate stricter than the rest of its
+  member's data, and the first stored outside the table it describes. Reading it
+  is a deliberate act — a join plus a permission check — which is the point.
+- `members` gains `UNIQUE (id, team_id)`, a constraint that exists only to let
+  the composite foreign key above be declared.
+- Re-importing the same file becomes idempotent, which is the acceptance test
+  for the import feature.
+- The row is optional and everything must stay usable without it. A member who
+  has no Swedish personnummer — a new arrival, a visiting player — is a normal
+  case, not an error state.
+- The club takes on a data-protection obligation it did not have: the number
+  must appear in data-subject exports, and be removed on erasure. Archiving a
+  member (ADR-014) keeps the row, so erasure is a separate action — here a
+  single-row `DELETE`, which is cleaner than nulling a column.
+- No audit log records who revealed a number. For a handful of coaches in one
+  team, an access trail is *more* data about people, not less. Worth revisiting
+  only if fc-app is used club-wide.
+- The product spec's "core fields kept minimal" line now has a documented
+  exception, and this ADR is the reason it is one.
