@@ -76,6 +76,7 @@ import {
   setMemberFieldValuesHandler,
   updateMemberFieldHandler,
 } from "./procedures/member-fields.js";
+import { previewMemberImportHandler } from "./procedures/member-import.js";
 import { meHandler } from "./procedures/me.js";
 import {
   createMemberHandler,
@@ -135,6 +136,7 @@ export const router = os.router({
   updateMemberField: updateMemberFieldHandler,
   archiveMemberField: archiveMemberFieldHandler,
   setMemberFieldValues: setMemberFieldValuesHandler,
+  previewMemberImport: previewMemberImportHandler,
   listMemberGuardians: listMemberGuardiansHandler,
   addGuardian: addGuardianHandler,
   removeGuardian: removeGuardianHandler,

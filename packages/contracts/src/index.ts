@@ -14,6 +14,7 @@ export * from "./roles.js";
 export * from "./clubs.js";
 export * from "./invitations.js";
 export * from "./members.js";
+export * from "./member-import.js";
 export * from "./personal-id.js";
 export * from "./guardians.js";
 export * from "./groups.js";

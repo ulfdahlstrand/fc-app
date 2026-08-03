@@ -54,6 +54,27 @@ export async function loadPersonalIds(
   return result;
 }
 
+/**
+ * Raw, unmasked numbers for a whole team, keyed by member — the one read that
+ * is not for a caller's eyes. The import has to compare numbers to decide who
+ * a row is, and a masked value cannot be compared.
+ *
+ * It stays in this module so the table still has exactly one reader. The
+ * returned values must never reach a response: matching happens server-side
+ * and only the resulting member id travels (ADR-022).
+ */
+export async function loadPersonalIdsForMatching(
+  db: Kysely<Database>,
+  teamId: string
+): Promise<Map<string, string>> {
+  const rows = await db
+    .selectFrom("member_personal_ids")
+    .select(["member_id", "personal_id"])
+    .where("team_id", "=", teamId)
+    .execute();
+  return new Map(rows.map((row) => [row.member_id, row.personal_id]));
+}
+
 /** What a valid personnummer implies for the member row itself. */
 export interface DerivedFromPersonalId {
   birthDate: string;
