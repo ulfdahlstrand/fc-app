@@ -1,6 +1,6 @@
 /** Member roster data hooks (issue #7). */
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { memberWriteFields } from "@fc-app/contracts";
+import { memberWriteFields, parsePersonalId } from "@fc-app/contracts";
 import { z } from "zod";
 import { orpc } from "../orpc-client";
 import { queryClient } from "../query-client";
@@ -56,7 +56,25 @@ export const memberFormSchema = z.object({
   birthYear: optionalNumber(memberWriteFields.birthYear),
   email: optionalText(memberWriteFields.email),
   phone: optionalText(memberWriteFields.phone),
+  /**
+   * Checked here with the same function the server uses (ADR-010, ADR-022), so
+   * a mistyped check digit is caught before it becomes a round trip.
+   */
+  personalId: optionalText(memberWriteFields.personalId).refine(
+    (value) => value === null || parsePersonalId(value).ok,
+    { message: "Not a valid personnummer" },
+  ),
 });
+
+/**
+ * A member's `personalId` comes back masked for anyone without
+ * `members.manage`. Editing requires that permission, so this should not
+ * happen — but a masked string must never be typed back in as a new number.
+ */
+export function editablePersonalId(value: string | null): string {
+  if (value === null || value.includes("*")) return "";
+  return value;
+}
 
 /** What the inputs hold while editing (all strings). */
 export type MemberFormValues = z.input<typeof memberFormSchema>;

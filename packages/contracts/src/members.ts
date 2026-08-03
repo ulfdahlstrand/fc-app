@@ -9,6 +9,16 @@ export const memberSchema = z.object({
   firstName: z.string(),
   lastName: z.string(),
   birthYear: z.number().int().nullable(),
+  /** `YYYY-MM-DD`, derived from the personnummer when there is one (ADR-022). */
+  birthDate: z.string().nullable(),
+  /**
+   * Full (`20170314-2412`) for a caller with `members.manage`, masked
+   * (`20170314-****`) for everyone else, null when the member has none. The
+   * server decides which; a client cannot ask for the full number (ADR-022).
+   */
+  personalId: z.string().nullable(),
+  /** The exporting system's own key ("Medlems Nr"), when a file carried one. */
+  externalRef: z.string().nullable(),
   email: z.string().nullable(),
   phone: z.string().nullable(),
   archived: z.boolean(),
@@ -95,6 +105,13 @@ export const memberWriteFields = {
   birthYear: z.number().int().min(MIN_BIRTH_YEAR).max(MAX_BIRTH_YEAR).nullable(),
   email: z.string().email().max(255).nullable(),
   phone: z.string().max(50).nullable(),
+  /**
+   * Raw as typed — any form `parsePersonalId` accepts. Normalising and
+   * rejecting happen server-side, so the length cap here is only a guard
+   * against a client sending something absurd. Null clears it.
+   */
+  personalId: z.string().max(20).nullable(),
+  externalRef: z.string().max(100).nullable(),
 };
 
 export const listMembersInputSchema = z.object({
@@ -125,6 +142,8 @@ export const createMemberInputSchema = z.object({
   birthYear: memberWriteFields.birthYear.optional(),
   email: memberWriteFields.email.optional(),
   phone: memberWriteFields.phone.optional(),
+  personalId: memberWriteFields.personalId.optional(),
+  externalRef: memberWriteFields.externalRef.optional(),
 });
 
 export const createMemberOutputSchema = z.object({
@@ -139,6 +158,8 @@ export const updateMemberInputSchema = z.object({
   birthYear: memberWriteFields.birthYear.optional(),
   email: memberWriteFields.email.optional(),
   phone: memberWriteFields.phone.optional(),
+  personalId: memberWriteFields.personalId.optional(),
+  externalRef: memberWriteFields.externalRef.optional(),
 });
 
 export const updateMemberOutputSchema = z.object({

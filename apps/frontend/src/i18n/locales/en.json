@@ -80,6 +80,11 @@
     "showArchived": "Show archived",
     "name": "Name",
     "birthYear": "Birth year",
+    "personalId": "Personnummer",
+    "personalIdHint": "Used to identify the member across imports. Only visible to those who can edit members.",
+    "showPersonalId": "Show",
+    "hidePersonalId": "Hide",
+    "personalIdTaken": "Another member in this team already has that personnummer.",
     "contact": "Contact",
     "firstName": "First name",
     "lastName": "Last name",
@@ -117,6 +122,10 @@
       },
       "phone": {
         "too_big": "The phone number is too long."
+      },
+      "personalId": {
+        "custom": "Enter a valid personnummer.",
+        "too_big": "That is too long to be a personnummer."
       }
     }
   },

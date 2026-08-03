@@ -75,7 +75,10 @@ tracked items) is **configuration data, not code**.
 - Invite users by link/email with a preset role; configurable roles per club.
 
 ### 2. Members
-- Roster CRUD; core fields kept minimal (name, birth year, contact).
+- Roster CRUD; core fields kept minimal (name, birth year, contact) with one
+  deliberate exception: the **personnummer**, which is what identifies a person
+  across imports and the licence register. It is stored apart from the roster,
+  masked for anyone without `members.manage`, and never logged — see ADR-022.
 - **Custom field definitions** per team: text, number, date, boolean, select
   (e.g. jersey number, position, allergies, photo consent).
 - Guardians: link user accounts to members.
@@ -121,6 +124,8 @@ users ─┬─ identities (oauth provider + subject)
 clubs ──< teams ──< seasons
 users >──< memberships (club/team, role) ──> roles ──< role_permissions
 teams ──< members ──< member_guardians >── users
+members ──1 member_personal_ids          (personnummer, gated — ADR-022)
+members ──< member_contacts >── users     (guardians without an account yet)
 teams ──< member_field_definitions ──< member_field_values >── members
 teams ──< groups ──< group_members >── members
 teams ──< activity_types ──< activities
