@@ -49,7 +49,12 @@ export function decideResponder(access: {
   canManage: boolean;
   canRespond: boolean;
 }): { allowed: boolean; onBehalf: boolean } {
-  if (access.isLinked && access.canRespond) {
+  // Being linked is what makes an answer your own. Which permission carried
+  // you in does not change whose question it was: a coach answering for their
+  // own child was branded "on behalf" until #74, because a coach holds
+  // `callups.manage` and not `callups.respond` and so fell through to the
+  // second route. The paragraph above always said otherwise.
+  if (access.isLinked && (access.canRespond || access.canManage)) {
     return { allowed: true, onBehalf: false };
   }
   if (access.canManage) {
