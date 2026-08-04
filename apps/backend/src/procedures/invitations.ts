@@ -295,28 +295,44 @@ export const acceptInvitationHandler = os.acceptInvitation.handler(
       }
 
       if (invitation.member_id != null) {
-        await trx
-          .insertInto("memberships")
-          .values({
-            user_id: user.id,
-            club_id: invitation.club_id,
-            team_id: invitation.team_id,
-            role_id: invitation.role_id,
-          })
-          // Matches memberships_user_club_team_uq, which is NULLS NOT DISTINCT
-          // so a club-wide row (team_id null) collides with itself rather than
-          // stacking up. Narrowing this to (user_id, club_id) — as this briefly
-          // did — matches no constraint on a correctly migrated database, and
-          // would also forbid the thing the constraint exists to allow: a user
-          // who is a player in one team and a coach in another.
-          //
-          // doNothing: someone who already holds this exact membership keeps
-          // the role they have. Being named as a guardian must not quietly
-          // demote a coach.
-          .onConflict((oc) =>
-            oc.columns(["user_id", "club_id", "team_id"]).doNothing()
-          )
-          .execute();
+        // A club-wide membership says "this is my role everywhere in this
+        // club". Adding a team-scoped guardian row alongside it would carve
+        // out a silent exception in one team — and because requireTeamAccess
+        // prefers the team-scoped row, a coach who accepted an invitation for
+        // their own child stopped being a coach there (#74).
+        //
+        // Scoping someone down in a single team is a real thing a club may
+        // want; it is just not something a guardian invitation should do by
+        // itself. An admin does it deliberately in settings.
+        const clubWide = await trx
+          .selectFrom("memberships")
+          .select("id")
+          .where("user_id", "=", user.id)
+          .where("club_id", "=", invitation.club_id)
+          .where("team_id", "is", null)
+          .executeTakeFirst();
+
+        if (!clubWide) {
+          await trx
+            .insertInto("memberships")
+            .values({
+              user_id: user.id,
+              club_id: invitation.club_id,
+              team_id: invitation.team_id,
+              role_id: invitation.role_id,
+            })
+            // Matches memberships_user_club_team_uq, which is NULLS NOT
+            // DISTINCT so a club-wide row (team_id null) collides with itself
+            // rather than stacking up. Narrowing this to (user_id, club_id) —
+            // as this briefly did — matches no constraint on a correctly
+            // migrated database, and would also forbid the thing the
+            // constraint exists to allow: a player in one team who coaches
+            // another.
+            .onConflict((oc) =>
+              oc.columns(["user_id", "club_id", "team_id"]).doNothing()
+            )
+            .execute();
+        }
 
         await trx
           .insertInto("member_guardians")
