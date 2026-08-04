@@ -373,7 +373,9 @@ function ManageGroupMembersDialog({
                   <label
                     key={member.id}
                     htmlFor={id}
-                    className="flex items-center gap-2 text-sm"
+                    // A checkbox row is a tap target like any other, and 44px
+                    // is Kit's floor for one.
+                    className="flex min-h-tap items-center gap-2 text-sm kit:min-h-0"
                   >
                     <Checkbox
                       id={id}

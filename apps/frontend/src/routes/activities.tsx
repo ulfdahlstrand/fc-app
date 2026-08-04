@@ -29,6 +29,7 @@ import {
   useActivityTypes,
 } from "../lib/activity-types";
 import { ensureMe } from "../lib/auth";
+import { useIsPhone } from "../lib/breakpoint";
 import { ensureMyClubs, useHasPermission, useSelectedTeam } from "../lib/clubs";
 import { useSeasons } from "../lib/seasons";
 import {
@@ -94,6 +95,15 @@ function Calendar({ teamId }: { teamId: string }) {
 
   const [month, setMonth] = useState(() => startOfMonth(new Date()));
   const [view, setView] = useState<View>("month");
+  const isPhone = useIsPhone();
+  /**
+   * Kit's phone Schedule is "week groups of date tiles", not a month grid —
+   * and for good reason: seven columns at 390px leave 48px a day, which is
+   * less than an activity chip needs to say a time and a name. Rather than
+   * clip one, the phone shows the list. The toggle is hidden with it, since
+   * offering a view that cannot render is worse than not offering it.
+   */
+  const effectiveView: View = isPhone ? "list" : view;
   const [typeId, setTypeId] = useState(ALL_TYPES);
   const [seasonId, setSeasonId] = useState(ALL_SEASONS);
   /** The day a "+" was clicked on; also the flag that opens the create dialog. */
@@ -102,7 +112,7 @@ function Calendar({ teamId }: { teamId: string }) {
   const seasons = useSeasons(teamId);
   // A season spans months, so it only makes sense as the *list's* window; the
   // month grid always draws its own month.
-  const bySeason = view === "list" && seasonId !== ALL_SEASONS;
+  const bySeason = effectiveView === "list" && seasonId !== ALL_SEASONS;
   const season = seasons.data?.seasons.find((one) => one.id === seasonId);
 
   const range = useMemo(() => monthGridRange(month), [month]);
@@ -152,7 +162,7 @@ function Calendar({ teamId }: { teamId: string }) {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <ViewToggle view={view} onChange={setView} />
+          {!isPhone && <ViewToggle view={view} onChange={setView} />}
           {/* A season already fixes the window — stepping months inside it
               would only be a way to look at nothing. */}
           {!bySeason && (
@@ -195,9 +205,9 @@ function Calendar({ teamId }: { teamId: string }) {
           value={typeId}
           onChange={setTypeId}
         />
-        {view === "list" && (seasons.data?.seasons.length ?? 0) > 0 && (
+        {effectiveView === "list" && (seasons.data?.seasons.length ?? 0) > 0 && (
           <Select value={seasonId} onValueChange={setSeasonId}>
-            <SelectTrigger className="w-56" aria-label={t("seasons.filter")}>
+            <SelectTrigger className="w-full kit:w-56" aria-label={t("seasons.filter")}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -220,7 +230,7 @@ function Calendar({ teamId }: { teamId: string }) {
         <Alert variant="destructive">
           <AlertDescription>{t("activities.loadError")}</AlertDescription>
         </Alert>
-      ) : view === "month" ? (
+      ) : effectiveView === "month" ? (
         <MonthGrid
           month={month}
           activities={activities.data.activities}
@@ -305,7 +315,11 @@ function TypeFilter({
   if (options.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap gap-2">
+    // Kit: "filter pills scroll sideways past the gutter instead of wrapping".
+    // `flex-none` on the row is what keeps it from collapsing to zero height
+    // inside a column flex — the reference calls this out as a bug it hit.
+    <div className="-mx-[var(--gutter)] flex flex-none overflow-x-auto px-[var(--gutter)] kit:mx-0 kit:overflow-visible kit:px-0">
+      <div className="flex flex-none gap-2 kit:flex-wrap">
       <FilterChip
         active={value === ALL_TYPES}
         onClick={() => onChange(ALL_TYPES)}
@@ -328,6 +342,7 @@ function TypeFilter({
           {type.name}
         </FilterChip>
       ))}
+      </div>
     </div>
   );
 }
@@ -521,7 +536,11 @@ function ActivityList({
                     params: { activityId: activity.id },
                   })
                 }
-                className="bg-card hover:bg-secondary flex flex-wrap items-center gap-3 rounded-md p-4 text-left transition-colors duration-[120ms] ease-standard"
+                // On a phone the row is a grid: dot, then a column holding the
+                // time, the title and the meta. Wrapping a flex row instead
+                // pushed the meta onto its own line still glued right, which
+                // read as a second, unrelated row.
+                className="bg-card hover:bg-secondary grid grid-cols-[auto_1fr] items-start gap-x-3 gap-y-0.5 rounded-lg p-4 text-left transition-colors duration-[120ms] ease-standard kit:flex kit:flex-wrap kit:items-center kit:rounded-md"
               >
                 <span
                   aria-hidden
@@ -530,18 +549,18 @@ function ActivityList({
                     ACTIVITY_COLOUR_DOT[type?.colour ?? "neutral"],
                   )}
                 />
-                <span className="w-28 shrink-0 font-semibold tabular-nums">
+                <span className="font-semibold tabular-nums kit:w-28 kit:shrink-0">
                   {formatTimeRange(activity.startsAt, activity.endsAt, locale)}
                 </span>
                 <span
                   className={cn(
-                    "font-display text-lg",
+                    "col-start-2 font-display text-lg",
                     activity.cancelled && "line-through opacity-60",
                   )}
                 >
                   {activity.title ?? type?.name ?? ""}
                 </span>
-                <span className="text-muted-foreground ml-auto text-sm">
+                <span className="text-muted-foreground col-start-2 text-sm kit:ml-auto">
                   {[
                     activity.title === null ? null : type?.name,
                     activity.location,

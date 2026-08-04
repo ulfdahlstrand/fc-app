@@ -112,7 +112,7 @@ function Posts({ teamId }: { teamId: string }) {
           <AlertDescription>{t("posts.loadError")}</AlertDescription>
         </Alert>
       ) : list.length === 0 ? (
-        <div className="bg-card flex flex-col gap-2 rounded-xl px-6 py-8">
+        <div className="bg-card flex flex-col gap-2 rounded-xl px-5 py-[18px] kit:px-6 kit:py-8">
           <p className="font-display text-2xl">{t("posts.empty")}</p>
           <p className="text-muted-foreground">
             {canManage ? t("posts.emptyHint") : t("posts.emptyReader")}
@@ -176,7 +176,7 @@ function PostCard({
   return (
     <article
       className={cn(
-        "bg-card flex flex-col gap-3 rounded-xl px-6 py-5",
+        "bg-card flex flex-col gap-3 rounded-xl px-5 py-[18px] kit:px-6 kit:py-5",
         // A pinned post is louder by weight, not by a shadow.
         post.pinned && "outline-2 outline-ink",
       )}
