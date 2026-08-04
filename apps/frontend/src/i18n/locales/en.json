@@ -71,7 +71,11 @@
     "teamSettings": "Team settings",
     "clubSettings": "Club settings",
     "tracking": "Tracking",
-    "posts": "Noticeboard"
+    "posts": "Noticeboard",
+    "menu": "Menu",
+    "menuTeam": "Team",
+    "menuClub": "Club",
+    "profile": "Profile"
   },
   "members": {
     "heading": "Members",

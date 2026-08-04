@@ -71,7 +71,11 @@
     "teamSettings": "Laginställningar",
     "clubSettings": "Klubbinställningar",
     "tracking": "Uppföljning",
-    "posts": "Anslagstavla"
+    "posts": "Anslagstavla",
+    "menu": "Meny",
+    "menuTeam": "Lag",
+    "menuClub": "Klubb",
+    "profile": "Profil"
   },
   "members": {
     "heading": "Medlemmar",

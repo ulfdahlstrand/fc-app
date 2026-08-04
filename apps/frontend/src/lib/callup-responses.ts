@@ -5,8 +5,16 @@ import { orpc } from "../orpc-client";
 import { queryClient } from "../query-client";
 import { orpcQuery } from "./orpc-query";
 
-export function useMyCallups() {
-  return useQuery(orpcQuery.myCallups.queryOptions({ input: {} }));
+/**
+ * `enabled` exists for the app shell, which reads the pending count on every
+ * page to light the alert dot on the phone's `Menu` tab — but must not ask for
+ * it before anyone is signed in.
+ */
+export function useMyCallups({ enabled = true }: { enabled?: boolean } = {}) {
+  return useQuery({
+    ...orpcQuery.myCallups.queryOptions({ input: {} }),
+    enabled,
+  });
 }
 
 export function useTeamCallups(teamId: string, includePast = false) {
