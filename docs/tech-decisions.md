@@ -838,3 +838,68 @@ and licensing is such a purpose. General convenience is not.
   only if fc-app is used club-wide.
 - The product spec's "core fields kept minimal" line now has a documented
   exception, and this ADR is the reason it is one.
+
+---
+
+## ADR-023 — 2026-08-04 — A person is the record; a member is that person in a team
+
+**Status:** Accepted (amends the schema in ADR-022)
+
+**Context:**
+ADR-022 hung the personnummer off a member — `member_personal_ids`, keyed by
+member, unique per *team*. That makes the number an attribute of a membership,
+and it has a consequence nobody wanted: the same child in P14 and P17 is two
+unrelated numbers, and nothing in the app can say they are one person.
+
+The question came up while deciding how far to take club-level identity. Two
+things settled it. Inverting the relation is the smaller change and the more
+honest model: a person exists, and playing in a team is something they do.
+And the alternative on the table — deduplicating people by e-mail — is weaker
+than deduplicating by the one identifier that does not change.
+
+**Decision:**
+- **`persons`** — `id`, `club_id`, `personal_id`, `created_at`, unique on
+  `(club_id, personal_id)`. **`members.person_id`** points at it, nullable.
+  `member_personal_ids` is gone, its rows folded in.
+- **Scoped to the club, not globally.** ADR-003 isolates tenants row by row;
+  a person shared between two clubs would be the first row that is not. One
+  club's register answers the case that exists.
+- **Only identity moves.** Names, addresses and contact details stay on
+  `members` and `member_contacts`. ADR-022 keeps the number apart from
+  everything else, and a register that grew names would quietly undo that.
+- **A person is club-wide; a member is team-scoped.** Importing a team looks
+  the person up across the club, but always matches a *member* within the team.
+  A row whose person is already known elsewhere creates a **new member in this
+  team pointing at the same person**, and the preview says so. It is not an
+  update of the other team's row, and not an error: it is what moving up an
+  age group looks like.
+- The read gate is unchanged. `members/personal-id.ts` is still the only module
+  that touches the number, and a member row now carries a `person_id` — a uuid,
+  which says nothing about anybody.
+
+**Alternatives considered:**
+- **Keeping ADR-022's shape and deduplicating parents by e-mail.** Still needed
+  for guardians, who have no personnummer in the export, but the wrong primary
+  key for anyone who has one: an address changes and an identity does not.
+- **A globally unique `persons` table.** Rejected on ADR-003. Two clubs
+  importing the same child would share a row, and cross-club identity is not a
+  problem anyone has.
+- **Letting a second team's import update the first team's member.** Rejected
+  explicitly. It would look like it worked and quietly rewrite another team's
+  roster.
+
+**Consequences:**
+- The club gets a person register for everyone who has a personnummer on file.
+  Guardians who are only contacts are still outside it — the SportAdmin export
+  has no personnummer column for `Målsman` — but the table is now the place to
+  put one if it is ever collected.
+- Uniqueness moved from per-team to per-club, which is a widening: a number
+  rejected as a duplicate now conflicts across a whole club rather than one
+  squad. Within a team the rule is unchanged — one person cannot be two players
+  in one squad.
+- The import gained a warnings channel distinct from errors. A warned row
+  imports; an errored row does not. The second-team notice is the first user of
+  it, and it self-clears once the member exists in the team.
+- The migration folds duplicates: two members of one club holding the same
+  number become one person. That is the point, and it is not reversible in the
+  sense that the down migration cannot know they were ever separate.

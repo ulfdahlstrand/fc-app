@@ -641,7 +641,8 @@
       "invalidPersonalId": "Ogiltigt personnummer.",
       "personalIdInUse": "Personnumret tillhör redan en annan medlem i laget.",
       "duplicateInFile": "Samma person som rad {{row}} i filen.",
-      "ambiguousMatch": "Flera medlemmar passar in — går inte att avgöra vem."
+      "ambiguousMatch": "Flera medlemmar passar in — går inte att avgöra vem.",
+      "alreadyInAnotherTeam": "Finns redan i klubben i ett annat lag — kopplas till samma person."
     },
     "fields": {
       "firstName": "Förnamn",

@@ -1,9 +1,10 @@
 /**
- * The only module that reads or writes `member_personal_ids` (ADR-022).
+ * The only module that reads or writes a personnummer (ADR-022, ADR-023).
  *
- * `grep member_personal_ids` should therefore return this file and nothing
- * else: the point of keeping the number out of `members` is that reading it
- * has to be a deliberate act, not something a `selectAll()` does for you.
+ * `grep persons` should therefore return this file and nothing else: the point
+ * of keeping the number out of `members` is that reading it has to be a
+ * deliberate act, not something a `selectAll()` does for you. A member row
+ * carries only a `person_id` — a uuid, which says nothing about anybody.
  *
  * The permission check and the masking both live here, so a caller cannot leak
  * a full number by forgetting which shape it asked for.
@@ -39,40 +40,71 @@ export async function loadPersonalIds(
   if (memberIds.length === 0) return result;
 
   const rows = await db
-    .selectFrom("member_personal_ids")
-    .select(["member_id", "personal_id"])
-    .where("member_id", "in", memberIds)
+    .selectFrom("members")
+    .innerJoin("persons", "persons.id", "members.person_id")
+    .select(["members.id as member_id", "persons.personal_id"])
+    .where("members.id", "in", memberIds)
     .execute();
 
   const reveal = mayRevealPersonalId(permissions);
   for (const row of rows) {
     result.set(
       row.member_id,
-      reveal ? formatPersonalId(row.personal_id) : maskPersonalId(row.personal_id)
+      reveal
+        ? formatPersonalId(row.personal_id)
+        : maskPersonalId(row.personal_id)
     );
   }
   return result;
 }
 
+/** A person in the club's register, as the import needs to see them. */
+export interface KnownPerson {
+  personId: string;
+  personalId: string;
+  /** Members of this club who are this person, by team. */
+  members: { memberId: string; teamId: string }[];
+}
+
 /**
- * Raw, unmasked numbers for a whole team, keyed by member — the one read that
- * is not for a caller's eyes. The import has to compare numbers to decide who
- * a row is, and a masked value cannot be compared.
+ * The whole club's register, keyed by number — the one unmasked read.
  *
- * It stays in this module so the table still has exactly one reader. The
- * returned values must never reach a response: matching happens server-side
- * and only the resulting member id travels (ADR-022).
+ * The import compares numbers to decide who a row is, and a masked value
+ * cannot be compared. It is club-wide because a person is: the same child in
+ * P14 and P17 is one entry here, with a member in each team.
+ *
+ * The values must never reach a response. Matching happens server-side and
+ * only ids travel (ADR-022).
  */
-export async function loadPersonalIdsForMatching(
+export async function loadClubRegister(
   db: Kysely<Database>,
-  teamId: string
-): Promise<Map<string, string>> {
+  clubId: string
+): Promise<Map<string, KnownPerson>> {
   const rows = await db
-    .selectFrom("member_personal_ids")
-    .select(["member_id", "personal_id"])
-    .where("team_id", "=", teamId)
+    .selectFrom("persons")
+    .leftJoin("members", "members.person_id", "persons.id")
+    .select([
+      "persons.id as person_id",
+      "persons.personal_id",
+      "members.id as member_id",
+      "members.team_id",
+    ])
+    .where("persons.club_id", "=", clubId)
     .execute();
-  return new Map(rows.map((row) => [row.member_id, row.personal_id]));
+
+  const register = new Map<string, KnownPerson>();
+  for (const row of rows) {
+    const known = register.get(row.personal_id) ?? {
+      personId: row.person_id,
+      personalId: row.personal_id,
+      members: [],
+    };
+    if (row.member_id !== null && row.team_id !== null) {
+      known.members.push({ memberId: row.member_id, teamId: row.team_id });
+    }
+    register.set(row.personal_id, known);
+  }
+  return register;
 }
 
 /** What a valid personnummer implies for the member row itself. */
@@ -82,23 +114,33 @@ export interface DerivedFromPersonalId {
 }
 
 /**
- * Writes, replaces or clears a member's personnummer, and returns what the
- * member row should derive from it. Passing null clears the row entirely —
- * erasure is a delete here, not a column set to null.
+ * Writes, replaces or clears a member's personnummer.
  *
- * Throws BAD_REQUEST on an unparseable number, and CONFLICT when the team
- * already has that person. Neither message contains the number.
+ * Passing null unlinks the member from their person. The person record itself
+ * stays: it may be someone's identity in another team, and it is not this
+ * member's to delete.
+ *
+ * Throws BAD_REQUEST on an unparseable number, and CONFLICT when another
+ * member of the same *team* already holds it — one person cannot be two
+ * players in one squad. Across teams it is expected, and the register is what
+ * makes it one person. Neither message contains the number.
  */
 export async function setPersonalId(
   db: Kysely<Database>,
-  params: { memberId: string; teamId: string; raw: string | null }
+  params: {
+    memberId: string;
+    teamId: string;
+    clubId: string;
+    raw: string | null;
+  }
 ): Promise<DerivedFromPersonalId | null> {
-  const { memberId, teamId, raw } = params;
+  const { memberId, teamId, clubId, raw } = params;
 
   if (raw === null || raw.trim() === "") {
     await db
-      .deleteFrom("member_personal_ids")
-      .where("member_id", "=", memberId)
+      .updateTable("members")
+      .set({ person_id: null })
+      .where("id", "=", memberId)
       .execute();
     return null;
   }
@@ -108,12 +150,14 @@ export async function setPersonalId(
     throw new ORPCError("BAD_REQUEST", { message: parsed.error });
   }
 
+  const person = await upsertPerson(db, clubId, parsed.value.value);
+
   const clash = await db
-    .selectFrom("member_personal_ids")
-    .select("member_id")
+    .selectFrom("members")
+    .select("id")
     .where("team_id", "=", teamId)
-    .where("personal_id", "=", parsed.value.value)
-    .where("member_id", "!=", memberId)
+    .where("person_id", "=", person.id)
+    .where("id", "!=", memberId)
     .executeTakeFirst();
   if (clash) {
     throw new ORPCError("CONFLICT", {
@@ -122,19 +166,34 @@ export async function setPersonalId(
   }
 
   await db
-    .insertInto("member_personal_ids")
-    .values({
-      member_id: memberId,
-      team_id: teamId,
-      personal_id: parsed.value.value,
-    })
-    .onConflict((oc) =>
-      oc.column("member_id").doUpdateSet({ personal_id: parsed.value.value })
-    )
+    .updateTable("members")
+    .set({ person_id: person.id })
+    .where("id", "=", memberId)
     .execute();
 
   return {
     birthDate: parsed.value.birthDate,
     birthYear: parsed.value.birthYear,
   };
+}
+
+/** The club's person for this number, creating them the first time. */
+export async function upsertPerson(
+  db: Kysely<Database>,
+  clubId: string,
+  personalId: string
+): Promise<{ id: string }> {
+  const existing = await db
+    .selectFrom("persons")
+    .select("id")
+    .where("club_id", "=", clubId)
+    .where("personal_id", "=", personalId)
+    .executeTakeFirst();
+  if (existing) return existing;
+
+  return await db
+    .insertInto("persons")
+    .values({ club_id: clubId, personal_id: personalId })
+    .returning("id")
+    .executeTakeFirstOrThrow();
 }

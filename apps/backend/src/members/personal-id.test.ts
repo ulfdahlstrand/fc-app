@@ -115,11 +115,14 @@ describe("formatPersonalId / maskPersonalId", () => {
 
 const MEMBER_ID = "550e8400-e29b-41d4-a716-446655440010";
 
-/** Covers the single query shape loadPersonalIds issues. */
+/**
+ * Covers the single query shape loadPersonalIds issues: members joined to the
+ * club's person register (ADR-023).
+ */
 function fakeDb(rows: { member_id: string; personal_id: string }[]) {
   const execute = vi.fn().mockResolvedValue(rows);
   const selectFrom = vi.fn().mockReturnValue({
-    select: () => ({ where: () => ({ execute }) }),
+    innerJoin: () => ({ select: () => ({ where: () => ({ execute }) }) }),
   });
   return {
     db: { selectFrom } as unknown as Kysely<Database>,
