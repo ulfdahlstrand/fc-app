@@ -148,6 +148,7 @@
   "permissions": {
     "members.view": "View members",
     "members.manage": "Manage members",
+    "members.import": "Import members from a file",
     "activities.manage": "Manage activities",
     "attendance.record": "Record attendance",
     "callups.manage": "Manage call-ups",
@@ -575,5 +576,90 @@
     "orange": "Orange",
     "amber": "Amber",
     "neutral": "Grey"
+  },
+  "import": {
+    "title": "Import members",
+    "intro": "From a SportAdmin member export, into {{team}}.",
+    "forbidden": "You do not have permission to import members.",
+    "step1": "1. Choose a file",
+    "step2": "2. What should the columns become?",
+    "step3": "3. Preview",
+    "fileHint": "Excel file (.xlsx). An old .xls has to be re-saved first. The file is never uploaded — it is read here in the browser.",
+    "readError": "That file could not be read. Is it an .xlsx?",
+    "manyTeams": "The file covers several groups ({{names}}). All of it imports into {{team}}.",
+    "mappingHint": "Empty columns are hidden. Leave out personal data the team does not need.",
+    "whichRoles": "Which rows should be included?",
+    "column": "Column",
+    "include": "Include",
+    "sensitive": "Sensitive",
+    "sensitiveWarning": "Health data. Include it only if the team genuinely needs it.",
+    "guardianColumn": "Guardian {{index}} – {{field}}",
+    "rowCount": "{{count}} rows to import",
+    "runPreview": "Preview",
+    "previewError": "The preview failed.",
+    "dryRun": "Nothing has changed. This only shows what an import would do.",
+    "created": "New",
+    "updated": "Updated",
+    "unchanged": "Unchanged",
+    "errors": "Errors",
+    "row": "Row",
+    "outcome": "Outcome",
+    "details": "Details",
+    "changedNotShown": "changes (not shown)",
+    "addsGuardians": "Adds guardian: {{names}}",
+    "willCreateGroups": "New groups would be created: {{names}}",
+    "willCreateFields": "New custom fields would be created: {{names}}",
+    "contactField": {
+      "name": "name",
+      "relation": "relation",
+      "email": "e-mail",
+      "phone": "phone"
+    },
+    "outcomes": {
+      "new": "New",
+      "update": "Update",
+      "unchanged": "Unchanged",
+      "error": "Error"
+    },
+    "matchedBy": {
+      "personalId": "Matched on personnummer",
+      "externalRef": "Matched on member number",
+      "nameAndBirthDate": "Matched on name and birth date",
+      "email": "Matched on e-mail"
+    },
+    "rowErrors": {
+      "invalidPersonalId": "Not a valid personnummer.",
+      "personalIdInUse": "That personnummer already belongs to another member of this team.",
+      "duplicateInFile": "The same person as row {{row}} in the file.",
+      "ambiguousMatch": "Several members fit — this cannot be decided automatically."
+    },
+    "fields": {
+      "firstName": "First name",
+      "lastName": "Last name",
+      "email": "E-mail",
+      "phone": "Phone",
+      "externalRef": "Member number",
+      "birthDate": "Birth date",
+      "personalId": "Personnummer",
+      "groups": "Groups"
+    },
+    "targetLabel": "Becomes",
+    "target": {
+      "skip": "Skip",
+      "builtin-firstName": "First name",
+      "builtin-lastName": "Last name",
+      "builtin-personalId": "Personnummer",
+      "builtin-externalRef": "Member number",
+      "builtin-email": "E-mail",
+      "builtin-phoneMobile": "Mobile",
+      "builtin-phoneHome": "Home phone",
+      "builtin-phoneWork": "Work phone",
+      "builtin-group": "Group",
+      "builtin-teamName": "Team name (unused)",
+      "custom": "Custom field"
+    },
+    "fromEmptyRoster": "Import from SportAdmin",
+    "open": "Open the import",
+    "settingsBlurb": "Read a whole team in from a SportAdmin export."
   }
 }

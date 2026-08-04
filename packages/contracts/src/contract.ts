@@ -12,6 +12,7 @@ import { addGuardianInputSchema, addGuardianOutputSchema, listClubUsersInputSche
 import { healthInputSchema, healthOutputSchema } from "./health.js";
 import { acceptInvitationInputSchema, acceptInvitationOutputSchema, createInvitationInputSchema, createInvitationOutputSchema, getInvitationInputSchema, getInvitationOutputSchema, listInvitationsInputSchema, listInvitationsOutputSchema, revokeInvitationInputSchema, revokeInvitationOutputSchema } from "./invitations.js";
 import { archiveMemberFieldInputSchema, archiveMemberFieldOutputSchema, createMemberFieldInputSchema, createMemberFieldOutputSchema, createMemberInputSchema, createMemberOutputSchema, getMemberInputSchema, getMemberOutputSchema, listMemberFieldsInputSchema, listMemberFieldsOutputSchema, listMembersInputSchema, listMembersOutputSchema, setMemberArchivedInputSchema, setMemberArchivedOutputSchema, setMemberFieldValuesInputSchema, setMemberFieldValuesOutputSchema, updateMemberFieldInputSchema, updateMemberFieldOutputSchema, updateMemberInputSchema, updateMemberOutputSchema } from "./members.js";
+import { previewMemberImportInputSchema, previewMemberImportOutputSchema } from "./member-import.js";
 import { createPostInputSchema, createPostOutputSchema, deletePostInputSchema, deletePostOutputSchema, getPostInputSchema, getPostOutputSchema, listPostsInputSchema, listPostsOutputSchema, setPostPublishedInputSchema, setPostPublishedOutputSchema, updatePostInputSchema, updatePostOutputSchema } from "./posts.js";
 import { createRoleInputSchema, createRoleOutputSchema, deleteRoleInputSchema, deleteRoleOutputSchema, listRolesInputSchema, listRolesOutputSchema, updateRoleInputSchema, updateRoleOutputSchema } from "./roles.js";
 import { createSeasonInputSchema, createSeasonOutputSchema, deleteSeasonInputSchema, deleteSeasonOutputSchema, listSeasonsInputSchema, listSeasonsOutputSchema, updateSeasonInputSchema, updateSeasonOutputSchema } from "./seasons.js";
@@ -112,6 +113,12 @@ export const contract = oc.router({
     .route({ method: "POST", path: "/members/field-values" })
     .input(setMemberFieldValuesInputSchema)
     .output(setMemberFieldValuesOutputSchema),
+  // POST despite writing nothing: the rows are the request body, and a roster
+  // does not belong in a query string.
+  previewMemberImport: oc
+    .route({ method: "POST", path: "/members/import/preview" })
+    .input(previewMemberImportInputSchema)
+    .output(previewMemberImportOutputSchema),
   listMemberGuardians: oc
     .route({ method: "GET", path: "/members/guardians" })
     .input(listMemberGuardiansInputSchema)

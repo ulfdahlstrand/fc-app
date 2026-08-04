@@ -1,6 +1,6 @@
 /** Members roster (issue #7) — the team's list of members. */
 import { useState } from "react";
-import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -71,6 +71,7 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const canManage = useHasPermission("members.manage");
+  const canImport = useHasPermission("members.import");
   const [search, setSearch] = useState("");
   const [includeArchived, setIncludeArchived] = useState(false);
   const [groupId, setGroupId] = useState("");
@@ -152,7 +153,15 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
           <AlertDescription>{t("members.loadError")}</AlertDescription>
         </Alert>
       ) : members.data.members.length === 0 ? (
-        <p className="text-muted-foreground">{t("members.empty")}</p>
+        <div className="flex flex-col items-start gap-3">
+          <p className="text-muted-foreground">{t("members.empty")}</p>
+          {/* The case the import exists for: a team on its first day. */}
+          {canImport && (
+            <Button variant="outline" asChild>
+              <Link to="/import">{t("import.fromEmptyRoster")}</Link>
+            </Button>
+          )}
+        </div>
       ) : (
         <div className="rounded-xl bg-card px-2">
           <Table>

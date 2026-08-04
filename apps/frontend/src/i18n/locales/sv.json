@@ -148,6 +148,7 @@
   "permissions": {
     "members.view": "Se medlemmar",
     "members.manage": "Hantera medlemmar",
+    "members.import": "Importera medlemmar från fil",
     "activities.manage": "Hantera aktiviteter",
     "attendance.record": "Registrera närvaro",
     "callups.manage": "Hantera kallelser",
@@ -575,5 +576,90 @@
     "orange": "Orange",
     "amber": "Gul",
     "neutral": "Grå"
+  },
+  "import": {
+    "title": "Importera medlemmar",
+    "intro": "Från en medlemsexport ur SportAdmin, till {{team}}.",
+    "forbidden": "Du har inte behörighet att importera medlemmar.",
+    "step1": "1. Välj fil",
+    "step2": "2. Vad ska kolumnerna bli?",
+    "step3": "3. Förhandsgranska",
+    "fileHint": "Excel-fil (.xlsx). Har du en gammal .xls behöver den sparas om först. Filen laddas aldrig upp — den läses här i webbläsaren.",
+    "readError": "Filen gick inte att läsa. Är det en .xlsx?",
+    "manyTeams": "Filen innehåller flera grupper ({{names}}). Allt importeras till {{team}}.",
+    "mappingHint": "Tomma kolumner döljs. Personuppgifter du inte behöver bör lämnas av.",
+    "whichRoles": "Vilka rader ska med?",
+    "column": "Kolumn",
+    "include": "Med",
+    "sensitive": "Känslig",
+    "sensitiveWarning": "Hälsouppgifter. Ta bara med om laget verkligen behöver dem.",
+    "guardianColumn": "Målsman {{index}} – {{field}}",
+    "rowCount": "{{count}} rader att importera",
+    "runPreview": "Förhandsgranska",
+    "previewError": "Förhandsgranskningen misslyckades.",
+    "dryRun": "Inget har ändrats. Det här visar bara vad en import skulle göra.",
+    "created": "Nya",
+    "updated": "Uppdateras",
+    "unchanged": "Oförändrade",
+    "errors": "Fel",
+    "row": "Rad",
+    "outcome": "Utfall",
+    "details": "Detaljer",
+    "changedNotShown": "ändras (visas inte)",
+    "addsGuardians": "Lägger till målsman: {{names}}",
+    "willCreateGroups": "Nya grupper skapas: {{names}}",
+    "willCreateFields": "Nya egna fält skapas: {{names}}",
+    "contactField": {
+      "name": "namn",
+      "relation": "relation",
+      "email": "e-post",
+      "phone": "telefon"
+    },
+    "outcomes": {
+      "new": "Ny",
+      "update": "Uppdateras",
+      "unchanged": "Oförändrad",
+      "error": "Fel"
+    },
+    "matchedBy": {
+      "personalId": "Matchad på personnummer",
+      "externalRef": "Matchad på medlemsnummer",
+      "nameAndBirthDate": "Matchad på namn och födelsedatum",
+      "email": "Matchad på e-post"
+    },
+    "rowErrors": {
+      "invalidPersonalId": "Ogiltigt personnummer.",
+      "personalIdInUse": "Personnumret tillhör redan en annan medlem i laget.",
+      "duplicateInFile": "Samma person som rad {{row}} i filen.",
+      "ambiguousMatch": "Flera medlemmar passar in — går inte att avgöra vem."
+    },
+    "fields": {
+      "firstName": "Förnamn",
+      "lastName": "Efternamn",
+      "email": "E-post",
+      "phone": "Telefon",
+      "externalRef": "Medlemsnummer",
+      "birthDate": "Födelsedatum",
+      "personalId": "Personnummer",
+      "groups": "Grupper"
+    },
+    "targetLabel": "Blir",
+    "target": {
+      "skip": "Hoppa över",
+      "builtin-firstName": "Förnamn",
+      "builtin-lastName": "Efternamn",
+      "builtin-personalId": "Personnummer",
+      "builtin-externalRef": "Medlemsnummer",
+      "builtin-email": "E-post",
+      "builtin-phoneMobile": "Mobiltelefon",
+      "builtin-phoneHome": "Telefon hem",
+      "builtin-phoneWork": "Telefon jobb",
+      "builtin-group": "Grupp",
+      "builtin-teamName": "Lagnamn (används inte)",
+      "custom": "Eget fält"
+    },
+    "fromEmptyRoster": "Importera från SportAdmin",
+    "open": "Öppna importen",
+    "settingsBlurb": "Läs in ett helt lag från en SportAdmin-export."
   }
 }

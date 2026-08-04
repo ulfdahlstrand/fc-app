@@ -2,12 +2,13 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { PERMISSIONS, type Permission, type Role } from "@fc-app/contracts";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
@@ -27,7 +28,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { InvitationsSection } from "../components/InvitationsSection";
 import { ensureMe } from "../lib/auth";
-import { ensureMyClubs, myClubsQueryOptions } from "../lib/clubs";
+import {
+  ensureMyClubs,
+  myClubsQueryOptions,
+  useHasPermission,
+} from "../lib/clubs";
 import { useZodResolver } from "../lib/form";
 import {
   roleFormSchema,
@@ -68,6 +73,29 @@ function ClubSettingsPage() {
   return <ClubRoles clubId={club.id} clubName={club.name} />;
 }
 
+/** Shown only to whoever holds `members.import` in the selected team. */
+function ImportEntryPoint() {
+  const { t } = useTranslation();
+  const canImport = useHasPermission("members.import");
+  if (!canImport) return null;
+
+  return (
+    <Card>
+      <CardContent className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="font-display text-xl">{t("import.title")}</h2>
+          <p className="text-sm text-muted-foreground">
+            {t("import.settingsBlurb")}
+          </p>
+        </div>
+        <Button variant="outline" asChild>
+          <Link to="/import">{t("import.open")}</Link>
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
 function ClubRoles({ clubId, clubName }: { clubId: string; clubName: string }) {
   const { t } = useTranslation();
   const roles = useRoles(clubId);
@@ -82,6 +110,9 @@ function ClubRoles({ clubId, clubName }: { clubId: string; clubName: string }) {
         </h1>
         <p className="text-muted-foreground">{clubName}</p>
       </div>
+
+      {/* The import has no nav pill; this is where an admin goes to find it. */}
+      <ImportEntryPoint />
 
       <div>
         <div className="mb-2 flex items-center justify-between">

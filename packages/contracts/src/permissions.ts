@@ -5,6 +5,12 @@ import { z } from "zod";
 export const PERMISSIONS = [
   "members.view",
   "members.manage",
+  /**
+   * Rewriting the roster from a file (#63). Separate from `members.manage`
+   * because editing one member and replacing a hundred are not the same
+   * authority; seeded to Admin only, but a club may grant it (ADR-005).
+   */
+  "members.import",
   "activities.manage",
   "attendance.record",
   "callups.manage",
