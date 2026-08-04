@@ -553,7 +553,12 @@
       "self": "Egen"
     },
     "contactsHeading": "Från importen",
-    "noAccount": "Inget konto"
+    "noAccount": "Inget konto",
+    "pendingInvites_one": "{{count}} importerad vårdnadshavare saknar konto.",
+    "pendingInvites_other": "{{count}} importerade vårdnadshavare saknar konto.",
+    "inviteAll": "Bjud in alla",
+    "invitesSent_one": "{{count}} inbjudan skapad.",
+    "invitesSent_other": "{{count}} inbjudningar skapade."
   },
   "profile": {
     "language": "Språk",

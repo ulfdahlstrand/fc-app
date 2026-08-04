@@ -553,7 +553,12 @@
       "self": "Self"
     },
     "contactsHeading": "From the import",
-    "noAccount": "No account"
+    "noAccount": "No account",
+    "pendingInvites_one": "{{count}} imported guardian has no account.",
+    "pendingInvites_other": "{{count}} imported guardians have no account.",
+    "inviteAll": "Invite them all",
+    "invitesSent_one": "{{count}} invitation created.",
+    "invitesSent_other": "{{count}} invitations created."
   },
   "profile": {
     "language": "Language",

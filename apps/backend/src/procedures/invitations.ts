@@ -223,6 +223,38 @@ export const getInvitationHandler = os.getInvitation.handler(
   }
 );
 
+/**
+ * Folds an imported contact into the account that just accepted (#65).
+ *
+ * The row was written by an import as data about a person with no account;
+ * this is the moment it becomes a person with one. Compared in application
+ * code rather than SQL so the same case-folding is used as everywhere else.
+ */
+async function claimImportedContact(
+  trx: Kysely<Database>,
+  memberId: string,
+  user: { id: string; email: string }
+): Promise<void> {
+  const contacts = await trx
+    .selectFrom("member_contacts")
+    .select(["id", "email"])
+    .where("member_id", "=", memberId)
+    .where("user_id", "is", null)
+    .execute();
+
+  const wanted = user.email.trim().toLowerCase();
+  const match = contacts.find(
+    (contact) => contact.email?.trim().toLowerCase() === wanted
+  );
+  if (!match) return;
+
+  await trx
+    .updateTable("member_contacts")
+    .set({ user_id: user.id })
+    .where("id", "=", match.id)
+    .execute();
+}
+
 export const acceptInvitationHandler = os.acceptInvitation.handler(
   async ({ input, context }) => {
     const user = requireUser(context);
@@ -271,9 +303,15 @@ export const acceptInvitationHandler = os.acceptInvitation.handler(
             team_id: invitation.team_id,
             role_id: invitation.role_id,
           })
-          .onConflict((oc) =>
-            oc.columns(["user_id", "club_id", "team_id"]).doNothing()
-          )
+          // The unique constraint is (user_id, club_id) — naming team_id here
+          // matched no index, and Postgres rejects an ON CONFLICT target it
+          // cannot infer whether or not a row actually collides. Every
+          // member-bound invitation therefore failed to be accepted.
+          //
+          // doNothing is also the right answer: someone already in the club
+          // keeps the role they have. Being named as a guardian should not
+          // quietly demote a coach.
+          .onConflict((oc) => oc.columns(["user_id", "club_id"]).doNothing())
           .execute();
 
         await trx
@@ -289,6 +327,20 @@ export const acceptInvitationHandler = os.acceptInvitation.handler(
               .doUpdateSet({ relation: invitation.relation ?? "guardian" })
           )
           .execute();
+
+        await claimImportedContact(trx, invitation.member_id, user);
+
+        // Accepting for oneself is the one moment the member's own address can
+        // be set without guessing: until now it was probably a parent's, and at
+        // eighteen there is no parent in between any more. See "Growing up" in
+        // docs/product/member-import.md.
+        if (invitation.relation === "self") {
+          await trx
+            .updateTable("members")
+            .set({ email: user.email, updated_at: new Date() })
+            .where("id", "=", invitation.member_id)
+            .execute();
+        }
       } else {
         // Plain invitation: a duplicate membership means "already a member".
         try {
