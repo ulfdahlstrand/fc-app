@@ -99,7 +99,7 @@ export function CallupSection({
     <div className="flex flex-col gap-[18px]">
       {/* Ink, not green: this is the fixture card, and the squad is not a
           count of who turned up. Green would claim more than it knows. */}
-      <div className="bg-ink flex flex-wrap items-end justify-between gap-4 rounded-xl px-7 py-6 text-white">
+      <div className="bg-ink flex flex-wrap items-end justify-between gap-4 rounded-xl px-5 py-[18px] text-white kit:px-7 kit:py-6">
         <div className="flex flex-col gap-2">
           <p className="kit-overline text-[var(--neutral-500)]">
             {published ? t("callups.published") : t("callups.draft")}
@@ -176,7 +176,7 @@ export function CallupSection({
         </div>
       )}
 
-      <div className="grid gap-[11px] md:grid-cols-2">
+      <div className="grid gap-[11px] kit:grid-cols-2">
         {roster.map((member) => (
           <SquadRow
             key={member.id}
@@ -192,9 +192,14 @@ export function CallupSection({
         ))}
       </div>
 
+      {/* Kit: the save bar never scrolls away. On a phone it also sits on the
+          frame — full-bleed to the gutter and flush against the tab bar,
+          rather than floating with a player row showing underneath.
+          `-bottom-8` is what does that: a sticky offset is measured from the
+          scrollport's *padding* edge, so `bottom-0` parks the bar 32px high,
+          exactly the page's own bottom padding. */}
       {canManage && (
-        // Kit: the save bar never scrolls away.
-        <div className="bg-background sticky bottom-0 flex flex-wrap items-center justify-between gap-3 py-3">
+        <div className="bg-background sticky -bottom-8 -mx-[var(--gutter)] -mb-8 flex flex-wrap items-center justify-between gap-3 px-[var(--gutter)] py-3 pb-8 kit:bottom-0 kit:mx-0 kit:mb-0 kit:px-0 kit:pb-3">
           <p className="text-muted-foreground text-sm">
             {t("callups.selected", {
               count: counts.squad,

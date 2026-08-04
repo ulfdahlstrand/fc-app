@@ -296,7 +296,10 @@ function SummaryRow({
     <Link
       to="/activities/$activityId"
       params={{ activityId: callup.activityId }}
-      className="bg-card hover:bg-secondary flex flex-wrap items-center gap-4 rounded-md px-4 py-3 transition-colors duration-[120ms] ease-standard"
+      // The tally is four numbers plus a phrase; beside a title and a date it
+      // has no room at 390px. It keeps its own line instead of wrapping into
+      // the title's.
+      className="bg-card hover:bg-secondary grid grid-cols-[auto_1fr_auto] items-center gap-x-3 gap-y-2 rounded-lg px-4 py-3 transition-colors duration-[120ms] ease-standard kit:flex kit:flex-wrap kit:gap-4 kit:rounded-md"
     >
       <span
         aria-hidden
@@ -327,7 +330,7 @@ function SummaryRow({
       )}
 
       {/* The tally, in the same three colours the squad rows use. */}
-      <span className="ml-auto flex items-center gap-2 text-sm font-semibold">
+      <span className="col-span-3 flex items-center gap-2 text-sm font-semibold kit:col-span-1 kit:ml-auto">
         <Tally tone="accepted" value={callup.accepted} />
         <Tally tone="declined" value={callup.declined} />
         <Tally tone="pending" value={callup.pending} />
