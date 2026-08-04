@@ -105,6 +105,35 @@
   );
   --glow-hero: rgb(255 255 255 / 0.1);
 
+  /* ---- Kit mobile ------------------------------------------------------
+     Kit is a two-layout system with exactly one breakpoint: phone below 700px,
+     desktop at 700px and up. Nothing is designed in between — a tablet gets
+     the desktop shell, centred and capped at `--width-desktop-max`. Crossing
+     the line swaps *which components build a screen*, not how they look; only
+     the gutter and the Anton display steps scale by media query. */
+  --bp-mobile-max: 699px;
+  --bp-desktop-min: 700px;
+  --width-mobile-design: 390px;
+  --width-desktop-max: 1100px;
+
+  --gutter-desktop: 30px;
+  --gutter-mobile: 16px;
+  --gutter: var(--gutter-desktop);
+
+  /* Touch: 44px is a hard floor for anything tappable. */
+  --tap-min: 44px;
+  --tap-row: 54px; /* list rows and menu-sheet rows */
+  --tap-tab: 46px; /* TabBar items */
+
+  /* Shell bands. The phone screen is four bands and only the middle scrolls. */
+  --bar-tab-mobile: 72px; /* TabBar incl. home-indicator allowance */
+  --safe-bottom: 20px;
+
+  /* Sheet. The 45% ink scrim is the one translucent surface Kit permits, and
+     it exists for this component alone. */
+  --sheet-max-height: 88%;
+  --sheet-scrim: rgb(12 16 14 / 0.45);
+
   /* ---- Kit motion ------------------------------------------------------ */
   --duration-fast: 120ms; /* state flips */
   --duration-base: 180ms; /* layout */
@@ -146,6 +175,22 @@
   /* Kit leaves focus unspecified (a documented caveat). Brand green reads as
      deliberate against every Kit surface and clears 3:1 on white. */
   --ring: var(--green-500);
+}
+
+/**
+ * The gutter is one of only two things Kit scales by media query (the Anton
+ * display steps are the other). Read it as `px-[var(--gutter)]` rather than
+ * hard-coding 30px at a call site.
+ *
+ * This sits outside `@layer base` deliberately: the `:root` block above is
+ * unlayered, and an unlayered declaration beats a layered one no matter how
+ * specific the layered selector is. Inside `@layer base` this override never
+ * applies and the phone silently keeps the 30px desktop gutter.
+ */
+@media (width < 700px) {
+  :root {
+    --gutter: var(--gutter-mobile);
+  }
 }
 
 /**
@@ -229,6 +274,16 @@
 
   /* Motion: fast and flat. Emits the `ease-standard` utility. */
   --ease-standard: cubic-bezier(0.2, 0.8, 0.3, 1);
+
+  /* Kit's one breakpoint, as a Tailwind screen. Tailwind's own `sm`/`md`/`lg`
+     stay defined but are not Kit: anything that decides *layout* must key off
+     `kit` (700px), so the two shells stay the only two arrangements. */
+  --breakpoint-kit: 700px;
+
+  /* Touch, as utilities: `min-h-tap`, `h-tap-row`, `h-tap-tab`. */
+  --spacing-tap: 44px;
+  --spacing-tap-row: 54px;
+  --spacing-tap-tab: 46px;
 }
 
 @layer base {
@@ -257,6 +312,58 @@
     text-transform: uppercase;
     letter-spacing: 0.3px;
     line-height: 1;
+  }
+
+  /* The Anton display steps — one of only two things Kit scales by media query. Anton drops about two
+     steps on a phone — above 64px a number stops being readable at arm's length
+     and starts being a wall. Body type deliberately does *not* scale; 13px is
+     the floor for something read standing on a pitch.
+     Use these instead of a raw `text-*` next to `font-display`. */
+  .kit-display-hero {
+    font-size: 100px;
+    line-height: 1.02;
+    letter-spacing: -0.5px;
+  }
+  .kit-display-lg {
+    font-size: 54px;
+  }
+  .kit-display-md {
+    font-size: 38px;
+  }
+  .kit-display-sm {
+    font-size: 28px;
+  }
+
+  @media (width < 700px) {
+    .kit-display-hero {
+      font-size: 64px;
+    }
+    .kit-display-lg {
+      font-size: 40px;
+    }
+    .kit-display-md {
+      font-size: 30px;
+    }
+    .kit-display-sm {
+      font-size: 24px;
+    }
+  }
+
+  /* Kit: "No modals, no dropdowns, no popovers on a phone: a choice is a
+     sheet." Radix anchors every popper to its trigger with an inline transform
+     on a wrapper element, so the rule is enforced here rather than per
+     component — one place, and it catches any popover added later.
+
+     `!important` is unavoidable: the declarations being overridden are inline
+     styles Radix recomputes on every open. */
+  @media (width < 700px) {
+    [data-radix-popper-content-wrapper] {
+      position: fixed !important;
+      inset: auto 0 0 0 !important;
+      transform: none !important;
+      min-width: 100% !important;
+      max-width: 100% !important;
+    }
   }
 
   /* The 12px uppercase micro-label that sits above every Kit panel.

@@ -23,9 +23,12 @@ const buttonVariants = cva(
         link: "text-[var(--link)] underline-offset-4 hover:underline hover:text-[var(--link-hover)]",
       },
       size: {
+        // `default` is already Kit's `md` — the 44px touch floor. On a phone
+        // the other two collapse onto it: "Buttons use size md (44px), never
+        // lg, and never a custom height."
         default: "h-11 px-[22px] text-[15px] has-[>svg]:px-5",
-        sm: "h-9 gap-1.5 px-4 text-sm has-[>svg]:px-3",
-        lg: "h-13 px-7 text-base has-[>svg]:px-6",
+        sm: "h-tap gap-1.5 px-4 text-sm has-[>svg]:px-3 kit:h-9",
+        lg: "h-tap px-7 text-base has-[>svg]:px-6 kit:h-13",
         icon: "size-11",
       },
     },

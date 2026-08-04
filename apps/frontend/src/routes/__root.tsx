@@ -1,13 +1,30 @@
-/** Root route — renders the application shell and the Outlet for child routes. */
+/**
+ * Root route — renders the application shell and the Outlet for child routes.
+ *
+ * Kit is a two-layout system with one breakpoint at 700px (the `kit:` variant).
+ * Below it the screen is four bands — `MobileTopBar`, one scrolling middle,
+ * the page's own save bar, `TabBar` — and only the middle moves. At 700px and
+ * up it is the desktop app bar over a normally scrolling document. There is no
+ * third arrangement: a tablet gets the desktop shell, centred and capped.
+ *
+ * Both shells read the same ordered destination list (`lib/navigation.ts`), so
+ * the pill nav and the tab bar cannot drift apart.
+ */
 import { useQuery } from "@tanstack/react-query";
-import { createRootRoute, Link, Outlet } from "@tanstack/react-router";
+import { createRootRoute, Link, Outlet, useNavigate } from "@tanstack/react-router";
 import { UserIcon } from "lucide-react";
+import { useState } from "react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
+import { MenuSheet } from "../components/navigation/MenuSheet";
+import { MobileTopBar } from "../components/navigation/MobileTopBar";
+import { TabBar, TabBarButton, TabBarLink } from "../components/navigation/TabBar";
 import { TeamSwitcher } from "../components/TeamSwitcher";
-import { meQueryOptions } from "../lib/auth";
-import { useHasPermission, useSelectedTeam } from "../lib/clubs";
+import { logout, meQueryOptions } from "../lib/auth";
+import { useMyCallups } from "../lib/callup-responses";
+import { myClubsQueryOptions, selectTeam, useSelectedTeam } from "../lib/clubs";
+import { splitForTabBar, visibleDestinations } from "../lib/navigation";
 
 export const Route = createRootRoute({
   component: RootLayout,
@@ -43,26 +60,65 @@ function NavPill({ to, children }: { to: string; children: ReactNode }) {
   );
 }
 
+function initialsOf(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  const first = parts[0]?.charAt(0) ?? "";
+  const last = parts.length > 1 ? (parts.at(-1)?.charAt(0) ?? "") : "";
+  return (first + last).toUpperCase();
+}
+
 function RootLayout() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const me = useQuery(meQueryOptions);
   const user = me.data?.user;
   const selected = useSelectedTeam();
-  const canViewMembers = useHasPermission("members.view");
-  const canRespond = useHasPermission("callups.respond");
-  const canManageTeam = useHasPermission("settings.team");
-  const canManageClub = useHasPermission("settings.club");
+  const clubs = useQuery(myClubsQueryOptions);
+  const callups = useMyCallups({ enabled: Boolean(user) });
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const permissions = selected?.team.permissions ?? [];
+  const desktopDestinations = visibleDestinations(permissions);
+  const { tabs, sheet } = splitForTabBar(permissions);
+  const pendingCallups = callups.data?.pending ?? 0;
+
+  // Call-ups rarely earn a tab, so an unanswered one raises the alert dot on
+  // `Menu` instead — which is exactly what Kit's `alert` is for.
+  const menuAlert =
+    pendingCallups > 0 && !tabs.some((d) => d.to === "/callups");
 
   // Kit renders the club mark as its initial letter in Anton inside a green
   // disc — the sources contain no logo, and we must not draw a crest.
   const clubName = selected?.club.name ?? t("app.title");
   const clubInitial = clubName.trim().charAt(0).toUpperCase();
 
+  const teams =
+    clubs.data?.clubs.flatMap((club) =>
+      club.teams.map((team) => ({
+        id: team.id,
+        name: team.name,
+        clubName: club.name,
+      })),
+    ) ?? [];
+
+  const handleSignOut = async () => {
+    await logout();
+    await navigate({ to: "/login" });
+  };
+
   return (
-    <div className="flex min-h-screen flex-col">
-      {/* One fixed ink app bar, no sidebar. */}
-      <header className="bg-ink text-white">
-        <div className="mx-auto flex min-h-16 w-full max-w-6xl flex-wrap items-center gap-7 px-[30px] py-[18px]">
+    <div
+      className={cn(
+        // Phone: a fixed frame whose middle band is the only thing that
+        // scrolls. Desktop: an ordinary document.
+        "flex h-dvh flex-col overflow-hidden",
+        "kit:h-auto kit:min-h-screen kit:overflow-visible",
+      )}
+    >
+      {/* Desktop: one fixed ink app bar, no sidebar. */}
+      <header className="bg-ink hidden text-white kit:block">
+        <div className="mx-auto flex min-h-16 w-full max-w-[1100px] flex-wrap items-center gap-7 px-[var(--gutter)] py-[18px]">
           <Link to="/" className="flex items-center gap-3">
             <span className="bg-brand flex size-8 items-center justify-center rounded-full font-display text-[17px] leading-none text-white">
               {clubInitial}
@@ -71,44 +127,25 @@ function RootLayout() {
               {clubName}
             </span>
           </Link>
-          {/* Sketch order: the team's own pages first (overview, roster,
-              calendar, attendance, then the rest), the "Manage" group after a
-              divider, and the team switcher next to the avatar on the right. */}
           {user && (
             <nav className="ml-auto flex flex-wrap items-center justify-end gap-2">
-              <NavPill to="/">{t("nav.overview")}</NavPill>
-              {canViewMembers && (
-                <NavPill to="/members">{t("nav.members")}</NavPill>
-              )}
-              {canViewMembers && (
-                <NavPill to="/activities">{t("nav.activities")}</NavPill>
-              )}
-              {/* Call-ups are for whoever is asked as well as whoever asks,
-                  so this is the one nav item a player also sees. */}
-              {(canViewMembers || canRespond) && (
-                <NavPill to="/callups">{t("nav.callups")}</NavPill>
-              )}
-              {canViewMembers && (
-                <NavPill to="/groups">{t("nav.groups")}</NavPill>
-              )}
-              {/* The noticeboard is for everyone in the team, not just whoever
-                  can see the roster — being announced to needs no permission. */}
-              <NavPill to="/posts">{t("nav.posts")}</NavPill>
-              {canViewMembers && (
-                <NavPill to="/statistics">{t("nav.statistics")}</NavPill>
-              )}
-              {canViewMembers && (
-                <NavPill to="/tracking">{t("nav.tracking")}</NavPill>
-              )}
-              {(canManageTeam || canManageClub) && (
+              {desktopDestinations
+                .filter((d) => d.group === "team")
+                .map((d) => (
+                  <NavPill key={d.to} to={d.to}>
+                    {t(`nav.${d.labelKey}`)}
+                  </NavPill>
+                ))}
+              {desktopDestinations.some((d) => d.group === "club") && (
                 <span aria-hidden className="bg-ink-raised mx-1 h-5 w-px" />
               )}
-              {canManageTeam && (
-                <NavPill to="/settings/team">{t("nav.teamSettings")}</NavPill>
-              )}
-              {canManageClub && (
-                <NavPill to="/settings/club">{t("nav.clubSettings")}</NavPill>
-              )}
+              {desktopDestinations
+                .filter((d) => d.group === "club")
+                .map((d) => (
+                  <NavPill key={d.to} to={d.to}>
+                    {t(`nav.${d.labelKey}`)}
+                  </NavPill>
+                ))}
               <TeamSwitcher />
               <Link
                 to="/profile"
@@ -137,9 +174,61 @@ function RootLayout() {
           )}
         </div>
       </header>
-      <main className="mx-auto w-full max-w-6xl flex-1 px-[30px] py-8">
+
+      {/* Phone: identity and the team pill only — sections live in the tab bar. */}
+      <div className="kit:hidden">
+        <MobileTopBar
+          clubName={clubName}
+          clubInitial={clubInitial}
+          teamName={user ? (selected?.team.name ?? null) : null}
+          onTeam={() => setMenuOpen(true)}
+        />
+      </div>
+
+      <main
+        className={cn(
+          "mx-auto w-full max-w-[1100px] flex-1 px-[var(--gutter)] py-8",
+          // The middle band, and the only one that scrolls.
+          "overflow-y-auto kit:overflow-visible",
+        )}
+      >
         <Outlet />
       </main>
+
+      {user && (
+        <div className="kit:hidden">
+          <TabBar>
+            {tabs.map((d) => (
+              <TabBarLink key={d.to} to={d.to} exact={d.to === "/"}>
+                {t(`nav.${d.labelKey}`)}
+              </TabBarLink>
+            ))}
+            <TabBarButton
+              onClick={() => setMenuOpen(true)}
+              active={menuOpen}
+              alert={menuAlert}
+            >
+              {t("nav.menu")}
+            </TabBarButton>
+          </TabBar>
+        </div>
+      )}
+
+      {user && (
+        <MenuSheet
+          open={menuOpen}
+          onOpenChange={setMenuOpen}
+          destinations={sheet}
+          teams={teams}
+          activeTeamId={selected?.team.id ?? null}
+          onSelectTeam={selectTeam}
+          userName={user.name}
+          userMeta={selected ? selected.team.name : null}
+          userInitials={initialsOf(user.name)}
+          pendingCallups={pendingCallups}
+          onSignOut={handleSignOut}
+        />
+      )}
     </div>
   );
 }
