@@ -50,7 +50,7 @@ Four facts from the sample data constrain everything below:
 | Grupp | — | The target team is chosen in the UI. Several distinct values in one file → warn, offer one `group` per value |
 | Gruppkoppling | `groups` / `group_members` | There is no role column on `members`. Groups are the right home: they already drive call-up squads and post targeting |
 | Kommentar | custom field (text) | Stored raw; no parsing of `Kläder: 152-152-31/33` |
-| Personnummer | `member_personal_ids` (+ derived `birth_date`, `birth_year`) | Stored — it is the identity we match on. See "Personnummer" below and ADR-022 |
+| Personnummer | `persons` via `members.person_id` (+ derived `birth_date`, `birth_year`) | Stored — it is the identity we match on. See "Personnummer" below, ADR-022 and ADR-023 |
 | Kön | custom field (select) | Optional, off by default |
 | Förnamn / Efternamn | `first_name` / `last_name` | |
 | c/o, Adress, Postnummer, Stad, Land | custom fields | Optional, off by default — data minimisation |
@@ -73,11 +73,13 @@ a re-export.
 
 Handling rules are settled in **ADR-022**; the short version:
 
-- **Its own table**, `member_personal_ids` (`member_id` PK, `team_id`,
-  `personal_id`, `created_at`), normalised to twelve digits (`201703142412`) —
-  no separator, century always present. Unique on `(team_id, personal_id)`.
+- **Its own table**, `persons` (`id`, `club_id`, `personal_id`), normalised to
+  twelve digits (`201703142412`) — no separator, century always present. Unique
+  on `(club_id, personal_id)`, with `members.person_id` pointing at it.
   Separate from `members` so that a `.selectAll()` on the roster can never carry
-  it along: what you did not join, you cannot leak.
+  it along: what you did not join, you cannot leak. The person is the record and
+  a member is that person in one team, so the same child in P14 and P17 is one
+  entry — see ADR-023.
 - **Validation.** Shared in `@fc-app/contracts` as a pure function with its own
   tests (ADR-016): length, date validity, and the Luhn check digit. It must
   accept **samordningsnummer** (day + 60) and every input form the export or a
@@ -212,7 +214,9 @@ Row cap: 500 per file, rejected in the contract schema.
 
 Match key per member row, in priority order:
 
-1. personnummer — the real identity, and unique per team
+1. personnummer — the real identity, unique per club. A person already known
+   from another team becomes a **new member here pointing at the same person**,
+   with a warning; never an update of the other team's row (ADR-023)
 2. `Medlems Nr` → `members.external_ref`
 3. normalised `(first_name, last_name, birth_date)`
 4. normalised `email`, only when it is not also a guardian e-mail on some other

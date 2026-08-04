@@ -570,6 +570,17 @@ function PreviewResult({
                       })}
                     </p>
                   ))}
+                  {/* A warned row still imports; an errored one does not. */}
+                  {row.warnings.map((warning, position) => (
+                    <p
+                      key={position}
+                      className="text-amber-600 dark:text-amber-400"
+                    >
+                      {t(`import.rowErrors.${warning.code}`, {
+                        row: warning.detail ?? "",
+                      })}
+                    </p>
+                  ))}
                   {row.changes.map((change, position) => (
                     <p key={position}>
                       <span className="text-muted-foreground">

@@ -641,7 +641,8 @@
       "invalidPersonalId": "Not a valid personnummer.",
       "personalIdInUse": "That personnummer already belongs to another member of this team.",
       "duplicateInFile": "The same person as row {{row}} in the file.",
-      "ambiguousMatch": "Several members fit — this cannot be decided automatically."
+      "ambiguousMatch": "Several members fit — this cannot be decided automatically.",
+      "alreadyInAnotherTeam": "Already in the club in another team — linked to the same person."
     },
     "fields": {
       "firstName": "First name",

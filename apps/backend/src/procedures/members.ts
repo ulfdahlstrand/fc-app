@@ -149,6 +149,7 @@ export const createMemberHandler = os.createMember.handler(
       const derived = await setPersonalId(trx, {
         memberId: inserted.id,
         teamId: input.teamId,
+        clubId: access.clubId,
         raw: input.personalId ?? null,
       });
       if (!derived) return inserted;
@@ -214,6 +215,7 @@ export const updateMemberHandler = os.updateMember.handler(
         const derived = await setPersonalId(trx, {
           memberId: input.memberId,
           teamId: input.teamId,
+          clubId: access.clubId,
           raw: input.personalId,
         });
         // Clearing the number leaves the birth date alone: it is still the last

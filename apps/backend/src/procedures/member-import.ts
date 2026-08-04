@@ -14,9 +14,14 @@ export const previewMemberImportHandler = os.previewMemberImport.handler(
   async ({ input, context }) => {
     const user = requireUser(context);
     const db = getDb();
-    await requireTeamPermission(db, user.id, input.teamId, "members.import");
+    const { clubId } = await requireTeamPermission(
+      db,
+      user.id,
+      input.teamId,
+      "members.import"
+    );
 
-    const plan = await buildImportPlan(db, input.teamId, input.rows);
+    const plan = await buildImportPlan(db, input.teamId, clubId, input.rows);
     return {
       rows: plan.results,
       summary: plan.summary,
@@ -30,13 +35,18 @@ export const commitMemberImportHandler = os.commitMemberImport.handler(
   async ({ input, context }) => {
     const user = requireUser(context);
     const db = getDb();
-    await requireTeamPermission(db, user.id, input.teamId, "members.import");
+    const { clubId } = await requireTeamPermission(
+      db,
+      user.id,
+      input.teamId,
+      "members.import"
+    );
 
     // Planned and applied inside one transaction, so the roster cannot move
     // between the two and a failure half-way leaves nothing behind.
     const plan = await db.transaction().execute(async (trx) => {
-      const planned = await buildImportPlan(trx, input.teamId, input.rows);
-      await applyImportPlan(trx, input.teamId, planned);
+      const planned = await buildImportPlan(trx, input.teamId, clubId, input.rows);
+      await applyImportPlan(trx, input.teamId, clubId, planned);
       return planned;
     });
 

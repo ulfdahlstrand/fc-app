@@ -158,6 +158,7 @@ async function linkContactsToMembers(
 export async function applyImportPlan(
   trx: Kysely<Database>,
   teamId: string,
+  clubId: string,
   plan: ImportPlan
 ): Promise<void> {
   if (plan.actions.length === 0) return;
@@ -239,6 +240,7 @@ export async function applyImportPlan(
       await setPersonalId(trx, {
         memberId,
         teamId,
+        clubId,
         raw: action.personalId,
       });
     }

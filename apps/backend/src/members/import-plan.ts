@@ -26,7 +26,7 @@ import {
   matchImportRow,
   type ExistingMember,
 } from "./import-match.js";
-import { loadPersonalIdsForMatching } from "./personal-id.js";
+import { loadClubRegister, type KnownPerson } from "./personal-id.js";
 
 /** Everything the preview compares against, read once. */
 interface RosterSnapshot {
@@ -41,6 +41,12 @@ interface RosterSnapshot {
   groupNames: Set<string>;
   /** Custom field definition names that exist in the team, normalised. */
   fieldNames: Set<string>;
+  /**
+   * Everyone the *club* already knows by personnummer, with the teams they
+   * play in. A person is club-wide; a member is that person in one team
+   * (ADR-023).
+   */
+  register: Map<string, KnownPerson>;
 }
 
 /**
@@ -50,7 +56,8 @@ interface RosterSnapshot {
  */
 async function loadRoster(
   db: Kysely<Database>,
-  teamId: string
+  teamId: string,
+  clubId: string
 ): Promise<RosterSnapshot> {
   const memberRows = await db
     .selectFrom("members")
@@ -66,7 +73,18 @@ async function loadRoster(
     .where("team_id", "=", teamId)
     .execute();
 
-  const personalIds = await loadPersonalIdsForMatching(db, teamId);
+  const register = await loadClubRegister(db, clubId);
+
+  // The team's own view of the register: matching a *member* stays scoped to
+  // this team even though the person is not.
+  const personalIds = new Map<string, string>();
+  for (const person of register.values()) {
+    for (const member of person.members) {
+      if (member.teamId === teamId) {
+        personalIds.set(member.memberId, person.personalId);
+      }
+    }
+  }
 
   const members: ExistingMember[] = memberRows.map((row) => ({
     id: row.id,
@@ -144,6 +162,7 @@ async function loadRoster(
     contacts,
     groupNames: new Set(teamGroups.map((row) => normaliseForMatch(row.name))),
     fieldNames: new Set(definitions.map((row) => normaliseForMatch(row.name))),
+    register,
   };
 }
 
@@ -211,9 +230,10 @@ export interface ImportPlan {
 export async function buildImportPlan(
   db: Kysely<Database>,
   teamId: string,
+  clubId: string,
   inputRows: ImportRow[]
 ): Promise<ImportPlan> {
-  const roster = await loadRoster(db, teamId);
+  const roster = await loadRoster(db, teamId, clubId);
   const index = buildMatchIndex(roster.members);
   const byId = new Map(roster.members.map((member) => [member.id, member]));
   const guardianEmails = collectGuardianEmails(inputRows);
@@ -222,6 +242,7 @@ export async function buildImportPlan(
   // seen before any of them is described as an update.
   const resolved = inputRows.map((row) => {
     const errors: ImportError[] = [];
+    const warnings: ImportError[] = [];
     let personalId: string | null = null;
     let birthDate: string | null = null;
 
@@ -255,15 +276,28 @@ export async function buildImportPlan(
 
     const memberId = outcome.kind === "matched" ? outcome.memberId : null;
 
-    // The number is free only if nobody else in the team holds it.
+    // The number is free only if nobody else in *this team* holds it. Across
+    // teams it is not a clash at all — it is one person in two age groups.
     if (personalId !== null) {
       const holder = index.byPersonalId.get(personalId);
       if (holder !== undefined && memberId !== null && holder !== memberId) {
         errors.push({ code: "personalIdInUse", detail: null });
       }
+
+      // Already in the club, but not yet in this team. The row still imports:
+      // it becomes a second membership for one person, which is what moving up
+      // an age group looks like. Said out loud because a club admin importing
+      // one team should know they just touched someone from another (ADR-023).
+      const known = roster.register.get(personalId);
+      const elsewhere = known?.members.filter(
+        (member) => member.teamId !== teamId
+      );
+      if (holder === undefined && elsewhere !== undefined && elsewhere.length > 0) {
+        warnings.push({ code: "alreadyInAnotherTeam", detail: null });
+      }
     }
 
-    return { row, errors, personalId, birthDate, memberId, outcome };
+    return { row, errors, warnings, personalId, birthDate, memberId, outcome };
   });
 
   const collisions = findFileCollisions(
@@ -317,6 +351,7 @@ export async function buildImportPlan(
           entry.outcome.kind === "matched" ? entry.outcome.matchedBy : null,
         changes: [],
         errors,
+        warnings: entry.warnings,
         newContacts: [],
       };
     }
@@ -337,6 +372,7 @@ export async function buildImportPlan(
         matchedBy: null,
         changes: [],
         errors: [],
+        warnings: entry.warnings,
         newContacts,
       };
     }
@@ -399,6 +435,7 @@ export async function buildImportPlan(
         entry.outcome.kind === "matched" ? entry.outcome.matchedBy : null,
       changes,
       errors: [],
+      warnings: entry.warnings,
       newContacts,
     };
   });

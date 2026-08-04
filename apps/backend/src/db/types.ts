@@ -93,6 +93,8 @@ export interface MembersTable {
   birth_year: number | null;
   /** DATE column: derived from the personnummer when there is one (ADR-022). */
   birth_date: ColumnType<string | null, string | null, string | null>;
+  /** The club person this member is, when a personnummer is known (ADR-023). */
+  person_id: string | null;
   /** The exporting system's own key ("Medlems Nr"), when the file carried one. */
   external_ref: string | null;
   email: string | null;
@@ -103,15 +105,16 @@ export interface MembersTable {
 }
 
 /**
- * The personnummer, deliberately not a column on `members` (ADR-022) — a
- * `selectAll()` on the roster must not be able to return it. Only
- * `members/personal-id.ts` touches this table.
+ * The club's person register (ADR-023). A person is the record; a member is
+ * that person in one team, so the same child in P14 and P17 is one row here.
+ *
+ * Holds identity and nothing else — ADR-022 keeps the number apart from names
+ * and contact details, and only `members/personal-id.ts` reads this column.
  */
-export interface MemberPersonalIdsTable {
-  member_id: string;
-  /** Denormalised so uniqueness can be per team; a composite FK keeps it true. */
-  team_id: string;
-  /** Twelve digits, no separator. */
+export interface PersonsTable {
+  id: Generated<string>;
+  club_id: string;
+  /** Twelve digits, no separator. Unique within the club. */
   personal_id: string;
   created_at: Timestamp;
 }
@@ -328,7 +331,7 @@ export interface Database {
   role_permissions: RolePermissionsTable;
   invitations: InvitationsTable;
   members: MembersTable;
-  member_personal_ids: MemberPersonalIdsTable;
+  persons: PersonsTable;
   member_contacts: MemberContactsTable;
   member_field_definitions: MemberFieldDefinitionsTable;
   member_field_values: MemberFieldValuesTable;

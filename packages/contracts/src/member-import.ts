@@ -98,6 +98,12 @@ export const importErrorSchema = z.object({
     "duplicateInFile",
     /** Several existing members fit, so picking one would be a guess. */
     "ambiguousMatch",
+    /**
+     * Warning, not a failure: the club already knows this person from another
+     * team. The row still imports — it becomes a second membership for one
+     * person, which is what a player moving up an age group looks like.
+     */
+    "alreadyInAnotherTeam",
   ]),
   detail: z.string().nullable(),
 });
@@ -115,6 +121,11 @@ export const importRowResultSchema = z.object({
   changes: z.array(importChangeSchema),
   /** Why this row cannot be imported. One bad row never fails the file. */
   errors: z.array(importErrorSchema),
+  /**
+   * Worth saying out loud, but not a reason to stop. A warned row imports;
+   * an errored row does not.
+   */
+  warnings: z.array(importErrorSchema),
   /** Guardians this row would add; already-present ones are left out. */
   newContacts: z.array(z.string()),
 });
