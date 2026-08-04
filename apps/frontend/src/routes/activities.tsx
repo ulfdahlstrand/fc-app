@@ -96,14 +96,6 @@ function Calendar({ teamId }: { teamId: string }) {
   const [month, setMonth] = useState(() => startOfMonth(new Date()));
   const [view, setView] = useState<View>("month");
   const isPhone = useIsPhone();
-  /**
-   * Kit's phone Schedule is "week groups of date tiles", not a month grid —
-   * and for good reason: seven columns at 390px leave 48px a day, which is
-   * less than an activity chip needs to say a time and a name. Rather than
-   * clip one, the phone shows the list. The toggle is hidden with it, since
-   * offering a view that cannot render is worse than not offering it.
-   */
-  const effectiveView: View = isPhone ? "list" : view;
   const [typeId, setTypeId] = useState(ALL_TYPES);
   const [seasonId, setSeasonId] = useState(ALL_SEASONS);
   /** The day a "+" was clicked on; also the flag that opens the create dialog. */
@@ -112,7 +104,7 @@ function Calendar({ teamId }: { teamId: string }) {
   const seasons = useSeasons(teamId);
   // A season spans months, so it only makes sense as the *list's* window; the
   // month grid always draws its own month.
-  const bySeason = effectiveView === "list" && seasonId !== ALL_SEASONS;
+  const bySeason = view === "list" && seasonId !== ALL_SEASONS;
   const season = seasons.data?.seasons.find((one) => one.id === seasonId);
 
   const range = useMemo(() => monthGridRange(month), [month]);
@@ -162,7 +154,7 @@ function Calendar({ teamId }: { teamId: string }) {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {!isPhone && <ViewToggle view={view} onChange={setView} />}
+          <ViewToggle view={view} onChange={setView} />
           {/* A season already fixes the window — stepping months inside it
               would only be a way to look at nothing. */}
           {!bySeason && (
@@ -205,9 +197,12 @@ function Calendar({ teamId }: { teamId: string }) {
           value={typeId}
           onChange={setTypeId}
         />
-        {effectiveView === "list" && (seasons.data?.seasons.length ?? 0) > 0 && (
+        {view === "list" && (seasons.data?.seasons.length ?? 0) > 0 && (
           <Select value={seasonId} onValueChange={setSeasonId}>
-            <SelectTrigger className="w-full kit:w-56" aria-label={t("seasons.filter")}>
+            <SelectTrigger
+              className="w-full kit:w-56"
+              aria-label={t("seasons.filter")}
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -230,8 +225,9 @@ function Calendar({ teamId }: { teamId: string }) {
         <Alert variant="destructive">
           <AlertDescription>{t("activities.loadError")}</AlertDescription>
         </Alert>
-      ) : effectiveView === "month" ? (
+      ) : view === "month" ? (
         <MonthGrid
+          compact={isPhone}
           month={month}
           activities={activities.data.activities}
           typesById={typesById}
@@ -320,28 +316,28 @@ function TypeFilter({
     // inside a column flex — the reference calls this out as a bug it hit.
     <div className="-mx-[var(--gutter)] flex flex-none overflow-x-auto px-[var(--gutter)] kit:mx-0 kit:overflow-visible kit:px-0">
       <div className="flex flex-none gap-2 kit:flex-wrap">
-      <FilterChip
-        active={value === ALL_TYPES}
-        onClick={() => onChange(ALL_TYPES)}
-      >
-        {t("activities.allTypes")}
-      </FilterChip>
-      {options.map((type) => (
         <FilterChip
-          key={type.id}
-          active={value === type.id}
-          onClick={() => onChange(type.id)}
+          active={value === ALL_TYPES}
+          onClick={() => onChange(ALL_TYPES)}
         >
-          <span
-            aria-hidden
-            className={cn(
-              "size-2.5 rounded-full",
-              ACTIVITY_COLOUR_DOT[type.colour],
-            )}
-          />
-          {type.name}
+          {t("activities.allTypes")}
         </FilterChip>
-      ))}
+        {options.map((type) => (
+          <FilterChip
+            key={type.id}
+            active={value === type.id}
+            onClick={() => onChange(type.id)}
+          >
+            <span
+              aria-hidden
+              className={cn(
+                "size-2.5 rounded-full",
+                ACTIVITY_COLOUR_DOT[type.colour],
+              )}
+            />
+            {type.name}
+          </FilterChip>
+        ))}
       </div>
     </div>
   );
@@ -374,12 +370,15 @@ function FilterChip({
 }
 
 function MonthGrid({
+  compact,
   month,
   activities,
   typesById,
   canManage,
   onAdd,
 }: {
+  /** Phone shape: dots instead of chips, with the tapped day opening below. */
+  compact: boolean;
   month: Date;
   activities: Activity[];
   typesById: Map<string, ActivityType>;
@@ -391,23 +390,90 @@ function MonthGrid({
   const days = useMemo(() => monthGridDays(month), [month]);
   const today = new Date();
 
+  /**
+   * Which day the phone grid has open. A month at 390px gives 48px a day —
+   * enough for a date and a few dots, nowhere near enough for a chip that
+   * says a time and a name. So the grid answers "is anything on?" and the
+   * tapped day answers "what?", underneath it, without leaving the month.
+   */
+  const [openDay, setOpenDay] = useState<string | null>(null);
+  const activitiesOn = (day: Date) =>
+    activities.filter((activity) =>
+      isSameDay(new Date(activity.startsAt), day),
+    );
+
+  // A month the user steps away from should not keep a day open from the
+  // previous one, and today is the useful default when it is in view.
+  const defaultOpen = isSameMonth(today, month) ? today.toDateString() : null;
+  const open = openDay ?? defaultOpen;
+  const openDate = days.find((day) => day.toDateString() === open) ?? null;
+
   return (
     <div className="flex flex-col gap-2">
       <div className="grid grid-cols-7 gap-1.5">
         {weekdayLabels(locale).map((label) => (
-          <p key={label} className="kit-overline px-2">
+          <p
+            key={label}
+            className={cn("kit-overline", compact ? "text-center" : "px-2")}
+          >
             {label}
           </p>
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-1.5">
+      <div className={cn("grid grid-cols-7", compact ? "gap-1" : "gap-1.5")}>
         {days.map((day) => {
           const inMonth = isSameMonth(day, month);
           const isToday = isSameDay(day, today);
-          const dayActivities = activities.filter((activity) =>
-            isSameDay(new Date(activity.startsAt), day),
-          );
+          const dayActivities = activitiesOn(day);
+
+          if (compact) {
+            const isOpen = day.toDateString() === open;
+            return (
+              <button
+                key={day.toISOString()}
+                type="button"
+                // The cell is the tap target, so it carries the 44px floor
+                // itself rather than padding a smaller number inside it.
+                className={cn(
+                  "flex min-h-tap flex-col items-center justify-center gap-1 rounded-lg py-1.5 transition-colors duration-[120ms] ease-standard",
+                  inMonth ? "bg-card" : "bg-[var(--neutral-100)]",
+                  isOpen && "ring-2 ring-ink",
+                )}
+                aria-pressed={isOpen}
+                aria-label={formatDayHeading(day, locale)}
+                onClick={() => setOpenDay(day.toDateString())}
+              >
+                <span
+                  className={cn(
+                    "flex size-6 items-center justify-center rounded-full text-sm font-semibold tabular-nums",
+                    isToday && "bg-brand text-white",
+                    !inMonth && "text-muted-foreground",
+                  )}
+                >
+                  {day.getDate()}
+                </span>
+                {/* Three dots is the ceiling: a fourth would not read at this
+                    size, and the count is on the day below anyway. */}
+                <span className="flex h-1.5 items-center gap-0.5">
+                  {dayActivities.slice(0, 3).map((activity) => (
+                    <span
+                      key={activity.id}
+                      aria-hidden
+                      className={cn(
+                        "size-1.5 rounded-full",
+                        ACTIVITY_COLOUR_DOT[
+                          typesById.get(activity.activityTypeId)?.colour ??
+                            "neutral"
+                        ],
+                        activity.cancelled && "opacity-40",
+                      )}
+                    />
+                  ))}
+                </span>
+              </button>
+            );
+          }
 
           return (
             <div
@@ -450,7 +516,98 @@ function MonthGrid({
           );
         })}
       </div>
+
+      {/* The tapped day, in full. The desktop grid has room for its chips in
+          the cell and needs none of this. */}
+      {compact && openDate !== null && (
+        <div className="mt-2 flex flex-col gap-[11px]">
+          <p className="kit-overline">{formatDayHeading(openDate, locale)}</p>
+          {activitiesOn(openDate).length === 0 ? (
+            <p className="text-muted-foreground text-sm">
+              {t("activities.nothingOnDay")}
+            </p>
+          ) : (
+            activitiesOn(openDate).map((activity) => (
+              <ActivityRow
+                key={activity.id}
+                activity={activity}
+                type={typesById.get(activity.activityTypeId)}
+              />
+            ))
+          )}
+          {canManage && isSameMonth(openDate, month) && (
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => onAdd(openDate)}
+            >
+              {t("activities.newOnDay")}
+            </Button>
+          )}
+        </div>
+      )}
     </div>
+  );
+}
+
+/**
+ * One activity as a row. Shared by the list view and, on a phone, by the day
+ * a compact month cell opens — the same fact should not be two shapes.
+ *
+ * On a phone the row is a grid: dot, then a column holding the time, the title
+ * and the meta. Wrapping a flex row instead pushed the meta onto its own line
+ * still glued right, which read as a second, unrelated row.
+ */
+function ActivityRow({
+  activity,
+  type,
+}: {
+  activity: Activity;
+  type: ActivityType | undefined;
+}) {
+  const { t } = useTranslation();
+  const locale = useDateLocale();
+  const navigate = useNavigate();
+
+  return (
+    <button
+      type="button"
+      onClick={() =>
+        navigate({
+          to: "/activities/$activityId",
+          params: { activityId: activity.id },
+        })
+      }
+      className="bg-card hover:bg-secondary grid grid-cols-[auto_1fr] items-start gap-x-3 gap-y-0.5 rounded-lg p-4 text-left transition-colors duration-[120ms] ease-standard kit:flex kit:flex-wrap kit:items-center kit:rounded-md"
+    >
+      <span
+        aria-hidden
+        className={cn(
+          "size-3 shrink-0 rounded-full",
+          ACTIVITY_COLOUR_DOT[type?.colour ?? "neutral"],
+        )}
+      />
+      <span className="font-semibold tabular-nums kit:w-28 kit:shrink-0">
+        {formatTimeRange(activity.startsAt, activity.endsAt, locale)}
+      </span>
+      <span
+        className={cn(
+          "col-start-2 font-display text-lg",
+          activity.cancelled && "line-through opacity-60",
+        )}
+      >
+        {activity.title ?? type?.name ?? ""}
+      </span>
+      <span className="text-muted-foreground col-start-2 text-sm kit:ml-auto">
+        {[
+          activity.title === null ? null : type?.name,
+          activity.location,
+          activity.cancelled ? t("activities.cancelled") : null,
+        ]
+          .filter((part) => part !== null && part !== undefined)
+          .join(SEPARATOR)}
+      </span>
+    </button>
   );
 }
 
@@ -497,7 +654,6 @@ function ActivityList({
 }) {
   const { t } = useTranslation();
   const locale = useDateLocale();
-  const navigate = useNavigate();
 
   // The API returns them in start order, so a plain run-length grouping keeps
   // the days in order too.
@@ -522,56 +678,18 @@ function ActivityList({
   return (
     <div className="flex flex-col gap-[18px]">
       {days.map((group) => (
-        <div key={group.day.toDateString()} className="flex flex-col gap-[11px]">
+        <div
+          key={group.day.toDateString()}
+          className="flex flex-col gap-[11px]"
+        >
           <p className="kit-overline">{formatDayHeading(group.day, locale)}</p>
-          {group.activities.map((activity) => {
-            const type = typesById.get(activity.activityTypeId);
-            return (
-              <button
-                key={activity.id}
-                type="button"
-                onClick={() =>
-                  navigate({
-                    to: "/activities/$activityId",
-                    params: { activityId: activity.id },
-                  })
-                }
-                // On a phone the row is a grid: dot, then a column holding the
-                // time, the title and the meta. Wrapping a flex row instead
-                // pushed the meta onto its own line still glued right, which
-                // read as a second, unrelated row.
-                className="bg-card hover:bg-secondary grid grid-cols-[auto_1fr] items-start gap-x-3 gap-y-0.5 rounded-lg p-4 text-left transition-colors duration-[120ms] ease-standard kit:flex kit:flex-wrap kit:items-center kit:rounded-md"
-              >
-                <span
-                  aria-hidden
-                  className={cn(
-                    "size-3 shrink-0 rounded-full",
-                    ACTIVITY_COLOUR_DOT[type?.colour ?? "neutral"],
-                  )}
-                />
-                <span className="font-semibold tabular-nums kit:w-28 kit:shrink-0">
-                  {formatTimeRange(activity.startsAt, activity.endsAt, locale)}
-                </span>
-                <span
-                  className={cn(
-                    "col-start-2 font-display text-lg",
-                    activity.cancelled && "line-through opacity-60",
-                  )}
-                >
-                  {activity.title ?? type?.name ?? ""}
-                </span>
-                <span className="text-muted-foreground col-start-2 text-sm kit:ml-auto">
-                  {[
-                    activity.title === null ? null : type?.name,
-                    activity.location,
-                    activity.cancelled ? t("activities.cancelled") : null,
-                  ]
-                    .filter((part) => part !== null && part !== undefined)
-                    .join(SEPARATOR)}
-                </span>
-              </button>
-            );
-          })}
+          {group.activities.map((activity) => (
+            <ActivityRow
+              key={activity.id}
+              activity={activity}
+              type={typesById.get(activity.activityTypeId)}
+            />
+          ))}{" "}
         </div>
       ))}
     </div>
