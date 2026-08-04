@@ -8,7 +8,7 @@ import { getCallupInputSchema, getCallupOutputSchema, listCallupsInputSchema, li
 import { createClubInputSchema, createClubOutputSchema, myClubsInputSchema, myClubsOutputSchema } from "./clubs.js";
 import { dashboardInputSchema, dashboardOutputSchema } from "./dashboard.js";
 import { archiveActivityTypeInputSchema, archiveActivityTypeOutputSchema, createActivityTypeInputSchema, createActivityTypeOutputSchema, createGroupInputSchema, createGroupOutputSchema, deleteGroupInputSchema, deleteGroupOutputSchema, listActivityTypesInputSchema, listActivityTypesOutputSchema, listGroupMembersInputSchema, listGroupMembersOutputSchema, listGroupsInputSchema, listGroupsOutputSchema, listMemberGroupsInputSchema, listMemberGroupsOutputSchema, renameGroupInputSchema, renameGroupOutputSchema, setGroupMembersInputSchema, setGroupMembersOutputSchema, updateActivityTypeInputSchema, updateActivityTypeOutputSchema } from "./groups.js";
-import { listMemberContactsInputSchema, listMemberContactsOutputSchema } from "./guardians.js";
+import { inviteMemberContactsInputSchema, inviteMemberContactsOutputSchema, listMemberContactsInputSchema, listMemberContactsOutputSchema, pendingContactInvitesInputSchema, pendingContactInvitesOutputSchema } from "./guardians.js";
 import { addGuardianInputSchema, addGuardianOutputSchema, listClubUsersInputSchema, listClubUsersOutputSchema, listMemberGuardiansInputSchema, listMemberGuardiansOutputSchema, myMembersInputSchema, myMembersOutputSchema, removeGuardianInputSchema, removeGuardianOutputSchema } from "./guardians.js";
 import { healthInputSchema, healthOutputSchema } from "./health.js";
 import { acceptInvitationInputSchema, acceptInvitationOutputSchema, createInvitationInputSchema, createInvitationOutputSchema, getInvitationInputSchema, getInvitationOutputSchema, listInvitationsInputSchema, listInvitationsOutputSchema, revokeInvitationInputSchema, revokeInvitationOutputSchema } from "./invitations.js";
@@ -128,6 +128,14 @@ export const contract = oc.router({
     .route({ method: "GET", path: "/members/contacts" })
     .input(listMemberContactsInputSchema)
     .output(listMemberContactsOutputSchema),
+  pendingContactInvites: oc
+    .route({ method: "GET", path: "/members/contacts/pending" })
+    .input(pendingContactInvitesInputSchema)
+    .output(pendingContactInvitesOutputSchema),
+  inviteMemberContacts: oc
+    .route({ method: "POST", path: "/members/contacts/invite" })
+    .input(inviteMemberContactsInputSchema)
+    .output(inviteMemberContactsOutputSchema),
   listMemberGuardians: oc
     .route({ method: "GET", path: "/members/guardians" })
     .input(listMemberGuardiansInputSchema)

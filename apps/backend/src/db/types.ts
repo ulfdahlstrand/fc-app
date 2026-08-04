@@ -129,6 +129,8 @@ export interface MemberContactsTable {
   email: string | null;
   phone: string | null;
   user_id: string | null;
+  /** Set when this contact is also on the roster — a coach who is a parent. */
+  linked_member_id: string | null;
   sort_order: Generated<number>;
   created_at: Timestamp;
 }

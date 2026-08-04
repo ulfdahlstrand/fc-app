@@ -111,3 +111,34 @@ export const listMemberContactsInputSchema = z.object({
 export const listMemberContactsOutputSchema = z.object({
   contacts: z.array(memberContactSchema),
 });
+
+/**
+ * Turning imported contacts into invitations (#65).
+ *
+ * Narrower than `createInvitation` on purpose: always the club's guardian
+ * role, always bound to one member, never club- or team-wide. That is why it
+ * is a roster action rather than a club-settings one.
+ */
+export const inviteMemberContactsInputSchema = z.object({
+  teamId: z.string(),
+  /** Limit to these members; omit for every member of the team. */
+  memberIds: z.array(z.string()).max(500).optional(),
+});
+
+export const inviteMemberContactsOutputSchema = z.object({
+  invited: z.number().int(),
+  /** Contacts left alone, and why — an empty reason list means none were. */
+  skippedNoEmail: z.number().int(),
+  skippedHasAccount: z.number().int(),
+  skippedAlreadyInvited: z.number().int(),
+});
+
+/** How many imported contacts are still waiting, for the roster to show. */
+export const pendingContactInvitesInputSchema = z.object({
+  teamId: z.string(),
+});
+
+export const pendingContactInvitesOutputSchema = z.object({
+  /** Contacts with an e-mail, no account, and no live invitation. */
+  invitable: z.number().int(),
+});

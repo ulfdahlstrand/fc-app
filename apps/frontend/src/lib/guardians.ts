@@ -67,3 +67,23 @@ export function useRemoveGuardian(teamId: string, memberId: string) {
       }),
   });
 }
+
+export function pendingContactInvitesQueryOptions(teamId: string) {
+  return orpcQuery.pendingContactInvites.queryOptions({ input: { teamId } });
+}
+
+/** How many imported guardians are still out of reach (#65). */
+export function usePendingContactInvites(teamId: string) {
+  return useQuery(pendingContactInvitesQueryOptions(teamId));
+}
+
+export function useInviteMemberContacts(teamId: string) {
+  return useMutation({
+    mutationFn: () => orpc.inviteMemberContacts({ teamId }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: orpcQuery.pendingContactInvites.key({ input: { teamId } }),
+      });
+    },
+  });
+}

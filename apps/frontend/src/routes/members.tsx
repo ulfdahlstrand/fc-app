@@ -27,6 +27,10 @@ import { formatFieldValue } from "../components/memberFieldDisplay";
 import { MemberFormDialog } from "../components/MemberFormDialog";
 import { ensureMe } from "../lib/auth";
 import { ensureMyClubs, useHasPermission, useSelectedTeam } from "../lib/clubs";
+import {
+  useInviteMemberContacts,
+  usePendingContactInvites,
+} from "../lib/guardians";
 import { useGroups } from "../lib/groups";
 import { useMemberFields } from "../lib/member-fields";
 import { useCreateMember, useMembers } from "../lib/members";
@@ -85,6 +89,8 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
   const fields = useMemberFields(teamId);
   const groups = useGroups(teamId);
   const createMember = useCreateMember(teamId);
+  const pendingInvites = usePendingContactInvites(teamId);
+  const inviteContacts = useInviteMemberContacts(teamId);
   const customColumns = fields.data?.fields ?? [];
 
   return (
@@ -100,6 +106,35 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
           <Button onClick={() => setCreating(true)}>{t("members.add")}</Button>
         )}
       </div>
+
+      {/* Only worth a line when there is actually someone out of reach. */}
+      {canManage && (pendingInvites.data?.invitable ?? 0) > 0 && (
+        <Alert>
+          <AlertDescription className="flex flex-wrap items-center justify-between gap-3">
+            <span>
+              {t("guardians.pendingInvites", {
+                count: pendingInvites.data?.invitable ?? 0,
+              })}
+            </span>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={inviteContacts.isPending}
+              onClick={() => inviteContacts.mutate()}
+            >
+              {t("guardians.inviteAll")}
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {inviteContacts.data && (
+        <Alert>
+          <AlertDescription>
+            {t("guardians.invitesSent", { count: inviteContacts.data.invited })}
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="flex flex-wrap items-end gap-4">
         <div className="flex flex-col gap-1.5">

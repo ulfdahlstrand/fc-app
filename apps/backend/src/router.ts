@@ -44,6 +44,10 @@ import {
   updateActivityTypeHandler,
 } from "./procedures/activity-types.js";
 import { createClubHandler } from "./procedures/create-club.js";
+import {
+  inviteMemberContactsHandler,
+  pendingContactInvitesHandler,
+} from "./procedures/contact-invitations.js";
 import { dashboardHandler } from "./procedures/dashboard.js";
 import {
   addGuardianHandler,
@@ -143,6 +147,8 @@ export const router = os.router({
   previewMemberImport: previewMemberImportHandler,
   commitMemberImport: commitMemberImportHandler,
   listMemberContacts: listMemberContactsHandler,
+  pendingContactInvites: pendingContactInvitesHandler,
+  inviteMemberContacts: inviteMemberContactsHandler,
   listMemberGuardians: listMemberGuardiansHandler,
   addGuardian: addGuardianHandler,
   removeGuardian: removeGuardianHandler,

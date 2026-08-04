@@ -10,7 +10,7 @@
  * means "not filled in", not "delete what you know" (ADR-014's reading).
  */
 import type { Kysely } from "kysely";
-import { normaliseForMatch } from "@fc-app/contracts";
+import { normaliseForMatch, normaliseName } from "@fc-app/contracts";
 import type { Database } from "../db/types.js";
 import { contactKey, MEMBER_COLUMNS, type ImportPlan } from "./import-plan.js";
 import { setPersonalId } from "./personal-id.js";
@@ -105,6 +105,54 @@ async function findUsersByEmail(
     .execute();
   for (const row of rows) byEmail.set(normaliseForMatch(row.email), row.id);
   return byEmail;
+}
+
+
+/**
+ * Points contacts at the roster row that is the same person — the coach who is
+ * also `Målsman 2` on their child's line.
+ *
+ * Matched on name alone, deliberately. E-mail looks like the stronger key and
+ * is the wrong one here: a child usually carries a parent's address, so
+ * matching on it would link the parent's contact row to the *child*. Where two
+ * members share a name the link is left unset rather than guessed.
+ *
+ * Runs after every member exists, because the coach's own row may be created
+ * later in the file than the child whose guardian they are.
+ */
+async function linkContactsToMembers(
+  trx: Kysely<Database>,
+  teamId: string
+): Promise<void> {
+  const members = await trx
+    .selectFrom("members")
+    .select(["id", "first_name", "last_name"])
+    .where("team_id", "=", teamId)
+    .execute();
+
+  const byName = new Map<string, string | null>();
+  for (const member of members) {
+    const key = normaliseName(member.first_name, member.last_name);
+    byName.set(key, byName.has(key) ? null : member.id);
+  }
+
+  const contacts = await trx
+    .selectFrom("member_contacts")
+    .innerJoin("members", "members.id", "member_contacts.member_id")
+    .select(["member_contacts.id", "member_contacts.name"])
+    .where("members.team_id", "=", teamId)
+    .where("member_contacts.linked_member_id", "is", null)
+    .execute();
+
+  for (const contact of contacts) {
+    const memberId = byName.get(normaliseForMatch(contact.name));
+    if (!memberId) continue;
+    await trx
+      .updateTable("member_contacts")
+      .set({ linked_member_id: memberId })
+      .where("id", "=", contact.id)
+      .execute();
+  }
 }
 
 export async function applyImportPlan(
@@ -253,4 +301,6 @@ export async function applyImportPlan(
         .execute();
     }
   }
+
+  await linkContactsToMembers(trx, teamId);
 }
