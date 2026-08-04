@@ -303,15 +303,19 @@ export const acceptInvitationHandler = os.acceptInvitation.handler(
             team_id: invitation.team_id,
             role_id: invitation.role_id,
           })
-          // The unique constraint is (user_id, club_id) — naming team_id here
-          // matched no index, and Postgres rejects an ON CONFLICT target it
-          // cannot infer whether or not a row actually collides. Every
-          // member-bound invitation therefore failed to be accepted.
+          // Matches memberships_user_club_team_uq, which is NULLS NOT DISTINCT
+          // so a club-wide row (team_id null) collides with itself rather than
+          // stacking up. Narrowing this to (user_id, club_id) — as this briefly
+          // did — matches no constraint on a correctly migrated database, and
+          // would also forbid the thing the constraint exists to allow: a user
+          // who is a player in one team and a coach in another.
           //
-          // doNothing is also the right answer: someone already in the club
-          // keeps the role they have. Being named as a guardian should not
-          // quietly demote a coach.
-          .onConflict((oc) => oc.columns(["user_id", "club_id"]).doNothing())
+          // doNothing: someone who already holds this exact membership keeps
+          // the role they have. Being named as a guardian must not quietly
+          // demote a coach.
+          .onConflict((oc) =>
+            oc.columns(["user_id", "club_id", "team_id"]).doNothing()
+          )
           .execute();
 
         await trx
