@@ -35,6 +35,11 @@ export const linkedMemberSchema = z.object({
   teamName: z.string(),
   clubName: z.string(),
   relation: guardianRelationSchema,
+  /**
+   * Sent so the guardian's own browser can work out when this member turns
+   * eighteen — it is the person reading the notice whose "today" counts (#66).
+   */
+  birthDate: z.string().nullable(),
 });
 
 export type LinkedMember = z.infer<typeof linkedMemberSchema>;

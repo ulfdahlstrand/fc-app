@@ -16,6 +16,7 @@ export * from "./invitations.js";
 export * from "./members.js";
 export * from "./member-import.js";
 export * from "./personal-id.js";
+export * from "./coming-of-age.js";
 export * from "./guardians.js";
 export * from "./groups.js";
 export * from "./activities.js";

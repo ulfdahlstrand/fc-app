@@ -127,7 +127,9 @@
         "custom": "Ange ett giltigt personnummer.",
         "too_big": "Det är för långt för att vara ett personnummer."
       }
-    }
+    },
+    "turningEighteen": "Fyller 18 den {{date}}.",
+    "addressIsGuardians": "E-postadressen är samma som en målsmans."
   },
   "fieldType": {
     "text": "Text",
@@ -550,7 +552,8 @@
     "linkError": "Kunde inte koppla kontot. Försök igen.",
     "relation": {
       "guardian": "Målsman",
-      "self": "Egen"
+      "self": "Egen",
+      "family": "Förälder"
     },
     "contactsHeading": "Från importen",
     "noAccount": "Inget konto",
@@ -558,7 +561,8 @@
     "pendingInvites_other": "{{count}} importerade vårdnadshavare saknar konto.",
     "inviteAll": "Bjud in alla",
     "invitesSent_one": "{{count}} inbjudan skapad.",
-    "invitesSent_other": "{{count}} inbjudningar skapade."
+    "invitesSent_other": "{{count}} inbjudningar skapade.",
+    "turningEighteen": "{{name}} fyller 18 den {{date}}. Efter det behöver spelaren sköta kallelser och kontakt själv. Er koppling finns kvar — det är vårdnadshavarskapet som upphör, inte familjebandet."
   },
   "profile": {
     "language": "Språk",
