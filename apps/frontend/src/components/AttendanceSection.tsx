@@ -100,7 +100,7 @@ export function AttendanceSection({
     <div className="flex flex-col gap-[18px]">
       {/* Kit's matchday hero: green at full strength, the count louder than
           anything else on the page, "All here" right next to it. */}
-      <div className="bg-brand relative flex flex-wrap items-end justify-between gap-4 overflow-hidden rounded-xl px-7 py-6 text-white">
+      <div className="bg-brand relative flex flex-wrap items-end justify-between gap-4 overflow-hidden rounded-xl px-5 py-[18px] text-white kit:px-7 kit:py-6">
         <div
           aria-hidden
           className="absolute -top-24 -right-16 size-64 rounded-full bg-[var(--glow-hero)]"
@@ -131,7 +131,7 @@ export function AttendanceSection({
         </div>
       </div>
 
-      <div className="grid gap-[11px] md:grid-cols-2">
+      <div className="grid gap-[11px] kit:grid-cols-2">
         {roster.map((member) => (
           <AttendanceRow
             key={member.id}
@@ -148,9 +148,14 @@ export function AttendanceSection({
         ))}
       </div>
 
+      {/* Kit: the save bar never scrolls away. On a phone it also sits on the
+          frame — full-bleed to the gutter and flush against the tab bar,
+          rather than floating with a player row showing underneath.
+          `-bottom-8` is what does that: a sticky offset is measured from the
+          scrollport's *padding* edge, so `bottom-0` parks the bar 32px high,
+          exactly the page's own bottom padding. */}
       {canRecord && (
-        // Kit: the save bar never scrolls away.
-        <div className="bg-background sticky bottom-0 flex flex-wrap items-center justify-between gap-3 py-3">
+        <div className="bg-background sticky -bottom-8 -mx-[var(--gutter)] -mb-8 flex flex-wrap items-center justify-between gap-3 px-[var(--gutter)] py-3 pb-8 kit:bottom-0 kit:mx-0 kit:mb-0 kit:px-0 kit:pb-3">
           <p className="text-muted-foreground text-sm">
             {t("attendance.marked", {
               count: roster.filter((m) => (marks[m.id] ?? null) !== null).length,

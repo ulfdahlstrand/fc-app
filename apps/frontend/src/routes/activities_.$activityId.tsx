@@ -183,7 +183,11 @@ function ActivityDetail({
 
       {/* The detail page is the anchor #14 and #16 extend with tabs. The
           call-up tab appears only for types that can have a squad (#11). */}
-      <div className="bg-secondary flex w-fit rounded-pill p-1">
+      {/* Kit: a filter row scrolls sideways past the gutter rather than
+          wrapping. `flex-none` is not optional — a scrolling row inside a
+          column flex resolves its min-height to 0 and collapses without it. */}
+      <div className="-mx-[var(--gutter)] flex flex-none overflow-x-auto px-[var(--gutter)] kit:mx-0 kit:px-0">
+        <div className="bg-secondary flex w-fit flex-none rounded-pill p-1">
         {tabs.map((value) => (
           <button
             key={value}
@@ -191,7 +195,7 @@ function ActivityDetail({
             aria-pressed={tab === value}
             onClick={() => setTab(value)}
             className={cn(
-              "rounded-pill px-4 py-1.5 text-sm font-bold transition-colors duration-[120ms] ease-standard",
+              "min-h-tap rounded-pill px-4 py-1.5 text-sm font-bold whitespace-nowrap transition-colors duration-[120ms] ease-standard kit:min-h-0",
               tab === value
                 ? "bg-ink text-white"
                 : "text-muted-foreground hover:bg-[var(--neutral-250)]",
@@ -200,6 +204,7 @@ function ActivityDetail({
             {t(`activities.tab.${value}`)}
           </button>
         ))}
+        </div>
       </div>
 
       {tab === "attendance" ? (
@@ -208,8 +213,8 @@ function ActivityDetail({
         <CallupSection teamId={teamId} activity={current} />
       ) : (
         <>
-      <div className="bg-card flex flex-col gap-4 rounded-xl px-7 py-6">
-        <dl className="grid gap-4 sm:grid-cols-2">
+      <div className="bg-card flex flex-col gap-4 rounded-xl px-5 py-[18px] kit:px-7 kit:py-6">
+        <dl className="grid gap-4 kit:grid-cols-2">
           <Detail label={t("activities.type")} value={type?.name ?? "—"} />
           <Detail
             label={t("activities.when")}

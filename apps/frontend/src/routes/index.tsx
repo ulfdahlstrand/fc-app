@@ -153,7 +153,7 @@ function Hero({ activity }: { activity: DashboardActivity }) {
     <Link
       to="/activities/$activityId"
       params={{ activityId: activity.id }}
-      className="bg-ink hover:bg-ink-raised flex flex-col gap-6 rounded-xl px-6 py-6 text-white transition-colors duration-[120ms] ease-standard sm:flex-row sm:items-center sm:justify-between sm:px-8"
+      className="bg-ink hover:bg-ink-raised flex flex-col gap-4 rounded-xl px-5 py-[18px] text-white transition-colors duration-[120ms] ease-standard kit:flex-row kit:items-center kit:justify-between kit:gap-6 kit:px-8 kit:py-6"
     >
       <div className="flex min-w-0 flex-col gap-1.5">
         <span className="kit-overline flex items-center gap-2 text-[var(--text-signal)]">
@@ -170,7 +170,7 @@ function Hero({ activity }: { activity: DashboardActivity }) {
         </span>
         <span
           className={cn(
-            "font-display text-3xl leading-tight",
+            "font-display kit-display-md leading-tight",
             activity.cancelled && "line-through",
           )}
         >
@@ -190,7 +190,7 @@ function Hero({ activity }: { activity: DashboardActivity }) {
         )}
       </div>
 
-      <div className="flex shrink-0 flex-col sm:items-end">
+      <div className="flex shrink-0 flex-col kit:items-end">
         <span className="font-display text-[64px] leading-none">
           {formatTime(activity.startsAt, locale)}
         </span>
@@ -210,7 +210,7 @@ function Hero({ activity }: { activity: DashboardActivity }) {
 function EmptyHero() {
   const { t } = useTranslation();
   return (
-    <div className="bg-card flex flex-col gap-2 rounded-xl px-6 py-8">
+    <div className="bg-card flex flex-col gap-2 rounded-xl px-5 py-[18px] kit:px-6 kit:py-8">
       <p className="kit-overline">{t("dashboard.next")}</p>
       <p className="font-display text-2xl">{t("dashboard.nothingPlanned")}</p>
       <Link to="/activities" className="text-sm font-semibold underline">
@@ -238,7 +238,7 @@ function Upcoming({ activities }: { activities: DashboardActivity[] }) {
             key={activity.id}
             to="/activities/$activityId"
             params={{ activityId: activity.id }}
-            className="bg-card hover:bg-secondary flex items-center gap-4 rounded-md px-4 py-3 transition-colors duration-[120ms] ease-standard"
+            className="bg-card hover:bg-secondary flex items-center gap-4 rounded-lg px-4 py-3 kit:rounded-md transition-colors duration-[120ms] ease-standard"
           >
             <span
               aria-hidden
@@ -291,7 +291,9 @@ function StatRow({
   const delta = attendanceDelta(attendance);
 
   return (
-    <div className="grid gap-[14px] sm:grid-cols-3">
+    // "Two stat cards across is the maximum at 390px" — and a third stacks
+    // rather than being squeezed into a half-width third slot.
+    <div className="grid grid-cols-2 gap-[14px] kit:grid-cols-3 [&>*:nth-child(3)]:col-span-2 kit:[&>*:nth-child(3)]:col-span-1">
       <StatCard
         to="/statistics"
         label={t("dashboard.attendance", { days: attendance.windowDays })}
@@ -351,7 +353,9 @@ function StatCard({
     <Link
       to={to}
       className={cn(
-        "flex flex-col justify-center gap-1.5 rounded-xl p-6 transition-colors duration-[120ms] ease-standard",
+        // Kit's card padding on a phone is 18px 20px, against 22–30px on the
+        // desktop. The radius is untouched — cards stay 22px everywhere.
+        "flex flex-col justify-center gap-1.5 rounded-xl px-5 py-[18px] transition-colors duration-[120ms] ease-standard kit:p-6",
         tone === "alert"
           ? "bg-destructive hover:bg-[var(--orange-800)] text-white"
           : "bg-ink hover:bg-ink-raised text-white",
@@ -367,7 +371,9 @@ function StatCard({
       >
         {label}
       </span>
-      <span className="font-display text-5xl leading-none">{value}</span>
+      {/* Kit's display-lg step: 54px on the desktop, 40px on a phone, where two
+          of these sit side by side. */}
+      <span className="font-display kit-display-lg leading-none">{value}</span>
       <span
         className={cn(
           "text-xs font-semibold",
@@ -403,7 +409,10 @@ function Tracking({ lists }: { lists: DashboardTrackingList[] }) {
             <Link
               key={list.definitionId}
               to="/tracking"
-              className="bg-card hover:bg-secondary flex items-center gap-4 rounded-md px-4 py-3 transition-colors duration-[120ms] ease-standard"
+              // Two fixed 96px columns plus a meter do not fit beside a name at
+              // 390px. Rather than clip anything, the counts drop to their own
+              // line under the name and keep their full words.
+              className="bg-card hover:bg-secondary flex min-h-tap-row flex-col justify-center gap-1 rounded-lg px-4 py-3 kit:flex-row kit:items-center kit:gap-4 kit:rounded-md transition-colors duration-[120ms] ease-standard"
             >
               <span className="min-w-0 flex-1 truncate font-semibold">
                 {list.name}
@@ -411,7 +420,7 @@ function Tracking({ lists }: { lists: DashboardTrackingList[] }) {
               {/* Kit's thin capsule meter, always paired with a count in words. */}
               <span
                 aria-hidden
-                className="hidden h-[7px] w-40 shrink-0 overflow-hidden rounded-full bg-[var(--neutral-250)] sm:block"
+                className="hidden h-[7px] w-40 shrink-0 overflow-hidden rounded-full bg-[var(--neutral-250)] kit:block"
               >
                 <span
                   className="bg-brand block h-full"
@@ -420,11 +429,13 @@ function Tracking({ lists }: { lists: DashboardTrackingList[] }) {
                   }}
                 />
               </span>
-              <span className="text-muted-foreground w-24 shrink-0 text-right text-sm font-semibold tabular-nums">
-                {list.done}/{list.total}
-              </span>
-              <span className="text-absent w-24 shrink-0 text-right text-sm font-semibold">
-                {t("dashboard.remaining", { count: remaining })}
+              <span className="flex shrink-0 gap-3 kit:contents">
+                <span className="text-muted-foreground text-sm font-semibold tabular-nums kit:w-24 kit:shrink-0 kit:text-right">
+                  {list.done}/{list.total}
+                </span>
+                <span className="text-absent text-sm font-semibold kit:w-24 kit:shrink-0 kit:text-right">
+                  {t("dashboard.remaining", { count: remaining })}
+                </span>
               </span>
             </Link>
           );
@@ -486,7 +497,7 @@ function PendingCallup({ callup }: { callup: MyCallup }) {
   };
 
   return (
-    <div className="bg-card flex flex-col gap-3 rounded-xl px-6 py-5">
+    <div className="bg-card flex flex-col gap-3 rounded-xl px-5 py-[18px] kit:px-6 kit:py-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 flex-col">
           <span className="kit-overline">
@@ -512,7 +523,9 @@ function PendingCallup({ callup }: { callup: MyCallup }) {
           )}
         </div>
 
-        <div className="flex shrink-0 gap-2">
+        {/* Accept and decline carry equal weight, so they split the width
+            evenly rather than taking Kit's 1 : 2 save-bar shape. */}
+        <div className="grid w-full shrink-0 grid-cols-2 gap-2 kit:flex kit:w-auto">
           <Button
             variant={answered === "accepted" ? "brand" : "outline"}
             disabled={respond.isPending}
