@@ -355,7 +355,8 @@
       "until": {
         "custom": "Ange ett sista datum, samma dag eller senare än det första."
       }
-    }
+    },
+    "nothingOnDay": "Inget den dagen."
   },
   "attendance": {
     "heading": "Tryck för att markera",

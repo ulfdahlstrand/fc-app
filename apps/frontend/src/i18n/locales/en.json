@@ -355,7 +355,8 @@
       "until": {
         "custom": "Give a last date, on or after the first one."
       }
-    }
+    },
+    "nothingOnDay": "Nothing on that day."
   },
   "attendance": {
     "heading": "Tap to mark",

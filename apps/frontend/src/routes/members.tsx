@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import type { Member } from "@fc-app/contracts";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,8 @@ import {
 import { formatFieldValue } from "../components/memberFieldDisplay";
 import { MemberFormDialog } from "../components/MemberFormDialog";
 import { ensureMe } from "../lib/auth";
+import { SEPARATOR } from "../lib/dates";
+import { useIsPhone } from "../lib/breakpoint";
 import { ensureMyClubs, useHasPermission, useSelectedTeam } from "../lib/clubs";
 import {
   useInviteMemberContacts,
@@ -74,6 +77,7 @@ function MembersPage() {
 function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const isPhone = useIsPhone();
   const canManage = useHasPermission("members.manage");
   const canImport = useHasPermission("members.import");
   // Inviting anyone into the club is an admin's call, however narrow the
@@ -140,11 +144,11 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
       )}
 
       <div className="flex flex-wrap items-end gap-4">
-        <div className="flex flex-col gap-1.5">
+        <div className="flex w-full flex-col gap-1.5 kit:w-auto">
           <Label htmlFor="member-search">{t("members.search")}</Label>
           <Input
             id="member-search"
-            className="w-56"
+            className="w-full kit:w-56"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
@@ -158,7 +162,7 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
           <Label htmlFor="show-archived">{t("members.showArchived")}</Label>
         </div>
         {(groups.data?.groups.length ?? 0) > 0 && (
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-1 flex-col gap-1.5 kit:flex-none">
             <Label htmlFor="group-filter">{t("groups.filterLabel")}</Label>
             <Select
               value={groupId === "" ? ALL_GROUPS : groupId}
@@ -166,7 +170,7 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
                 setGroupId(value === ALL_GROUPS ? "" : value)
               }
             >
-              <SelectTrigger id="group-filter" size="sm" className="w-40">
+              <SelectTrigger id="group-filter" size="sm" className="w-full kit:w-40">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -199,6 +203,18 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
               <Link to="/import">{t("import.fromEmptyRoster")}</Link>
             </Button>
           )}
+        </div>
+      ) : isPhone ? (
+        /* Kit's adapt matrix calls a table a swap, not an adjust: the pill nav
+           and the column set do not survive 390px. A member becomes a row —
+           initials, name, and one short meta line. The custom-field columns do
+           not come along; they are one tap away on the member, and inventing a
+           horizontal scroll for an unbounded number of them would be the
+           clipping Kit forbids. */
+        <div className="flex flex-col gap-[11px]">
+          {members.data.members.map((member) => (
+            <MemberRow key={member.id} member={member} />
+          ))}
         </div>
       ) : (
         <div className="rounded-xl bg-card px-2">
@@ -259,5 +275,49 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
         />
       )}
     </div>
+  );
+}
+
+/**
+ * A member on a phone (Kit's `PlayerRow`, adjusted): initials, name, and one
+ * short meta line. Kit's rule for this row on mobile is that the right-hand
+ * column drops and the meta shortens — so the birth year and the one contact
+ * detail share a line, joined by the house separator, and the archived state
+ * is carried by a badge rather than a column of its own.
+ */
+function MemberRow({ member }: { member: Member }) {
+  const { t } = useTranslation();
+  const initials =
+    `${member.firstName.charAt(0)}${member.lastName.charAt(0)}`.toUpperCase();
+  const meta = [member.birthYear, member.email ?? member.phone]
+    .filter((part) => part !== null && part !== "")
+    .join(SEPARATOR);
+
+  return (
+    <Link
+      to="/members/$memberId"
+      params={{ memberId: member.id }}
+      className="bg-card hover:bg-secondary flex min-h-tap-row items-center gap-3 rounded-lg px-4 py-3 transition-colors duration-[120ms] ease-standard"
+    >
+      <span
+        aria-hidden
+        className="bg-secondary text-muted-foreground flex size-10 flex-none items-center justify-center rounded-full text-sm font-bold"
+      >
+        {initials}
+      </span>
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span className="truncate font-semibold">
+          {member.lastName}, {member.firstName}
+        </span>
+        {meta !== "" && (
+          <span className="text-muted-foreground truncate text-sm">{meta}</span>
+        )}
+      </span>
+      {member.archived && (
+        <Badge variant="secondary" className="flex-none">
+          {t("members.archived")}
+        </Badge>
+      )}
+    </Link>
   );
 }
