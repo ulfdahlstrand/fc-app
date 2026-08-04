@@ -182,3 +182,43 @@ export const myMembersHandler = os.myMembers.handler(async ({ context }) => {
   }));
   return { members };
 });
+
+/**
+ * Contacts imported from a file (#64) — the people a coach can actually reach.
+ * Unlike `listMemberGuardians` these need no account, which is the whole point:
+ * on import day almost none of them have one.
+ */
+export const listMemberContactsHandler = os.listMemberContacts.handler(
+  async ({ input, context }) => {
+    const user = requireUser(context);
+    const db = getDb();
+    await requireTeamPermission(db, user.id, input.teamId, "members.view");
+
+    const rows = await db
+      .selectFrom("member_contacts")
+      .innerJoin("members", "members.id", "member_contacts.member_id")
+      .select([
+        "member_contacts.id",
+        "member_contacts.name",
+        "member_contacts.relation",
+        "member_contacts.email",
+        "member_contacts.phone",
+        "member_contacts.user_id",
+      ])
+      .where("member_contacts.member_id", "=", input.memberId)
+      .where("members.team_id", "=", input.teamId)
+      .orderBy("member_contacts.sort_order")
+      .execute();
+
+    return {
+      contacts: rows.map((row) => ({
+        id: row.id,
+        name: row.name,
+        relation: row.relation,
+        email: row.email,
+        phone: row.phone,
+        hasAccount: row.user_id !== null,
+      })),
+    };
+  }
+);

@@ -19,6 +19,7 @@ const TURE: ExistingMember = {
   lastName: "Dahlstrand",
   birthDate: "2017-03-14",
   email: "ulf.d.dahlstrand@gmail.com",
+  phone: null,
   externalRef: null,
   personalId: "201703142412",
 };
@@ -29,6 +30,7 @@ const ULF: ExistingMember = {
   lastName: "Dahlstrand",
   birthDate: "1985-08-22",
   email: "ulf.d.dahlstrand@gmail.com",
+  phone: "0700838161",
   externalRef: "4711",
   personalId: "198508223578",
 };

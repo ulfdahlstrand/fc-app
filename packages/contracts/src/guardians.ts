@@ -83,3 +83,31 @@ export const myMembersOutputSchema = z.object({
   members: z.array(linkedMemberSchema),
 });
 
+
+/**
+ * Someone attached to a member who may not have an account — the `Målsman`
+ * columns of an import (#64). A guardian with an account also appears in
+ * `listMemberGuardians`; this list is what the club actually knows about them,
+ * including the phone number a coach rings when a child does not turn up.
+ */
+export const memberContactSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  /** Free text as written ("Mamma", "Pappa"), not the guardian|self enum. */
+  relation: z.string().nullable(),
+  email: z.string().nullable(),
+  phone: z.string().nullable(),
+  /** True once this person has signed in and been linked. */
+  hasAccount: z.boolean(),
+});
+
+export type MemberContact = z.infer<typeof memberContactSchema>;
+
+export const listMemberContactsInputSchema = z.object({
+  teamId: z.string(),
+  memberId: z.string(),
+});
+
+export const listMemberContactsOutputSchema = z.object({
+  contacts: z.array(memberContactSchema),
+});

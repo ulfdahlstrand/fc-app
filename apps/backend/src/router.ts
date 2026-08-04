@@ -48,6 +48,7 @@ import { dashboardHandler } from "./procedures/dashboard.js";
 import {
   addGuardianHandler,
   listClubUsersHandler,
+  listMemberContactsHandler,
   listMemberGuardiansHandler,
   myMembersHandler,
   removeGuardianHandler,
@@ -76,7 +77,10 @@ import {
   setMemberFieldValuesHandler,
   updateMemberFieldHandler,
 } from "./procedures/member-fields.js";
-import { previewMemberImportHandler } from "./procedures/member-import.js";
+import {
+  commitMemberImportHandler,
+  previewMemberImportHandler,
+} from "./procedures/member-import.js";
 import { meHandler } from "./procedures/me.js";
 import {
   createMemberHandler,
@@ -137,6 +141,8 @@ export const router = os.router({
   archiveMemberField: archiveMemberFieldHandler,
   setMemberFieldValues: setMemberFieldValuesHandler,
   previewMemberImport: previewMemberImportHandler,
+  commitMemberImport: commitMemberImportHandler,
+  listMemberContacts: listMemberContactsHandler,
   listMemberGuardians: listMemberGuardiansHandler,
   addGuardian: addGuardianHandler,
   removeGuardian: removeGuardianHandler,

@@ -39,7 +39,10 @@ import {
 } from "@/components/ui/table";
 import { ensureMe } from "../lib/auth";
 import { ensureMyClubs, useHasPermission, useSelectedTeam } from "../lib/clubs";
-import { usePreviewMemberImport } from "../lib/member-import";
+import {
+  useCommitMemberImport,
+  usePreviewMemberImport,
+} from "../lib/member-import";
 import {
   parseSheet,
   toImportRows,
@@ -129,6 +132,7 @@ function ImportWizard({
   const [excludedGroups, setExcludedGroups] = useState<string[]>([]);
   const [readError, setReadError] = useState<string | null>(null);
   const preview = usePreviewMemberImport(teamId);
+  const commit = useCommitMemberImport(teamId);
 
   /** Distinct `Gruppkoppling` values, so a coach can leave staff rows out. */
   const groupValues = useMemo(() => {
@@ -162,6 +166,7 @@ function ImportWizard({
       setSheet(parsed);
       setPlans(parsed.plans);
       setExcludedGroups([]);
+      commit.reset();
     } catch {
       // Almost always a legacy .xls, which this reader cannot open.
       setReadError(t("import.readError"));
@@ -176,6 +181,7 @@ function ImportWizard({
       )
     );
     preview.reset();
+    commit.reset();
   }
 
   return (
@@ -233,6 +239,7 @@ function ImportWizard({
                 : [...current, value]
             );
             preview.reset();
+            commit.reset();
           }}
           onChange={setPlan}
         />
@@ -263,7 +270,57 @@ function ImportWizard({
         </Alert>
       )}
 
-      {preview.data && <PreviewResult data={preview.data} />}
+      {preview.data && !commit.data && (
+        <>
+          <PreviewResult data={preview.data} dryRun />
+          <Card>
+            <CardContent className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="font-display text-xl">{t("import.step4")}</h2>
+                <p className="text-sm text-muted-foreground">
+                  {t("import.commitHint", {
+                    created: preview.data.summary.created,
+                    updated: preview.data.summary.updated,
+                  })}
+                  {preview.data.summary.errors > 0 &&
+                    ` ${t("import.commitSkipped", {
+                      count: preview.data.summary.errors,
+                    })}`}
+                </p>
+              </div>
+              <Button
+                disabled={
+                  commit.isPending ||
+                  preview.data.summary.created + preview.data.summary.updated === 0
+                }
+                onClick={() => commit.mutate(rows)}
+              >
+                {commit.isPending ? t("common.loading") : t("import.runCommit")}
+              </Button>
+            </CardContent>
+          </Card>
+        </>
+      )}
+
+      {commit.isError && (
+        <Alert variant="destructive">
+          <AlertDescription>{t("import.commitError")}</AlertDescription>
+        </Alert>
+      )}
+
+      {commit.data && (
+        <>
+          <Alert>
+            <AlertDescription className="flex flex-wrap items-center gap-3">
+              <span>{t("import.done")}</span>
+              <Button size="sm" variant="outline" asChild>
+                <Link to="/members">{t("import.toRoster")}</Link>
+              </Button>
+            </AlertDescription>
+          </Alert>
+          <PreviewResult data={commit.data} dryRun={false} />
+        </>
+      )}
     </div>
   );
 }
@@ -423,7 +480,9 @@ const OUTCOME_VARIANT: Record<
 
 function PreviewResult({
   data,
+  dryRun,
 }: {
+  dryRun: boolean;
   data: {
     rows: ImportRowResult[];
     summary: {
@@ -454,14 +513,14 @@ function PreviewResult({
           <AlertDescription className="flex flex-col gap-1">
             {data.newGroups.length > 0 && (
               <span>
-                {t("import.willCreateGroups", {
+                {t(dryRun ? "import.willCreateGroups" : "import.createdGroups", {
                   names: data.newGroups.join(", "),
                 })}
               </span>
             )}
             {data.newCustomFields.length > 0 && (
               <span>
-                {t("import.willCreateFields", {
+                {t(dryRun ? "import.willCreateFields" : "import.createdFields", {
                   names: data.newCustomFields.join(", "),
                 })}
               </span>
@@ -470,9 +529,11 @@ function PreviewResult({
         </Alert>
       )}
 
-      <Alert>
-        <AlertDescription>{t("import.dryRun")}</AlertDescription>
-      </Alert>
+      {dryRun && (
+        <Alert>
+          <AlertDescription>{t("import.dryRun")}</AlertDescription>
+        </Alert>
+      )}
 
       <div className="overflow-x-auto">
         <Table>
