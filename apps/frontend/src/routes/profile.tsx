@@ -8,6 +8,10 @@ import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  ComingOfAgeNoticeForGuardian,
+  relationLabelKey,
+} from "../components/ComingOfAgeNotice";
 import i18n, { supportedLanguages } from "../i18n/i18n";
 import { ensureMe, logout, meQueryOptions } from "../lib/auth";
 import { selectTeam } from "../lib/clubs";
@@ -115,30 +119,37 @@ function MyMembers() {
       <CardContent className="flex flex-col gap-3">
         <h2 className="font-display text-xl">{t("profile.myMembers")}</h2>
         {members.map((member) => (
-          <button
-            key={member.memberId}
-            type="button"
-            className="flex items-center justify-between gap-2 rounded-lg bg-card p-3 text-left transition-colors hover:bg-accent"
-            onClick={() => {
-              selectTeam(member.teamId);
-              void navigate({
-                to: "/members/$memberId",
-                params: { memberId: member.memberId },
-              });
-            }}
-          >
-            <div>
-              <p className="font-medium">
-                {member.firstName} {member.lastName}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {member.clubName} — {member.teamName}
-              </p>
-            </div>
-            <Badge variant="secondary">
-              {t(`guardians.relation.${member.relation}`)}
-            </Badge>
-          </button>
+          <div key={member.memberId} className="flex flex-col gap-2">
+            <button
+              type="button"
+              className="flex items-center justify-between gap-2 rounded-lg bg-card p-3 text-left transition-colors hover:bg-accent"
+              onClick={() => {
+                selectTeam(member.teamId);
+                void navigate({
+                  to: "/members/$memberId",
+                  params: { memberId: member.memberId },
+                });
+              }}
+            >
+              <div>
+                <p className="font-medium">
+                  {member.firstName} {member.lastName}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {member.clubName} — {member.teamName}
+                </p>
+              </div>
+              <Badge variant="secondary">
+                {t(relationLabelKey(member.relation, member.birthDate))}
+              </Badge>
+            </button>
+            {/* Below the member it is about, or it reads as belonging to the
+                card above. */}
+            <ComingOfAgeNoticeForGuardian
+              name={`${member.firstName} ${member.lastName}`}
+              birthDate={member.birthDate}
+            />
+          </div>
         ))}
       </CardContent>
     </Card>

@@ -127,7 +127,9 @@
         "custom": "Enter a valid personnummer.",
         "too_big": "That is too long to be a personnummer."
       }
-    }
+    },
+    "turningEighteen": "Turns 18 on {{date}}.",
+    "addressIsGuardians": "This e-mail address is also a guardian's."
   },
   "fieldType": {
     "text": "Text",
@@ -550,7 +552,8 @@
     "linkError": "Could not link the account. Please try again.",
     "relation": {
       "guardian": "Guardian",
-      "self": "Self"
+      "self": "Self",
+      "family": "Parent"
     },
     "contactsHeading": "From the import",
     "noAccount": "No account",
@@ -558,7 +561,8 @@
     "pendingInvites_other": "{{count}} imported guardians have no account.",
     "inviteAll": "Invite them all",
     "invitesSent_one": "{{count}} invitation created.",
-    "invitesSent_other": "{{count}} invitations created."
+    "invitesSent_other": "{{count}} invitations created.",
+    "turningEighteen": "{{name}} turns 18 on {{date}}. After that the player handles call-ups and contact themselves. Your link stays — it is the legal guardianship that ends, not the family tie."
   },
   "profile": {
     "language": "Language",

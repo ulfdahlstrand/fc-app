@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { ComingOfAgeNoticeForTeam } from "../components/ComingOfAgeNotice";
 import { GuardiansSection } from "../components/GuardiansSection";
 import { formatFieldValue } from "../components/memberFieldDisplay";
 import { MemberAttendanceSection } from "../components/MemberAttendanceSection";
@@ -22,6 +23,7 @@ import { MemberFormDialog } from "../components/MemberFormDialog";
 import { MemberTrackingSection } from "../components/MemberTrackingSection";
 import { ensureMe } from "../lib/auth";
 import { ensureMyClubs, useHasPermission, useSelectedTeam } from "../lib/clubs";
+import { useMemberContacts } from "../lib/guardians";
 import { useMemberGroups } from "../lib/groups";
 import { useMemberFields, useSetMemberFieldValues } from "../lib/member-fields";
 import { useMember, useSetMemberArchived, useUpdateMember } from "../lib/members";
@@ -72,6 +74,7 @@ function MemberDetail({
   const member = useMember(teamId, memberId);
   const fields = useMemberFields(teamId);
   const memberGroups = useMemberGroups(teamId, memberId);
+  const contacts = useMemberContacts(teamId, memberId);
   const updateMember = useUpdateMember(teamId);
   const setArchived = useSetMemberArchived(teamId);
   const setFieldValues = useSetMemberFieldValues(teamId);
@@ -91,6 +94,15 @@ function MemberDetail({
 
   const m = member.data.member;
   const activeFields = fields.data?.fields ?? [];
+
+  // Derived, never stored: it self-corrects the moment either address changes.
+  const sharedAddress =
+    m.email !== null &&
+    (contacts.data?.contacts ?? []).some(
+      (contact) =>
+        contact.email !== null &&
+        contact.email.trim().toLowerCase() === m.email?.trim().toLowerCase()
+    );
 
   return (
     <div className="flex flex-col gap-6">
@@ -126,6 +138,11 @@ function MemberDetail({
           </div>
         )}
       </div>
+
+      <ComingOfAgeNoticeForTeam
+        birthDate={m.birthDate}
+        sharedAddress={sharedAddress}
+      />
 
       <Card>
         <CardContent className="flex flex-col gap-4">
@@ -182,7 +199,11 @@ function MemberDetail({
         </div>
       )}
 
-      <GuardiansSection teamId={teamId} memberId={m.id} />
+      <GuardiansSection
+        teamId={teamId}
+        memberId={m.id}
+        birthDate={m.birthDate}
+      />
 
       <MemberTrackingSection teamId={teamId} memberId={m.id} />
 

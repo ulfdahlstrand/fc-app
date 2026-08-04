@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { relationLabelKey } from "./ComingOfAgeNotice";
 import { useHasPermission } from "../lib/clubs";
 import {
   useAddGuardian,
@@ -33,9 +34,12 @@ import {
 export function GuardiansSection({
   teamId,
   memberId,
+  birthDate,
 }: {
   teamId: string;
   memberId: string;
+  /** Decides whether a linked parent is still described as a guardian (#66). */
+  birthDate: string | null;
 }) {
   const { t } = useTranslation();
   const canManage = useHasPermission("members.manage");
@@ -74,7 +78,7 @@ export function GuardiansSection({
                 <div className="flex items-center gap-2">
                   <p className="font-medium">{guardian.name}</p>
                   <Badge variant="secondary">
-                    {t(`guardians.relation.${guardian.relation}`)}
+                    {t(relationLabelKey(guardian.relation, birthDate))}
                   </Badge>
                 </div>
                 <p className="text-sm text-muted-foreground">{guardian.email}</p>
