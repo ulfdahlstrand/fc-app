@@ -112,6 +112,15 @@ describe("decideResponder", () => {
   it("does not brand a coach answering for their own child", () => {
     // Coaching the team your child plays in is the grassroots default. That
     // answer is the guardian's own, and must not be labelled as the coach's.
+    //
+    // The combination matters: the seeded coach role holds `callups.manage`
+    // and NOT `callups.respond`. This case was written with canRespond true,
+    // which no coach has, so it passed while the real one failed (#74).
+    expect(
+      decideResponder({ isLinked: true, canManage: true, canRespond: false })
+    ).toEqual({ allowed: true, onBehalf: false });
+
+    // An admin holds both, and is just as much a parent.
     expect(
       decideResponder({ isLinked: true, canManage: true, canRespond: true })
     ).toEqual({ allowed: true, onBehalf: false });

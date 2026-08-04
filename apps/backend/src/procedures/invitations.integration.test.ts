@@ -21,6 +21,7 @@ import {
   createTestMember,
   createTestUser,
   type TestClub,
+  type TestUser,
 } from "../test/fixtures.js";
 import { closeTestDb, testDb, truncateAll } from "../test/database.js";
 import { requireTeamAccess } from "../tenancy/membership.js";
@@ -28,11 +29,13 @@ import { acceptInvitationHandler } from "./invitations.js";
 
 let db: Kysely<Database>;
 let club: TestClub;
+let admin: TestUser;
 
 beforeEach(async () => {
   db = await testDb();
   await truncateAll();
   club = await createTestClub(db);
+  admin = await createTestUser(db, club, { systemKey: "admin" });
 });
 
 afterAll(async () => {
@@ -95,15 +98,11 @@ describe("acceptInvitation, member-bound", () => {
     expect(guardians[0]?.relation).toBe("guardian");
   });
 
-  // Skipped, not deleted: this is issue #74, a real bug with no one-line fix.
-  // The permission model gives one role per user per team, so a coach whose own
-  // child plays in the team they coach cannot be both. Written down here so it
-  // turns green the day it is fixed rather than being rediscovered.
-  it.skip("does not cost a coach their permissions in the team they coach", async () => {
-    // A coach accepting a guardian invitation for their own child gets a
-    // team-scoped guardian membership alongside their club-wide coach one.
-    // requireTeamAccess prefers the team-scoped row, so the question is not
-    // how many rows exist but what the coach can still do.
+  it("does not cost a coach their permissions in the team they coach", async () => {
+    // Issue #74. A club-wide membership is a role everywhere in the club, so
+    // an invitation must not carve out a team-scoped exception beside it —
+    // requireTeamAccess prefers the narrower row, and the coach stopped being
+    // a coach in the team their own child plays in.
     const coach = await createTestUser(db, club, { systemKey: "coach" });
     const memberId = await createTestMember(db, club.teamId);
     const token = await createGuardianInvitation({
@@ -117,6 +116,47 @@ describe("acceptInvitation, member-bound", () => {
 
     const access = await requireTeamAccess(db, coach.userId, club.teamId);
     expect(access.membership.permissions).toContain("members.manage");
+  });
+
+  it("gives a guardian with no club membership one", async () => {
+    // The other half of #74: skipping the insert must not leave a new parent
+    // with no way in. They have nothing, so the invitation is what grants it.
+    const db2 = db;
+    const outsider = await db2
+      .insertInto("users")
+      .values({
+        email: "new.parent@example.test",
+        name: "Ny Förälder",
+        image_url: null,
+      })
+      .returning("id")
+      .executeTakeFirstOrThrow();
+
+    const memberId = await createTestMember(db, club.teamId);
+    const token = await createGuardianInvitation({
+      memberId,
+      email: "new.parent@example.test",
+      relation: "guardian",
+      createdBy: admin.userId,
+    });
+
+    await call(
+      acceptInvitationHandler,
+      { token },
+      {
+        context: {
+          user: {
+            id: outsider.id,
+            email: "new.parent@example.test",
+            name: "Ny Förälder",
+            imageUrl: null,
+          },
+        },
+      }
+    );
+
+    const access = await requireTeamAccess(db, outsider.id, club.teamId);
+    expect(access.membership.permissions).toContain("callups.respond");
   });
 
   it("claims the imported contact that shares the accepting address", async () => {
