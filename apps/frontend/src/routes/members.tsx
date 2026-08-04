@@ -76,6 +76,9 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
   const navigate = useNavigate();
   const canManage = useHasPermission("members.manage");
   const canImport = useHasPermission("members.import");
+  // Inviting anyone into the club is an admin's call, however narrow the
+  // invitation is.
+  const canInvite = useHasPermission("settings.club");
   const [search, setSearch] = useState("");
   const [includeArchived, setIncludeArchived] = useState(false);
   const [groupId, setGroupId] = useState("");
@@ -89,7 +92,7 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
   const fields = useMemberFields(teamId);
   const groups = useGroups(teamId);
   const createMember = useCreateMember(teamId);
-  const pendingInvites = usePendingContactInvites(teamId);
+  const pendingInvites = usePendingContactInvites(teamId, canInvite);
   const inviteContacts = useInviteMemberContacts(teamId);
   const customColumns = fields.data?.fields ?? [];
 
@@ -108,7 +111,7 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
       </div>
 
       {/* Only worth a line when there is actually someone out of reach. */}
-      {canManage && (pendingInvites.data?.invitable ?? 0) > 0 && (
+      {canInvite && (pendingInvites.data?.invitable ?? 0) > 0 && (
         <Alert>
           <AlertDescription className="flex flex-wrap items-center justify-between gap-3">
             <span>

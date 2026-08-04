@@ -5,12 +5,13 @@
  * cannot reach through the app. This is what closes that gap, in one action
  * for a whole roster rather than one dialog per family.
  *
- * **Why `members.manage` and not `settings.club`.** `createInvitation` lets a
- * caller hand out any role in the club, so it is rightly an admin action. This
- * cannot: the role is always the club's seeded guardian role, the invitation is
- * always bound to one member of one team, and the address always comes from a
- * contact already stored against that member. A coach inviting the parents of
- * their own players is inside a coach's remit; handing out club roles is not.
+ * **Inviting is `settings.club`, and only that.** This shipped briefly behind
+ * `members.manage` on the argument that it is narrower than `createInvitation`
+ * — always the guardian role, always bound to one member. The club's answer was
+ * that bringing someone into the club is an admin's decision regardless of how
+ * narrow the invitation is, so it now uses the same gate as every other
+ * invitation. Narrower authority over *what* is granted does not make it a
+ * different kind of act.
  */
 import { randomBytes } from "node:crypto";
 import { ORPCError } from "@orpc/server";
@@ -18,7 +19,10 @@ import type { Kysely } from "kysely";
 import { getDb } from "../db/client.js";
 import type { Database } from "../db/types.js";
 import { os, requireUser } from "../orpc.js";
-import { requireTeamPermission } from "../tenancy/membership.js";
+import {
+  requireClubPermission,
+  requireTeamAccess,
+} from "../tenancy/membership.js";
 
 const EXPIRY_DAYS = 30;
 
@@ -116,7 +120,10 @@ export const pendingContactInvitesHandler = os.pendingContactInvites.handler(
   async ({ input, context }) => {
     const user = requireUser(context);
     const db = getDb();
-    await requireTeamPermission(db, user.id, input.teamId, "members.view");
+    // Gated the same as the action it leads to: a count nobody in this seat
+    // can act on is noise on the roster.
+    const { clubId } = await requireTeamAccess(db, user.id, input.teamId);
+    await requireClubPermission(db, user.id, clubId, "settings.club");
 
     const { contacts } = await findInvitable(db, input.teamId, undefined);
     return { invitable: contacts.length };
@@ -127,12 +134,8 @@ export const inviteMemberContactsHandler = os.inviteMemberContacts.handler(
   async ({ input, context }) => {
     const user = requireUser(context);
     const db = getDb();
-    const { clubId } = await requireTeamPermission(
-      db,
-      user.id,
-      input.teamId,
-      "members.manage"
-    );
+    const { clubId } = await requireTeamAccess(db, user.id, input.teamId);
+    await requireClubPermission(db, user.id, clubId, "settings.club");
 
     const guardianRole = await db
       .selectFrom("roles")

@@ -72,9 +72,13 @@ export function pendingContactInvitesQueryOptions(teamId: string) {
   return orpcQuery.pendingContactInvites.queryOptions({ input: { teamId } });
 }
 
-/** How many imported guardians are still out of reach (#65). */
-export function usePendingContactInvites(teamId: string) {
-  return useQuery(pendingContactInvitesQueryOptions(teamId));
+/**
+ * How many imported guardians are still out of reach (#65). Only an admin may
+ * ask: the endpoint is gated on settings.club, so firing this without it would
+ * be a guaranteed 403 on every roster a coach opens.
+ */
+export function usePendingContactInvites(teamId: string, enabled: boolean) {
+  return useQuery({ ...pendingContactInvitesQueryOptions(teamId), enabled });
 }
 
 export function useInviteMemberContacts(teamId: string) {
