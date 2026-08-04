@@ -1,40 +1,10 @@
 /** Migration runner — the only mechanism that touches schema (ADR-006). */
-import { promises as fs } from "node:fs";
-import path from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
-import type { Migration, MigrationProvider } from "kysely";
-import { Migrator } from "kysely";
 import { getDb } from "./client.js";
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-/** Only load files that look like migrations (timestamp prefix, not test files). */
-class MigrationFileProvider implements MigrationProvider {
-  constructor(private readonly folder: string) {}
-
-  async getMigrations(): Promise<Record<string, Migration>> {
-    const files = await fs.readdir(this.folder);
-    const migrations: Record<string, Migration> = {};
-    for (const file of files) {
-      if (file.endsWith(".test.ts") || file.endsWith(".test.js")) continue;
-      if (!file.match(/^\d{14}_/)) continue;
-      const filePath = path.join(this.folder, file);
-      const mod = await import(pathToFileURL(filePath).href);
-      const name = path.basename(file, path.extname(file));
-      migrations[name] = mod as Migration;
-    }
-    return migrations;
-  }
-}
+import { migrateToLatest } from "./migrator.js";
 
 const db = getDb();
 
-const migrator = new Migrator({
-  db,
-  provider: new MigrationFileProvider(path.join(__dirname, "migrations")),
-});
-
-const { error, results } = await migrator.migrateToLatest();
+const { error, results } = await migrateToLatest(db);
 
 if (results) {
   for (const result of results) {

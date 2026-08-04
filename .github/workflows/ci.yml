@@ -8,6 +8,25 @@ on:
 jobs:
   ci:
     runs-on: ubuntu-latest
+
+    # The integration suite runs against this. Without a real Postgres the
+    # harness only protects the machine it was written on, and the bugs it
+    # exists for are exactly the ones a mock cannot see.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: fcapp
+          POSTGRES_PASSWORD: fcapp
+          POSTGRES_DB: fcapp_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@v4
 
@@ -33,3 +52,8 @@ jobs:
 
       - name: Test
         run: npm run test
+
+      - name: Integration test
+        run: npm run test:integration --workspace @fc-app/backend
+        env:
+          TEST_DATABASE_URL: postgres://fcapp:fcapp@localhost:5432/fcapp_test
