@@ -20,6 +20,8 @@ export interface ExistingMember {
   /** `YYYY-MM-DD`, when one is known. */
   birthDate: string | null;
   email: string | null;
+  /** Not matched on — carried so the plan can diff it. */
+  phone: string | null;
   externalRef: string | null;
   /** Twelve digits, or null. Loaded through `personal-id.ts`, never widened. */
   personalId: string | null;

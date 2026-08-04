@@ -551,7 +551,9 @@
     "relation": {
       "guardian": "Guardian",
       "self": "Self"
-    }
+    },
+    "contactsHeading": "From the import",
+    "noAccount": "No account"
   },
   "profile": {
     "language": "Language",
@@ -594,7 +596,6 @@
     "sensitive": "Sensitive",
     "sensitiveWarning": "Health data. Include it only if the team genuinely needs it.",
     "guardianColumn": "Guardian {{index}} – {{field}}",
-    "rowCount": "{{count}} rows to import",
     "runPreview": "Preview",
     "previewError": "The preview failed.",
     "dryRun": "Nothing has changed. This only shows what an import would do.",
@@ -660,6 +661,18 @@
     },
     "fromEmptyRoster": "Import from SportAdmin",
     "open": "Open the import",
-    "settingsBlurb": "Read a whole team in from a SportAdmin export."
+    "settingsBlurb": "Read a whole team in from a SportAdmin export.",
+    "step4": "4. Commit",
+    "commitHint": "{{created}} will be created, {{updated}} updated.",
+    "runCommit": "Import",
+    "commitError": "The import failed. Nothing was changed.",
+    "done": "The import is done.",
+    "toRoster": "To the roster",
+    "createdGroups": "New groups created: {{names}}",
+    "createdFields": "New custom fields created: {{names}}",
+    "rowCount_one": "{{count}} row to import",
+    "rowCount_other": "{{count}} rows to import",
+    "commitSkipped_one": "{{count}} row is skipped.",
+    "commitSkipped_other": "{{count}} rows are skipped."
   }
 }

@@ -157,3 +157,11 @@ export function normaliseForMatch(value: string): string {
 export function normaliseName(first: string, last: string): string {
   return `${normaliseForMatch(first)} ${normaliseForMatch(last)}`;
 }
+
+/**
+ * Committing takes exactly what the preview took, and answers in the same
+ * shape. They are aliases on purpose: a commit that accepted anything the
+ * preview had not seen could not honour what the preview showed.
+ */
+export const commitMemberImportInputSchema = previewMemberImportInputSchema;
+export const commitMemberImportOutputSchema = previewMemberImportOutputSchema;

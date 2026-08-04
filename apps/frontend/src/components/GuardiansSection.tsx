@@ -25,6 +25,7 @@ import { useHasPermission } from "../lib/clubs";
 import {
   useAddGuardian,
   useClubUsers,
+  useMemberContacts,
   useMemberGuardians,
   useRemoveGuardian,
 } from "../lib/guardians";
@@ -39,6 +40,7 @@ export function GuardiansSection({
   const { t } = useTranslation();
   const canManage = useHasPermission("members.manage");
   const guardians = useMemberGuardians(teamId, memberId);
+  const contacts = useMemberContacts(teamId, memberId);
   const removeGuardian = useRemoveGuardian(teamId, memberId);
   const [linking, setLinking] = useState(false);
 
@@ -90,6 +92,40 @@ export function GuardiansSection({
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {(contacts.data?.contacts.length ?? 0) > 0 && (
+        <div className="mt-4">
+          <h3 className="mb-2 text-sm text-muted-foreground">
+            {t("guardians.contactsHeading")}
+          </h3>
+          <div className="flex flex-col gap-2">
+            {contacts.data?.contacts.map((contact) => (
+              <div
+                key={contact.id}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-card p-3"
+              >
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium">{contact.name}</p>
+                    {contact.relation && (
+                      <Badge variant="secondary">{contact.relation}</Badge>
+                    )}
+                    {!contact.hasAccount && (
+                      <Badge variant="outline">
+                        {t("guardians.noAccount")}
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {[contact.email, contact.phone].filter(Boolean).join(" · ") ||
+                      "—"}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

@@ -8,11 +8,12 @@ import { getCallupInputSchema, getCallupOutputSchema, listCallupsInputSchema, li
 import { createClubInputSchema, createClubOutputSchema, myClubsInputSchema, myClubsOutputSchema } from "./clubs.js";
 import { dashboardInputSchema, dashboardOutputSchema } from "./dashboard.js";
 import { archiveActivityTypeInputSchema, archiveActivityTypeOutputSchema, createActivityTypeInputSchema, createActivityTypeOutputSchema, createGroupInputSchema, createGroupOutputSchema, deleteGroupInputSchema, deleteGroupOutputSchema, listActivityTypesInputSchema, listActivityTypesOutputSchema, listGroupMembersInputSchema, listGroupMembersOutputSchema, listGroupsInputSchema, listGroupsOutputSchema, listMemberGroupsInputSchema, listMemberGroupsOutputSchema, renameGroupInputSchema, renameGroupOutputSchema, setGroupMembersInputSchema, setGroupMembersOutputSchema, updateActivityTypeInputSchema, updateActivityTypeOutputSchema } from "./groups.js";
+import { listMemberContactsInputSchema, listMemberContactsOutputSchema } from "./guardians.js";
 import { addGuardianInputSchema, addGuardianOutputSchema, listClubUsersInputSchema, listClubUsersOutputSchema, listMemberGuardiansInputSchema, listMemberGuardiansOutputSchema, myMembersInputSchema, myMembersOutputSchema, removeGuardianInputSchema, removeGuardianOutputSchema } from "./guardians.js";
 import { healthInputSchema, healthOutputSchema } from "./health.js";
 import { acceptInvitationInputSchema, acceptInvitationOutputSchema, createInvitationInputSchema, createInvitationOutputSchema, getInvitationInputSchema, getInvitationOutputSchema, listInvitationsInputSchema, listInvitationsOutputSchema, revokeInvitationInputSchema, revokeInvitationOutputSchema } from "./invitations.js";
 import { archiveMemberFieldInputSchema, archiveMemberFieldOutputSchema, createMemberFieldInputSchema, createMemberFieldOutputSchema, createMemberInputSchema, createMemberOutputSchema, getMemberInputSchema, getMemberOutputSchema, listMemberFieldsInputSchema, listMemberFieldsOutputSchema, listMembersInputSchema, listMembersOutputSchema, setMemberArchivedInputSchema, setMemberArchivedOutputSchema, setMemberFieldValuesInputSchema, setMemberFieldValuesOutputSchema, updateMemberFieldInputSchema, updateMemberFieldOutputSchema, updateMemberInputSchema, updateMemberOutputSchema } from "./members.js";
-import { previewMemberImportInputSchema, previewMemberImportOutputSchema } from "./member-import.js";
+import { commitMemberImportInputSchema, commitMemberImportOutputSchema, previewMemberImportInputSchema, previewMemberImportOutputSchema } from "./member-import.js";
 import { createPostInputSchema, createPostOutputSchema, deletePostInputSchema, deletePostOutputSchema, getPostInputSchema, getPostOutputSchema, listPostsInputSchema, listPostsOutputSchema, setPostPublishedInputSchema, setPostPublishedOutputSchema, updatePostInputSchema, updatePostOutputSchema } from "./posts.js";
 import { createRoleInputSchema, createRoleOutputSchema, deleteRoleInputSchema, deleteRoleOutputSchema, listRolesInputSchema, listRolesOutputSchema, updateRoleInputSchema, updateRoleOutputSchema } from "./roles.js";
 import { createSeasonInputSchema, createSeasonOutputSchema, deleteSeasonInputSchema, deleteSeasonOutputSchema, listSeasonsInputSchema, listSeasonsOutputSchema, updateSeasonInputSchema, updateSeasonOutputSchema } from "./seasons.js";
@@ -119,6 +120,14 @@ export const contract = oc.router({
     .route({ method: "POST", path: "/members/import/preview" })
     .input(previewMemberImportInputSchema)
     .output(previewMemberImportOutputSchema),
+  commitMemberImport: oc
+    .route({ method: "POST", path: "/members/import/commit" })
+    .input(commitMemberImportInputSchema)
+    .output(commitMemberImportOutputSchema),
+  listMemberContacts: oc
+    .route({ method: "GET", path: "/members/contacts" })
+    .input(listMemberContactsInputSchema)
+    .output(listMemberContactsOutputSchema),
   listMemberGuardians: oc
     .route({ method: "GET", path: "/members/guardians" })
     .input(listMemberGuardiansInputSchema)

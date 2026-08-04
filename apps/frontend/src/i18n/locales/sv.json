@@ -551,7 +551,9 @@
     "relation": {
       "guardian": "Målsman",
       "self": "Egen"
-    }
+    },
+    "contactsHeading": "Från importen",
+    "noAccount": "Inget konto"
   },
   "profile": {
     "language": "Språk",
@@ -594,7 +596,6 @@
     "sensitive": "Känslig",
     "sensitiveWarning": "Hälsouppgifter. Ta bara med om laget verkligen behöver dem.",
     "guardianColumn": "Målsman {{index}} – {{field}}",
-    "rowCount": "{{count}} rader att importera",
     "runPreview": "Förhandsgranska",
     "previewError": "Förhandsgranskningen misslyckades.",
     "dryRun": "Inget har ändrats. Det här visar bara vad en import skulle göra.",
@@ -660,6 +661,18 @@
     },
     "fromEmptyRoster": "Importera från SportAdmin",
     "open": "Öppna importen",
-    "settingsBlurb": "Läs in ett helt lag från en SportAdmin-export."
+    "settingsBlurb": "Läs in ett helt lag från en SportAdmin-export.",
+    "step4": "4. Genomför",
+    "commitHint": "{{created}} skapas, {{updated}} uppdateras.",
+    "runCommit": "Importera",
+    "commitError": "Importen misslyckades. Inget har ändrats.",
+    "done": "Importen är klar.",
+    "toRoster": "Till medlemslistan",
+    "createdGroups": "Nya grupper skapades: {{names}}",
+    "createdFields": "Nya egna fält skapades: {{names}}",
+    "rowCount_one": "{{count}} rad att importera",
+    "rowCount_other": "{{count}} rader att importera",
+    "commitSkipped_one": "{{count}} rad hoppas över.",
+    "commitSkipped_other": "{{count}} rader hoppas över."
   }
 }

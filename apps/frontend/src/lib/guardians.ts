@@ -15,6 +15,17 @@ export function useMemberGuardians(teamId: string, memberId: string) {
   return useQuery(memberGuardiansQueryOptions(teamId, memberId));
 }
 
+export function memberContactsQueryOptions(teamId: string, memberId: string) {
+  return orpcQuery.listMemberContacts.queryOptions({
+    input: { teamId, memberId },
+  });
+}
+
+/** Imported guardians (#64) — these need no account, unlike the links above. */
+export function useMemberContacts(teamId: string, memberId: string) {
+  return useQuery(memberContactsQueryOptions(teamId, memberId));
+}
+
 export function clubUsersQueryOptions(teamId: string) {
   return orpcQuery.listClubUsers.queryOptions({ input: { teamId } });
 }
