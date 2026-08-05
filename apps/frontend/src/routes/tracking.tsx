@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { ensureMe } from "../lib/auth";
+import { useIsPhone } from "../lib/breakpoint";
 import { ensureMyClubs, useHasPermission, useSelectedTeam } from "../lib/clubs";
 import { useGroups } from "../lib/groups";
 import {
@@ -64,10 +65,14 @@ function TrackingPage() {
 function Tracking({ teamId }: { teamId: string }) {
   const { t } = useTranslation();
   const canManage = useHasPermission("tracking.manage");
+  const isPhone = useIsPhone();
   const [groupId, setGroupId] = useState(ALL);
 
   const groups = useGroups(teamId);
-  const matrix = useTrackingMatrix(teamId, groupId === ALL ? undefined : groupId);
+  const matrix = useTrackingMatrix(
+    teamId,
+    groupId === ALL ? undefined : groupId,
+  );
 
   const definitions = matrix.data?.definitions ?? [];
   const members = matrix.data?.members ?? [];
@@ -90,7 +95,10 @@ function Tracking({ teamId }: { teamId: string }) {
         </div>
         {(groups.data?.groups.length ?? 0) > 0 && (
           <Select value={groupId} onValueChange={setGroupId}>
-            <SelectTrigger className="w-52" aria-label={t("groups.filterLabel")}>
+            <SelectTrigger
+              className="w-full kit:w-52"
+              aria-label={t("groups.filterLabel")}
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -117,6 +125,7 @@ function Tracking({ teamId }: { teamId: string }) {
         <p className="text-muted-foreground">{t("tracking.noMembers")}</p>
       ) : (
         <Matrix
+          compact={isPhone}
           teamId={teamId}
           definitions={definitions}
           members={members}
@@ -134,7 +143,7 @@ function NoDefinitions() {
   const canConfigure = useHasPermission("settings.team");
 
   return (
-    <div className="bg-card flex flex-col gap-2 rounded-xl px-6 py-8">
+    <div className="bg-card flex flex-col gap-2 rounded-xl px-5 py-[18px] kit:px-6 kit:py-8">
       <p className="font-display text-2xl">{t("tracking.noLists")}</p>
       <p className="text-muted-foreground">{t("tracking.noListsHint")}</p>
       {canConfigure && (
@@ -151,6 +160,7 @@ function NoDefinitions() {
 
 /** The matrix itself. */
 function Matrix({
+  compact,
   teamId,
   definitions,
   members,
@@ -158,6 +168,8 @@ function Matrix({
   byCell,
   canManage,
 }: {
+  /** Phone shape: a card per list instead of one wide members × lists grid. */
+  compact: boolean;
   teamId: string;
   definitions: TrackingDefinition[];
   members: { memberId: string; firstName: string; lastName: string }[];
@@ -167,6 +179,86 @@ function Matrix({
 }) {
   const { t } = useTranslation();
   const setEntry = useSetTrackingEntry(teamId);
+
+  /**
+   * A members × lists grid does not survive 390px: the sticky name column plus
+   * one 132px list column already fills the screen, so every further list is
+   * behind a horizontal scroll a thumb has to discover.
+   *
+   * The phone turns it on its side instead — a card per list, members inside.
+   * That is also the way in: the dashboard's "Still outstanding" links here
+   * from one list, and this is the shape that answers it.
+   */
+  if (compact) {
+    return (
+      <div className="flex flex-col gap-[14px]">
+        {definitions.map((definition) => {
+          const progress = definitionProgress(definition, memberIds, byCell);
+          return (
+            <div
+              key={definition.id}
+              className="bg-card flex flex-col gap-1 rounded-xl px-4 py-[18px]"
+            >
+              <div className="flex items-baseline justify-between gap-3 px-1">
+                <span className="font-semibold">{definition.name}</span>
+                <span className="text-muted-foreground text-xs font-semibold tabular-nums">
+                  {progress === null
+                    ? t(`trackingType.${definition.valueType}`)
+                    : `${progress.done}/${progress.total}`}
+                </span>
+              </div>
+              {members.map((member) => (
+                <div
+                  key={member.memberId}
+                  className="flex min-h-tap-row items-center justify-between gap-3 px-1"
+                >
+                  <Link
+                    to="/members/$memberId"
+                    params={{ memberId: member.memberId }}
+                    // Stretching to the row means the whole 54px is the
+                    // target, with no negative margins to reason about.
+                    className="flex min-w-0 flex-1 items-center self-stretch truncate text-sm font-semibold hover:underline"
+                  >
+                    {member.firstName} {member.lastName}
+                  </Link>
+                  <span className="flex-none">
+                    <Cell
+                      definition={definition}
+                      memberId={member.memberId}
+                      entry={byCell.get(
+                        cellKey(definition.id, member.memberId),
+                      )}
+                      canManage={canManage}
+                      pending={
+                        setEntry.isPending &&
+                        setEntry.variables?.definitionId === definition.id &&
+                        setEntry.variables?.memberId === member.memberId
+                      }
+                      onSet={(value) =>
+                        setEntry.mutate({
+                          definitionId: definition.id,
+                          memberId: member.memberId,
+                          value,
+                        })
+                      }
+                    />
+                  </span>
+                </div>
+              ))}
+            </div>
+          );
+        })}
+
+        {setEntry.isError && (
+          <Alert variant="destructive">
+            <AlertDescription>
+              {setEntry.error.message ?? t("tracking.saveError")}
+            </AlertDescription>
+          </Alert>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-3">
@@ -236,7 +328,9 @@ function Matrix({
                     <Cell
                       definition={definition}
                       memberId={member.memberId}
-                      entry={byCell.get(cellKey(definition.id, member.memberId))}
+                      entry={byCell.get(
+                        cellKey(definition.id, member.memberId),
+                      )}
                       canManage={canManage}
                       pending={
                         setEntry.isPending &&
@@ -367,7 +461,10 @@ function DoneCell({
       // Clearing sends null, which deletes the entry: unticking puts the cell
       // back to "nobody has said yet".
       onClick={() => onSet(done ? null : "true")}
-      className="rounded-full active:scale-[0.97] disabled:opacity-40"
+      // The disc itself is 32px, which is under Kit's 44px floor. It gains the
+      // difference as invisible slop — padding plus a matching negative
+      // margin — so the target grows without the disc or the row doing so.
+      className="-m-1.5 rounded-full p-1.5 active:scale-[0.97] disabled:opacity-40 kit:m-0 kit:p-0"
     >
       {face}
     </button>
@@ -424,14 +521,18 @@ function ValueCell({
       maxLength={definition.valueType === "text" ? 500 : undefined}
       aria-label={definition.name}
       placeholder={
-        definition.valueType === "text" ? t("tracking.notePlaceholder") : undefined
+        definition.valueType === "text"
+          ? t("tracking.notePlaceholder")
+          : undefined
       }
       onChange={(event) => setDraft(event.target.value)}
       onBlur={commit}
       onKeyDown={(event) => {
         if (event.key === "Enter") event.currentTarget.blur();
       }}
-      className="h-9 w-full min-w-[120px]"
+      // The base Input is already at Kit's 44px floor; this cell only shrinks
+      // it back to the desktop's denser row height above the breakpoint.
+      className="w-full min-w-[120px] kit:h-9"
     />
   );
 }

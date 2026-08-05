@@ -165,12 +165,12 @@ function Statistics({
           ))}
       </div>
 
-      <div className="bg-card flex flex-wrap items-end gap-4 rounded-xl px-6 py-5">
+      <div className="bg-card grid grid-cols-2 items-end gap-4 rounded-xl px-5 py-[18px] kit:flex kit:flex-wrap kit:px-6 kit:py-5">
         {(seasons.data?.seasons.length ?? 0) > 0 && (
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="season-filter">{t("seasons.filter")}</Label>
             <Select value={seasonId} onValueChange={setSeasonId}>
-              <SelectTrigger id="season-filter" className="w-48">
+              <SelectTrigger id="season-filter" className="w-full kit:w-48">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -190,7 +190,7 @@ function Statistics({
           <Input
             id="from-filter"
             type="date"
-            className="w-44"
+            className="w-full kit:w-44"
             value={from}
             onChange={(event) => setFrom(event.target.value)}
           />
@@ -200,7 +200,7 @@ function Statistics({
           <Input
             id="to-filter"
             type="date"
-            className="w-44"
+            className="w-full kit:w-44"
             value={to}
             onChange={(event) => setTo(event.target.value)}
           />
@@ -210,7 +210,7 @@ function Statistics({
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="group-filter">{t("groups.filterLabel")}</Label>
             <Select value={groupId} onValueChange={setGroupId}>
-              <SelectTrigger id="group-filter" className="w-48">
+              <SelectTrigger id="group-filter" className="w-full kit:w-48">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -234,7 +234,7 @@ function Statistics({
         </Alert>
       ) : (
         <>
-          <div className="grid gap-[14px] sm:grid-cols-3">
+          <div className="grid grid-cols-2 gap-[14px] kit:grid-cols-3 [&>*:nth-child(3)]:col-span-2 kit:[&>*:nth-child(3)]:col-span-1">
             <StatCard
               label={t("statistics.teamRate")}
               value={
@@ -330,7 +330,7 @@ function MemberRow({ member }: { member: MemberAttendanceStats }) {
           params: { memberId: member.memberId },
         })
       }
-      className="bg-card hover:bg-secondary flex items-center gap-4 rounded-md px-4 py-3 text-left transition-colors duration-[120ms] ease-standard"
+      className="bg-card hover:bg-secondary flex min-h-tap-row items-center gap-3 rounded-lg px-4 py-3 text-left transition-colors duration-[120ms] ease-standard kit:gap-4 kit:rounded-md"
     >
       <span
         aria-hidden
@@ -338,18 +338,23 @@ function MemberRow({ member }: { member: MemberAttendanceStats }) {
       >
         {initials}
       </span>
-      <span className="min-w-0 flex-1 truncate font-semibold">
-        {member.firstName} {member.lastName}
-      </span>
-      <AttendanceMeter member={member} />
-      <span className="w-20 shrink-0 text-right text-sm font-semibold tabular-nums">
-        {member.rate === null ? (
-          <span className="text-muted-foreground">
-            {t("statistics.notMarked")}
-          </span>
-        ) : (
-          `${member.attended}/${member.marked}`
-        )}
+      {/* Kit's PlayerRow on a phone: the right-hand column drops and the meta
+          moves under the name. The percentage stays — it is why the row is
+          here — and the fraction becomes its qualifier. */}
+      <span className="flex min-w-0 flex-1 flex-col kit:contents">
+        <span className="truncate font-semibold kit:min-w-0 kit:flex-1">
+          {member.firstName} {member.lastName}
+        </span>
+        <AttendanceMeter member={member} />
+        <span className="text-muted-foreground text-sm font-semibold tabular-nums kit:w-20 kit:shrink-0 kit:text-right">
+          {member.rate === null ? (
+            <span className="text-muted-foreground">
+              {t("statistics.notMarked")}
+            </span>
+          ) : (
+            `${member.attended}/${member.marked}`
+          )}
+        </span>
       </span>
       <span
         className={cn(
@@ -368,7 +373,7 @@ function AttendanceMeter({ member }: { member: MemberAttendanceStats }) {
   return (
     <span
       aria-hidden
-      className="hidden h-[7px] w-40 shrink-0 overflow-hidden rounded-full bg-[var(--neutral-250)] sm:block"
+      className="hidden h-[7px] w-40 shrink-0 overflow-hidden rounded-full bg-[var(--neutral-250)] kit:block"
     >
       <span
         className={cn(
@@ -396,8 +401,14 @@ function FilterChip({
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        "inline-flex items-center gap-2 rounded-pill px-4 py-2 text-sm font-semibold transition-colors duration-[120ms] ease-standard",
-        active ? "bg-ink text-white" : "bg-card text-foreground hover:bg-secondary",
+        // 44px is Kit's floor for a tap target, and `flex-none` +
+        // `whitespace-nowrap` are the reference's second flex trap: an
+        // inline-flex button inside a flex row otherwise shrinks to
+        // min-content and wraps its own label.
+        "inline-flex min-h-tap flex-none items-center gap-2 rounded-pill px-4 py-2 text-sm font-semibold whitespace-nowrap transition-colors duration-[120ms] ease-standard kit:min-h-0",
+        active
+          ? "bg-ink text-white"
+          : "bg-card text-foreground hover:bg-secondary",
       )}
     >
       {children}
