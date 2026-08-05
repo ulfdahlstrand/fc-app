@@ -25,6 +25,7 @@ import { Route as SettingsTeamRouteImport } from './routes/settings.team'
 import { Route as SettingsClubRouteImport } from './routes/settings.club'
 import { Route as MembersMemberIdRouteImport } from './routes/members_.$memberId'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
+import { Route as ImportAttendanceRouteImport } from './routes/import.attendance'
 import { Route as ActivitiesActivityIdRouteImport } from './routes/activities_.$activityId'
 
 const TrackingRoute = TrackingRouteImport.update({
@@ -107,6 +108,11 @@ const InviteTokenRoute = InviteTokenRouteImport.update({
   path: '/invite/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ImportAttendanceRoute = ImportAttendanceRouteImport.update({
+  id: '/attendance',
+  path: '/attendance',
+  getParentRoute: () => ImportRoute,
+} as any)
 const ActivitiesActivityIdRoute = ActivitiesActivityIdRouteImport.update({
   id: '/activities_/$activityId',
   path: '/activities/$activityId',
@@ -118,7 +124,7 @@ export interface FileRoutesByFullPath {
   '/activities': typeof ActivitiesRoute
   '/callups': typeof CallupsRoute
   '/groups': typeof GroupsRoute
-  '/import': typeof ImportRoute
+  '/import': typeof ImportRouteWithChildren
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
   '/onboarding': typeof OnboardingRoute
@@ -127,6 +133,7 @@ export interface FileRoutesByFullPath {
   '/statistics': typeof StatisticsRoute
   '/tracking': typeof TrackingRoute
   '/activities/$activityId': typeof ActivitiesActivityIdRoute
+  '/import/attendance': typeof ImportAttendanceRoute
   '/invite/$token': typeof InviteTokenRoute
   '/members/$memberId': typeof MembersMemberIdRoute
   '/settings/club': typeof SettingsClubRoute
@@ -137,7 +144,7 @@ export interface FileRoutesByTo {
   '/activities': typeof ActivitiesRoute
   '/callups': typeof CallupsRoute
   '/groups': typeof GroupsRoute
-  '/import': typeof ImportRoute
+  '/import': typeof ImportRouteWithChildren
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
   '/onboarding': typeof OnboardingRoute
@@ -146,6 +153,7 @@ export interface FileRoutesByTo {
   '/statistics': typeof StatisticsRoute
   '/tracking': typeof TrackingRoute
   '/activities/$activityId': typeof ActivitiesActivityIdRoute
+  '/import/attendance': typeof ImportAttendanceRoute
   '/invite/$token': typeof InviteTokenRoute
   '/members/$memberId': typeof MembersMemberIdRoute
   '/settings/club': typeof SettingsClubRoute
@@ -157,7 +165,7 @@ export interface FileRoutesById {
   '/activities': typeof ActivitiesRoute
   '/callups': typeof CallupsRoute
   '/groups': typeof GroupsRoute
-  '/import': typeof ImportRoute
+  '/import': typeof ImportRouteWithChildren
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
   '/onboarding': typeof OnboardingRoute
@@ -166,6 +174,7 @@ export interface FileRoutesById {
   '/statistics': typeof StatisticsRoute
   '/tracking': typeof TrackingRoute
   '/activities_/$activityId': typeof ActivitiesActivityIdRoute
+  '/import/attendance': typeof ImportAttendanceRoute
   '/invite/$token': typeof InviteTokenRoute
   '/members_/$memberId': typeof MembersMemberIdRoute
   '/settings/club': typeof SettingsClubRoute
@@ -187,6 +196,7 @@ export interface FileRouteTypes {
     | '/statistics'
     | '/tracking'
     | '/activities/$activityId'
+    | '/import/attendance'
     | '/invite/$token'
     | '/members/$memberId'
     | '/settings/club'
@@ -206,6 +216,7 @@ export interface FileRouteTypes {
     | '/statistics'
     | '/tracking'
     | '/activities/$activityId'
+    | '/import/attendance'
     | '/invite/$token'
     | '/members/$memberId'
     | '/settings/club'
@@ -225,6 +236,7 @@ export interface FileRouteTypes {
     | '/statistics'
     | '/tracking'
     | '/activities_/$activityId'
+    | '/import/attendance'
     | '/invite/$token'
     | '/members_/$memberId'
     | '/settings/club'
@@ -236,7 +248,7 @@ export interface RootRouteChildren {
   ActivitiesRoute: typeof ActivitiesRoute
   CallupsRoute: typeof CallupsRoute
   GroupsRoute: typeof GroupsRoute
-  ImportRoute: typeof ImportRoute
+  ImportRoute: typeof ImportRouteWithChildren
   LoginRoute: typeof LoginRoute
   MembersRoute: typeof MembersRoute
   OnboardingRoute: typeof OnboardingRoute
@@ -365,6 +377,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InviteTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/import/attendance': {
+      id: '/import/attendance'
+      path: '/attendance'
+      fullPath: '/import/attendance'
+      preLoaderRoute: typeof ImportAttendanceRouteImport
+      parentRoute: typeof ImportRoute
+    }
     '/activities_/$activityId': {
       id: '/activities_/$activityId'
       path: '/activities/$activityId'
@@ -375,12 +394,23 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface ImportRouteChildren {
+  ImportAttendanceRoute: typeof ImportAttendanceRoute
+}
+
+const ImportRouteChildren: ImportRouteChildren = {
+  ImportAttendanceRoute: ImportAttendanceRoute,
+}
+
+const ImportRouteWithChildren =
+  ImportRoute._addFileChildren(ImportRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ActivitiesRoute: ActivitiesRoute,
   CallupsRoute: CallupsRoute,
   GroupsRoute: GroupsRoute,
-  ImportRoute: ImportRoute,
+  ImportRoute: ImportRouteWithChildren,
   LoginRoute: LoginRoute,
   MembersRoute: MembersRoute,
   OnboardingRoute: OnboardingRoute,

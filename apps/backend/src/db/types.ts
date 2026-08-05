@@ -268,6 +268,11 @@ export interface ActivitiesTable {
   activity_type_id: string;
   /** Set when the activity was generated from a series (#13); null for one-offs. */
   series_id: string | null;
+  /**
+   * The exporting system's own activity id (#84). Unique per team, and the
+   * only key that keeps two activities starting at the same minute apart.
+   */
+  external_ref: string | null;
   /** Optional headline ("vs. Skiljebo SK"); falls back to the type name. */
   title: string | null;
   starts_at: ColumnType<Date, Date, Date>;

@@ -22,6 +22,7 @@ export * from "./groups.js";
 export * from "./activities.js";
 export * from "./seasons.js";
 export * from "./attendance.js";
+export * from "./attendance-import.js";
 export * from "./callups.js";
 export * from "./posts.js";
 export * from "./tracking.js";

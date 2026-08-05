@@ -3,6 +3,7 @@
 import { oc } from "@orpc/contract";
 import { createActivityInputSchema, createActivityOutputSchema, createRecurringActivitiesInputSchema, createRecurringActivitiesOutputSchema, getActivityInputSchema, getActivityOutputSchema, listActivitiesInputSchema, listActivitiesOutputSchema, setActivityCancelledInputSchema, setActivityCancelledOutputSchema, updateActivityInputSchema, updateActivityOutputSchema } from "./activities.js";
 import { archiveAttendanceStatusInputSchema, archiveAttendanceStatusOutputSchema, attendanceStatsFilterSchema, attendanceStatsOutputSchema, createAttendanceStatusInputSchema, createAttendanceStatusOutputSchema, listAttendanceInputSchema, listAttendanceOutputSchema, listAttendanceStatusesInputSchema, listAttendanceStatusesOutputSchema, memberAttendanceInputSchema, memberAttendanceOutputSchema, setAttendanceInputSchema, setAttendanceOutputSchema, updateAttendanceStatusInputSchema, updateAttendanceStatusOutputSchema } from "./attendance.js";
+import { previewAttendanceImportInputSchema, previewAttendanceImportOutputSchema } from "./attendance-import.js";
 import { meInputSchema, meOutputSchema } from "./auth.js";
 import { getCallupInputSchema, getCallupOutputSchema, listCallupsInputSchema, listCallupsOutputSchema, myCallupsInputSchema, myCallupsOutputSchema, respondToCallupInputSchema, respondToCallupOutputSchema, setCallupSquadInputSchema, setCallupSquadOutputSchema, updateCallupInputSchema, updateCallupOutputSchema } from "./callups.js";
 import { createClubInputSchema, createClubOutputSchema, myClubsInputSchema, myClubsOutputSchema } from "./clubs.js";
@@ -264,6 +265,12 @@ export const contract = oc.router({
     .route({ method: "POST", path: "/attendance" })
     .input(setAttendanceInputSchema)
     .output(setAttendanceOutputSchema),
+  // POST despite writing nothing: a season of marks is the request body, and
+  // it does not belong in a query string.
+  previewAttendanceImport: oc
+    .route({ method: "POST", path: "/attendance/import/preview" })
+    .input(previewAttendanceImportInputSchema)
+    .output(previewAttendanceImportOutputSchema),
   attendanceStats: oc
     .route({ method: "GET", path: "/attendance/stats" })
     .input(attendanceStatsFilterSchema)
