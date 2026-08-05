@@ -688,6 +688,8 @@
     "rowCount_one": "{{count}} row to import",
     "rowCount_other": "{{count}} rows to import",
     "commitSkipped_one": "{{count}} row is skipped.",
-    "commitSkipped_other": "{{count}} rows are skipped."
+    "commitSkipped_other": "{{count}} rows are skipped.",
+    "desktopOnly": "Do this one at a computer",
+    "desktopOnlyHint": "The import matches your spreadsheet's columns onto member fields. That is careful work that wants a wide screen — and getting it wrong writes bad data into the roster."
   }
 }

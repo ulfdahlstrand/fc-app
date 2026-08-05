@@ -255,3 +255,60 @@ columns.
 - The sticky cell needs the same background as its row, so the tint is applied
   to both the row and the sticky `<th>`.
 - Any future wide table follows this rather than shrinking text to fit.
+
+---
+
+## DDR-010 — 2026-08-05 — The phone is a second shell, not a narrower page
+
+**Status:** Accepted
+
+**Context:**
+The app was built for a single width: across every route there were about twenty
+breakpoint utilities in total, most of them shadcn defaults inside `Dialog`. The
+design reference then gained a mobile layer, and it is prescriptive — one
+breakpoint, a fixed four-band shell, a hard touch floor, and an explicit rule
+that a component must declare itself **same**, **adjust** or **swap**.
+
+**Decision:**
+One breakpoint at **700px**, exposed as the `kit:` variant. Two shells and
+nothing designed between them; a tablet gets the desktop shell capped at 1100px.
+Crossing the line swaps *which components build a screen*, not how they look —
+only the gutter (16 → 30px) and the Anton display steps scale.
+
+- **Navigation leaves the header.** Four sections plus `Menu` in a fixed
+  `TabBar`; everything else lives in `MenuSheet`. No hamburger — the sheet opens
+  from the bottom, where the thumb already is. The tab list is one ordered
+  priority list filtered by permission, so a player falls out with their own
+  three tabs and no role-specific code exists.
+- **44px is a hard floor.** Where a control is smaller by design — a 32px status
+  disc — it gains the difference as *invisible slop*: padding plus a matching
+  negative margin, so the target grows and neither the control nor the row does.
+- **A choice is a sheet.** No modals, dropdowns or popovers on a phone.
+- **Nothing is clipped to fit.** A row that does not fit gives its trailing
+  columns their own line, or shortens its meta in the data. Never an ellipsis:
+  a coach should not have to guess at a clipped word.
+- **Tables are swaps, not adjusts.** The roster and the tracking matrix become
+  cards. This **narrows DDR-009 to the desktop shell** — its pinned identifying
+  column is still right at 700px and up, but below it the matrix is transposed
+  to a card per list rather than scrolled sideways, because a list behind a
+  horizontal scroll is a list a thumb has to discover.
+- **Where a screen cannot be honest on a phone, it says so.** The member import
+  is desktop-only by decision, not by limitation: the file picker and both
+  tables would have adapted. Mapping a spreadsheet's columns onto member fields
+  is careful, wide-screen work, and getting it wrong writes bad data into the
+  roster.
+
+**Consequences:**
+- A **swap** needs a real branch, not CSS hiding: `useIsPhone` in
+  `lib/breakpoint.ts`, because a hidden tree stays in the DOM for screen readers
+  and keyboard users. Its 700 duplicates `--bp-desktop-min`, since a media query
+  cannot be built from a custom property — if one moves, move the other.
+- Two flex traps from the reference are now house rules: a horizontally
+  scrolling row inside a column flex needs `flex: none` or it collapses to zero
+  height, and an inline-flex button inside a flex row needs `flex: none` plus
+  `white-space: nowrap` or it wraps its own label.
+- A sticky offset is measured from the scrollport's **padding** edge. A save bar
+  in a page with bottom padding cannot sit flush with `bottom-0`; it needs a
+  negative offset matching that padding.
+- Tap targets are **measured, not eyeballed**. A probe for `height < 44` found
+  three that looked correct in a screenshot.

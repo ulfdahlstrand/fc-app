@@ -38,6 +38,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ensureMe } from "../lib/auth";
+import { useIsPhone } from "../lib/breakpoint";
 import { ensureMyClubs, useHasPermission, useSelectedTeam } from "../lib/clubs";
 import {
   useCommitMemberImport,
@@ -100,6 +101,7 @@ function ImportPage() {
   const { t } = useTranslation();
   const selected = useSelectedTeam();
   const canImport = useHasPermission("members.import");
+  const isPhone = useIsPhone();
 
   if (!selected) {
     return (
@@ -116,7 +118,35 @@ function ImportPage() {
     );
   }
 
-  return <ImportWizard teamId={selected.team.id} teamName={selected.team.name} />;
+  // Deliberately desktop-only. The file picker and both tables would adapt —
+  // this is not a technical limit — but mapping a spreadsheet's columns onto
+  // member fields is careful, wide-screen work, and getting it wrong writes
+  // bad data into the roster. Better to say so than to invite it one-handed.
+  if (isPhone) {
+    return <DesktopOnly />;
+  }
+
+  return (
+    <ImportWizard teamId={selected.team.id} teamName={selected.team.name} />
+  );
+}
+
+/** Shown below Kit's breakpoint, in place of the wizard. */
+function DesktopOnly() {
+  const { t } = useTranslation();
+
+  return (
+    <div className="flex flex-col gap-4">
+      <h1 className="font-display text-4xl">{t("import.title")}</h1>
+      <div className="bg-card flex flex-col items-start gap-3 rounded-xl px-5 py-[18px]">
+        <p className="font-display text-2xl">{t("import.desktopOnly")}</p>
+        <p className="text-muted-foreground">{t("import.desktopOnlyHint")}</p>
+        <Button variant="outline" asChild>
+          <Link to="/members">{t("members.backToList")}</Link>
+        </Button>
+      </div>
+    </div>
+  );
 }
 
 function ImportWizard({
@@ -138,7 +168,7 @@ function ImportWizard({
   const groupValues = useMemo(() => {
     if (!sheet) return [];
     const column = plans.find(
-      (plan) => plan.target.kind === "builtin" && plan.target.field === "group"
+      (plan) => plan.target.kind === "builtin" && plan.target.field === "group",
     );
     if (!column) return [];
     const values = new Set<string>();
@@ -154,7 +184,7 @@ function ImportWizard({
   const rows = useMemo(() => {
     if (!sheet) return [];
     return toImportRows(sheet, plans).filter(
-      (row) => !row.groups.some((group) => excludedGroups.includes(group))
+      (row) => !row.groups.some((group) => excludedGroups.includes(group)),
     );
   }, [sheet, plans, excludedGroups]);
 
@@ -177,8 +207,8 @@ function ImportWizard({
   function setPlan(index: number, update: Partial<ColumnPlan>): void {
     setPlans((current) =>
       current.map((plan) =>
-        plan.index === index ? { ...plan, ...update } : plan
-      )
+        plan.index === index ? { ...plan, ...update } : plan,
+      ),
     );
     preview.reset();
     commit.reset();
@@ -208,7 +238,9 @@ function ImportWizard({
               if (file) void onFile(file);
             }}
           />
-          <p className="text-xs text-muted-foreground">{t("import.fileHint")}</p>
+          <p className="text-xs text-muted-foreground">
+            {t("import.fileHint")}
+          </p>
           {readError && (
             <Alert variant="destructive">
               <AlertDescription>{readError}</AlertDescription>
@@ -236,7 +268,7 @@ function ImportWizard({
             setExcludedGroups((current) =>
               current.includes(value)
                 ? current.filter((item) => item !== value)
-                : [...current, value]
+                : [...current, value],
             );
             preview.reset();
             commit.reset();
@@ -291,7 +323,9 @@ function ImportWizard({
               <Button
                 disabled={
                   commit.isPending ||
-                  preview.data.summary.created + preview.data.summary.updated === 0
+                  preview.data.summary.created +
+                    preview.data.summary.updated ===
+                    0
                 }
                 onClick={() => commit.mutate(rows)}
               >
@@ -409,7 +443,7 @@ function MappingStep({
                           value={targetValue(plan.target)}
                           onValueChange={(value) => {
                             const option = TARGET_OPTIONS.find(
-                              (item) => item.value === value
+                              (item) => item.value === value,
                             );
                             onChange(plan.index, {
                               target: option
@@ -423,7 +457,10 @@ function MappingStep({
                           </SelectTrigger>
                           <SelectContent>
                             {TARGET_OPTIONS.map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
+                              <SelectItem
+                                key={option.value}
+                                value={option.value}
+                              >
                                 {t(`import.target.${option.value}`)}
                               </SelectItem>
                             ))}
@@ -513,16 +550,22 @@ function PreviewResult({
           <AlertDescription className="flex flex-col gap-1">
             {data.newGroups.length > 0 && (
               <span>
-                {t(dryRun ? "import.willCreateGroups" : "import.createdGroups", {
-                  names: data.newGroups.join(", "),
-                })}
+                {t(
+                  dryRun ? "import.willCreateGroups" : "import.createdGroups",
+                  {
+                    names: data.newGroups.join(", "),
+                  },
+                )}
               </span>
             )}
             {data.newCustomFields.length > 0 && (
               <span>
-                {t(dryRun ? "import.willCreateFields" : "import.createdFields", {
-                  names: data.newCustomFields.join(", "),
-                })}
+                {t(
+                  dryRun ? "import.willCreateFields" : "import.createdFields",
+                  {
+                    names: data.newCustomFields.join(", "),
+                  },
+                )}
               </span>
             )}
           </AlertDescription>

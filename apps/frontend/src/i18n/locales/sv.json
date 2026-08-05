@@ -688,6 +688,8 @@
     "rowCount_one": "{{count}} rad att importera",
     "rowCount_other": "{{count}} rader att importera",
     "commitSkipped_one": "{{count}} rad hoppas över.",
-    "commitSkipped_other": "{{count}} rader hoppas över."
+    "commitSkipped_other": "{{count}} rader hoppas över.",
+    "desktopOnly": "Gör den här vid datorn",
+    "desktopOnlyHint": "Importen matchar kolumnerna i ditt kalkylark mot fälten på medlemmarna. Det är noggrant arbete som behöver en bred skärm — och blir det fel hamnar felaktiga uppgifter i registret."
   }
 }
