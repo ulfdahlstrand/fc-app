@@ -56,7 +56,13 @@ function toLocalDate(day: Date): string {
   return `${year}-${month}-${date}`;
 }
 
-function toInstant(date: string, time: string, timeZone: string): Date {
+/**
+ * Local wall time to an instant. Exported so the attendance import (#84)
+ * resolves an imported "18:00" the same way the series generator resolves a
+ * generated one — two paths that disagreed would put the same training at two
+ * different moments.
+ */
+export function toInstant(date: string, time: string, timeZone: string): Date {
   const instant = fromZonedTime(`${date}T${time}:00`, timeZone);
   if (Number.isNaN(instant.getTime())) {
     throw new RangeError(`Unknown time zone: ${timeZone}`);

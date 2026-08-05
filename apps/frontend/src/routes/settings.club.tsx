@@ -96,6 +96,31 @@ function ImportEntryPoint() {
   );
 }
 
+/** Shown only to whoever holds `attendance.import` in the selected team. */
+function AttendanceImportEntryPoint() {
+  const { t } = useTranslation();
+  const canImport = useHasPermission("attendance.import");
+  if (!canImport) return null;
+
+  return (
+    <Card>
+      <CardContent className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="font-display text-xl">
+            {t("attendanceImport.title")}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {t("attendanceImport.settingsBlurb")}
+          </p>
+        </div>
+        <Button variant="outline" asChild>
+          <Link to="/import/attendance">{t("import.open")}</Link>
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
 function ClubRoles({ clubId, clubName }: { clubId: string; clubName: string }) {
   const { t } = useTranslation();
   const roles = useRoles(clubId);
@@ -113,6 +138,7 @@ function ClubRoles({ clubId, clubName }: { clubId: string; clubName: string }) {
 
       {/* The import has no nav pill; this is where an admin goes to find it. */}
       <ImportEntryPoint />
+      <AttendanceImportEntryPoint />
 
       <div>
         <div className="mb-2 flex items-center justify-between">

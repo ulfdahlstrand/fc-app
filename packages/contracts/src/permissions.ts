@@ -13,6 +13,13 @@ export const PERMISSIONS = [
   "members.import",
   "activities.manage",
   "attendance.record",
+  /**
+   * Backfilling a season of attendance from a file (#84). Separate from
+   * `attendance.record` because marking today's training is something a coach
+   * does forty times a season, and writing half a season of history in one
+   * action is not the same authority; seeded to Admin only (ADR-005).
+   */
+  "attendance.import",
   "callups.manage",
   "callups.respond",
   "posts.manage",
