@@ -726,7 +726,6 @@
     "added": "New",
     "changed": "Changed",
     "beforeJoining": "Before first attendance",
-    "commitLater": "Nothing has been saved. Carrying the import out comes next.",
     "value": {
       "present": "Present (green cell)",
       "absent": "Absent (empty cell)"
@@ -739,6 +738,12 @@
       "invalidDateTime": "Not a real instant: {{detail}}",
       "duplicateActivity": "The activity {{detail}} appears twice in the file"
     },
-    "settingsBlurb": "Read a season of attendance from SportAdmin's attendance page."
+    "settingsBlurb": "Read a season of attendance from SportAdmin's attendance page.",
+    "commit": "Run the import",
+    "commitHint": "The activities are created and the marks written. Running the same files again changes nothing.",
+    "fixErrorsFirst": "Fix the errors above first — rows with errors are not imported.",
+    "commitError": "The import failed. Nothing was saved.",
+    "done": "The import is done. This is what was written.",
+    "toCalendar": "Go to the calendar"
   }
 }

@@ -6,7 +6,7 @@
  * something you go somewhere on purpose to do. Requires `attendance.import`,
  * which only Admin holds by default.
  *
- * Nothing here writes. Step three is a dry run; committing arrives in #85.
+ * Step three is a dry run and writes nothing; step four commits (#85).
  */
 import { useMemo, useState } from "react";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
@@ -33,7 +33,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useActivityTypes } from "../lib/activity-types";
-import { usePreviewAttendanceImport } from "../lib/attendance-import";
+import {
+  useCommitAttendanceImport,
+  usePreviewAttendanceImport,
+} from "../lib/attendance-import";
 import { useAttendanceStatuses } from "../lib/attendance-statuses";
 import { ensureMe } from "../lib/auth";
 import { useIsPhone } from "../lib/breakpoint";
@@ -123,12 +126,13 @@ function AttendanceImportWizard({
   const statuses = useAttendanceStatuses(teamId);
   const types = useActivityTypes(teamId);
   const preview = usePreviewAttendanceImport(teamId);
+  const commit = useCommitAttendanceImport(teamId);
 
   const wire = useMemo(() => {
     if (!page) return null;
     const { activities, rows } = toImportInput(page, year);
     const former = new Set(
-      page.members.filter((m) => m.former).map((m) => m.externalRef)
+      page.members.filter((m) => m.former).map((m) => m.externalRef),
     );
     return {
       activities,
@@ -163,11 +167,12 @@ function AttendanceImportWizard({
   async function onFiles(files: FileList): Promise<void> {
     setReadError(null);
     preview.reset();
+    commit.reset();
     try {
       const parsed: ParsedPage[] = [];
       for (const file of [...files]) {
         parsed.push(
-          parseAttendancePage(decodeSportAdminPage(await file.arrayBuffer()))
+          parseAttendancePage(decodeSportAdminPage(await file.arrayBuffer())),
         );
       }
       const merged = mergePages(parsed);
@@ -176,8 +181,12 @@ function AttendanceImportWizard({
       // Sensible starting points, all overridable: the first status that
       // counts as present for "present", the first that does not for
       // "absent", and a type of the same name where the team has one.
-      const present = statuses.data?.attendanceStatuses.find((s) => s.countsAsPresent);
-      const away = statuses.data?.attendanceStatuses.find((s) => !s.countsAsPresent);
+      const present = statuses.data?.attendanceStatuses.find(
+        (s) => s.countsAsPresent,
+      );
+      const away = statuses.data?.attendanceStatuses.find(
+        (s) => !s.countsAsPresent,
+      );
       setStatusFor({
         ...(present ? { present: present.id } : {}),
         ...(away ? { absent: away.id } : {}),
@@ -187,41 +196,57 @@ function AttendanceImportWizard({
           [...new Set(merged.activities.map((a) => a.typeName))].flatMap(
             (name) => {
               const match = types.data?.activityTypes.find(
-                (type) => type.name.toLowerCase() === name.toLowerCase()
+                (type) => type.name.toLowerCase() === name.toLowerCase(),
               );
               return match ? [[name, match.id] as const] : [];
-            }
-          )
-        )
+            },
+          ),
+        ),
       );
     } catch (error) {
       setReadError(
-        error instanceof Error ? error.message : t("attendanceImport.readError")
+        error instanceof Error
+          ? error.message
+          : t("attendanceImport.readError"),
       );
       setPage(null);
     }
   }
 
-  function run(): void {
-    if (!wire) return;
-    preview.mutate({
+  function payload() {
+    if (!wire) return null;
+    return {
       timeZone: DEFAULT_TIME_ZONE,
       activities: wire.activities,
       rows: wire.rows,
       statusMapping: sourceValues.map((value) => ({
         value,
-        statusId: statusFor[value] === "ignore" ? null : (statusFor[value] ?? null),
+        statusId:
+          statusFor[value] === "ignore" ? null : (statusFor[value] ?? null),
       })),
       typeMapping: sourceTypes.map((sourceName) => ({
         sourceName,
         activityTypeId:
-          typeFor[sourceName] === "create" ? null : (typeFor[sourceName] ?? null),
+          typeFor[sourceName] === "create"
+            ? null
+            : (typeFor[sourceName] ?? null),
         colour: "neutral" as const,
       })),
-    });
+    };
   }
 
-  const result = preview.data;
+  function run(): void {
+    const input = payload();
+    if (input) preview.mutate(input);
+  }
+
+  function runCommit(): void {
+    const input = payload();
+    if (input) commit.mutate(input);
+  }
+
+  const done = commit.data;
+  const result = done ?? preview.data;
 
   return (
     <div className="flex flex-col gap-6">
@@ -286,6 +311,7 @@ function AttendanceImportWizard({
                 onChange={(event) => {
                   setYear(Number(event.target.value));
                   preview.reset();
+                  commit.reset();
                 }}
               />
               <span className="text-xs text-muted-foreground">
@@ -301,6 +327,7 @@ function AttendanceImportWizard({
                   onChange={(event) => {
                     setSkipFormer(event.target.checked);
                     preview.reset();
+                    commit.reset();
                   }}
                 />
                 {t("attendanceImport.skipFormer", { count: formerCount })}
@@ -308,7 +335,9 @@ function AttendanceImportWizard({
             )}
 
             <div className="flex flex-col gap-2">
-              <span className="text-sm">{t("attendanceImport.typeMapping")}</span>
+              <span className="text-sm">
+                {t("attendanceImport.typeMapping")}
+              </span>
               {sourceTypes.map((name) => (
                 <div key={name} className="flex items-center gap-3">
                   <span className="w-40 text-sm">{name}</span>
@@ -317,12 +346,11 @@ function AttendanceImportWizard({
                     onValueChange={(value) => {
                       setTypeFor((current) => ({ ...current, [name]: value }));
                       preview.reset();
+                      commit.reset();
                     }}
                   >
                     <SelectTrigger className="w-72">
-                      <SelectValue
-                        placeholder={t("attendanceImport.choose")}
-                      />
+                      <SelectValue placeholder={t("attendanceImport.choose")} />
                     </SelectTrigger>
                     <SelectContent>
                       {types.data?.activityTypes.map((type) => (
@@ -351,14 +379,16 @@ function AttendanceImportWizard({
                   <Select
                     value={statusFor[value] ?? ""}
                     onValueChange={(next) => {
-                      setStatusFor((current) => ({ ...current, [value]: next }));
+                      setStatusFor((current) => ({
+                        ...current,
+                        [value]: next,
+                      }));
                       preview.reset();
+                      commit.reset();
                     }}
                   >
                     <SelectTrigger className="w-72">
-                      <SelectValue
-                        placeholder={t("attendanceImport.choose")}
-                      />
+                      <SelectValue placeholder={t("attendanceImport.choose")} />
                     </SelectTrigger>
                     <SelectContent>
                       {statuses.data?.attendanceStatuses.map((status) => (
@@ -403,8 +433,10 @@ function AttendanceImportWizard({
             <h2 className="font-display text-xl">
               {t("attendanceImport.step3")}
             </h2>
-            <Alert>
-              <AlertDescription>{t("import.dryRun")}</AlertDescription>
+            <Alert variant={done ? "default" : undefined}>
+              <AlertDescription>
+                {done ? t("attendanceImport.done") : t("import.dryRun")}
+              </AlertDescription>
             </Alert>
 
             <div className="flex flex-wrap gap-2">
@@ -481,7 +513,7 @@ function AttendanceImportWizard({
                         .map((error) =>
                           t(`attendanceImport.error.${error.code}`, {
                             detail: error.detail ?? "",
-                          })
+                          }),
                         )
                         .join(" · ")}
                     </TableCell>
@@ -490,9 +522,42 @@ function AttendanceImportWizard({
               </TableBody>
             </Table>
 
-            <p className="text-xs text-muted-foreground">
-              {t("attendanceImport.commitLater")}
-            </p>
+            {commit.isError && (
+              <Alert variant="destructive">
+                <AlertDescription>
+                  {t("attendanceImport.commitError")}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {done ? (
+              <div className="flex flex-wrap gap-3">
+                <Button variant="outline" asChild>
+                  <Link to="/activities">
+                    {t("attendanceImport.toCalendar")}
+                  </Link>
+                </Button>
+                <Button variant="outline" asChild>
+                  <Link to="/statistics">
+                    {t("attendanceImport.backToStats")}
+                  </Link>
+                </Button>
+              </div>
+            ) : (
+              <div className="flex flex-col items-start gap-2">
+                <Button
+                  disabled={commit.isPending || result.summary.errors > 0}
+                  onClick={runCommit}
+                >
+                  {t("attendanceImport.commit")}
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  {result.summary.errors > 0
+                    ? t("attendanceImport.fixErrorsFirst")
+                    : t("attendanceImport.commitHint")}
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

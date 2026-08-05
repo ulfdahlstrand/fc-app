@@ -81,7 +81,7 @@ import {
   setMemberFieldValuesHandler,
   updateMemberFieldHandler,
 } from "./procedures/member-fields.js";
-import { previewAttendanceImportHandler } from "./procedures/attendance-import.js";
+import { commitAttendanceImportHandler, previewAttendanceImportHandler } from "./procedures/attendance-import.js";
 import {
   commitMemberImportHandler,
   previewMemberImportHandler,
@@ -147,6 +147,7 @@ export const router = os.router({
   setMemberFieldValues: setMemberFieldValuesHandler,
   previewMemberImport: previewMemberImportHandler,
   previewAttendanceImport: previewAttendanceImportHandler,
+  commitAttendanceImport: commitAttendanceImportHandler,
   commitMemberImport: commitMemberImportHandler,
   listMemberContacts: listMemberContactsHandler,
   pendingContactInvites: pendingContactInvitesHandler,

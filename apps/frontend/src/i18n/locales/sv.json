@@ -726,7 +726,6 @@
     "added": "Nya",
     "changed": "Ändras",
     "beforeJoining": "Före första närvaron",
-    "commitLater": "Inget har sparats. Att genomföra importen kommer i nästa steg.",
     "value": {
       "present": "Närvarande (grön ruta)",
       "absent": "Frånvarande (tom ruta)"
@@ -739,6 +738,12 @@
       "invalidDateTime": "Ogiltig tidpunkt: {{detail}}",
       "duplicateActivity": "Aktiviteten {{detail}} finns två gånger i filen"
     },
-    "settingsBlurb": "Läs in en säsongs närvaro från SportAdmins närvarosida."
+    "settingsBlurb": "Läs in en säsongs närvaro från SportAdmins närvarosida.",
+    "commit": "Genomför importen",
+    "commitHint": "Aktiviteterna skapas och närvaron skrivs. Att köra samma filer igen ändrar ingenting.",
+    "fixErrorsFirst": "Rätta felen ovan först — rader med fel importeras inte.",
+    "commitError": "Importen misslyckades. Inget har sparats.",
+    "done": "Importen är klar. Det här är vad som skrevs.",
+    "toCalendar": "Till kalendern"
   }
 }
