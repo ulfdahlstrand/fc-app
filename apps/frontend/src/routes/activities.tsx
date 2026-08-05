@@ -358,7 +358,11 @@ function FilterChip({
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        "inline-flex items-center gap-2 rounded-pill px-4 py-2 text-sm font-semibold transition-colors duration-[120ms] ease-standard",
+        // 44px is Kit's floor for a tap target, and `flex-none` +
+        // `whitespace-nowrap` are the reference's second flex trap: an
+        // inline-flex button inside a flex row otherwise shrinks to
+        // min-content and wraps its own label.
+        "inline-flex min-h-tap flex-none items-center gap-2 rounded-pill px-4 py-2 text-sm font-semibold whitespace-nowrap transition-colors duration-[120ms] ease-standard kit:min-h-0",
         active
           ? "bg-ink text-white"
           : "bg-card text-foreground hover:bg-secondary",
