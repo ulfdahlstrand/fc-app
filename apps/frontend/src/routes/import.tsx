@@ -71,6 +71,7 @@ const TARGET_OPTIONS: { value: string; target: ColumnTarget }[] = [
       "lastName",
       "personalId",
       "externalRef",
+      "sportAdminId",
       "email",
       "phoneMobile",
       "phoneHome",

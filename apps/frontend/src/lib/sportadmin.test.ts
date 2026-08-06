@@ -5,32 +5,117 @@
  * them.
  */
 import { describe, expect, it } from "vitest";
-import { parseSheet, planColumns, toImportRow, toImportRows } from "./sportadmin";
+import {
+  parseSheet,
+  planColumns,
+  toImportRow,
+  toImportRows,
+} from "./sportadmin";
 
 /** Verbatim from an export, including the three `E-post` columns. */
 const HEADER = [
-  "Grupp", "Gruppkoppling", "Kommentar", "Personnummer", "Kön", "Förnamn",
-  "Efternamn", "c/o", "Adress", "Postnummer", "Stad", "Land", "Mobiltelefon",
-  "Telefon hem", "Telefon jobb", "E-post", "Målsman 1", "Relation", "E-post",
-  "Telefon", "Målsman 2", "Relation", "E-post", "Telefon", "Skapad",
-  "Uppdaterad", "Licens", "Grupprekommendation", "Övrigt", "Medlems Nr",
-  "Start År", "Allergi",
+  "Grupp",
+  "Gruppkoppling",
+  "Kommentar",
+  "Personnummer",
+  "Kön",
+  "Förnamn",
+  "Efternamn",
+  "c/o",
+  "Adress",
+  "Postnummer",
+  "Stad",
+  "Land",
+  "Mobiltelefon",
+  "Telefon hem",
+  "Telefon jobb",
+  "E-post",
+  "Målsman 1",
+  "Relation",
+  "E-post",
+  "Telefon",
+  "Målsman 2",
+  "Relation",
+  "E-post",
+  "Telefon",
+  "Skapad",
+  "Uppdaterad",
+  "Licens",
+  "Grupprekommendation",
+  "Övrigt",
+  "Medlems Nr",
+  "Start År",
+  "Allergi",
 ];
 
 const PLAYER = [
-  "P 17:4", "Spelare", "Kläder: 152-152-31/33", "20170314-2412", "Man", "Ture",
-  "Dahlstrand", "", "Oxelvägen 24", "14141", "HUDDINGE", "Sverige", "", "", "",
-  "ulf.d.dahlstrand@gmail.com", "My Dahlstrand", "Mamma",
-  "my.dahlstrand@gmail.com", "0761414220", "Ulf Dahlstrand", "Pappa",
-  "ulf.d.dahlstrand@gmail.com", "0700838161", "2021-11-22 10:21:58",
-  "2026-02-18 15:29:24", "", "", "", "", "", "",
+  "P 17:4",
+  "Spelare",
+  "Kläder: 152-152-31/33",
+  "20170314-2412",
+  "Man",
+  "Ture",
+  "Dahlstrand",
+  "",
+  "Oxelvägen 24",
+  "14141",
+  "HUDDINGE",
+  "Sverige",
+  "",
+  "",
+  "",
+  "ulf.d.dahlstrand@gmail.com",
+  "My Dahlstrand",
+  "Mamma",
+  "my.dahlstrand@gmail.com",
+  "0761414220",
+  "Ulf Dahlstrand",
+  "Pappa",
+  "ulf.d.dahlstrand@gmail.com",
+  "0700838161",
+  "2021-11-22 10:21:58",
+  "2026-02-18 15:29:24",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
 ];
 
 const COACH = [
-  "P 17:4", "Tränare", "", "19850822-3578", "Man", "Ulf", "Dahlstrand", "",
-  "Oxelvägen 24", "14141", "HUDDINGE", "Sverige", "0700838161", "", "",
-  "ulf.d.dahlstrand@gmail.com", "", "", "", "", "", "", "", "",
-  "2022-03-09 13:08:06", "2025-12-22 16:26:32", "", "", "", "", "", "",
+  "P 17:4",
+  "Tränare",
+  "",
+  "19850822-3578",
+  "Man",
+  "Ulf",
+  "Dahlstrand",
+  "",
+  "Oxelvägen 24",
+  "14141",
+  "HUDDINGE",
+  "Sverige",
+  "0700838161",
+  "",
+  "",
+  "ulf.d.dahlstrand@gmail.com",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "2022-03-09 13:08:06",
+  "2025-12-22 16:26:32",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
 ];
 
 const SHEET = [HEADER, PLAYER, COACH];
@@ -44,8 +129,16 @@ describe("planColumns", () => {
   it("reads the three E-post columns as three different things", () => {
     const [member, first, second] = planFor("E-post");
     expect(member?.target).toEqual({ kind: "builtin", field: "email" });
-    expect(first?.target).toEqual({ kind: "contact", index: 1, field: "email" });
-    expect(second?.target).toEqual({ kind: "contact", index: 2, field: "email" });
+    expect(first?.target).toEqual({
+      kind: "contact",
+      index: 1,
+      field: "email",
+    });
+    expect(second?.target).toEqual({
+      kind: "contact",
+      index: 2,
+      field: "email",
+    });
   });
 
   it("assigns Relation and Telefon to the guardian block they follow", () => {
@@ -179,5 +272,34 @@ describe("parseSheet / toImportRows", () => {
     const sheet = parseSheet(SHEET);
     const rows = toImportRows(sheet, sheet.plans);
     expect(rows.map((row) => row.rowNumber)).toEqual([2, 3]);
+  });
+});
+
+describe("SportAdmin's internal member id", () => {
+  /**
+   * A different namespace from `Medlems Nr` — the two do not join, so they
+   * are recorded under different sources (#89). Deriving it into the export
+   * is what lets the attendance import stop trusting names.
+   */
+  it("is read from its own column", () => {
+    const sheet = parseSheet([
+      ["Förnamn", "Efternamn", "Medlems Nr", "SportAdmin-id"],
+      ["Ture", "Dahlstrand", "4711", "4214437"],
+    ]);
+    const row = toImportRow(sheet.rows[0]!, sheet.plans, 2);
+    expect(row).toMatchObject({
+      externalRef: "4711",
+      sportAdminId: "4214437",
+    });
+  });
+
+  it("is null when the export has no such column", () => {
+    const sheet = parseSheet([
+      ["Förnamn", "Efternamn"],
+      ["Ture", "Dahlstrand"],
+    ]);
+    expect(
+      toImportRow(sheet.rows[0]!, sheet.plans, 2)?.sportAdminId,
+    ).toBeNull();
   });
 });

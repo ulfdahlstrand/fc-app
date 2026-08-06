@@ -26,6 +26,10 @@ import {
   matchImportRow,
   type ExistingMember,
 } from "./import-match.js";
+import {
+  loadMemberExternalIds,
+  SOURCE_SPORTADMIN,
+} from "./external-ids.js";
 import { loadClubRegister, type KnownPerson } from "./personal-id.js";
 
 /** Everything the preview compares against, read once. */
@@ -86,6 +90,17 @@ async function loadRoster(
     }
   }
 
+  // Member id → the SportAdmin id recorded on their person (#89). Matching on
+  // it is what turns a second import into an update instead of a duplicate.
+  const sportAdminIds = await loadMemberExternalIds(db, {
+    teamId,
+    clubId,
+    source: SOURCE_SPORTADMIN,
+  }).then(
+    (byExternalId) =>
+      new Map([...byExternalId].map(([externalId, memberId]) => [memberId, externalId]))
+  );
+
   const members: ExistingMember[] = memberRows.map((row) => ({
     id: row.id,
     firstName: row.first_name,
@@ -95,6 +110,7 @@ async function loadRoster(
     phone: row.phone,
     externalRef: row.external_ref,
     personalId: personalIds.get(row.id) ?? null,
+    sportAdminId: sportAdminIds.get(row.id) ?? null,
   }));
 
   const memberIds = members.map((member) => member.id);
@@ -261,6 +277,7 @@ export async function buildImportPlan(
       {
         rowNumber: row.rowNumber,
         personalId,
+        sportAdminId: row.sportAdminId,
         externalRef: row.externalRef,
         firstName: row.firstName,
         lastName: row.lastName,
@@ -387,6 +404,12 @@ export async function buildImportPlan(
     push(scalarChange("email", existing.email, row.email));
     push(scalarChange("phone", existing.phone, row.phone));
     push(scalarChange("externalRef", existing.externalRef, row.externalRef));
+    // Not a column on `members` — it lives on the person — but a change all
+    // the same, and one the preview should name. Without it a row whose only
+    // change is its id counts as unchanged and never reaches the commit.
+    push(
+      scalarChange("sportAdminId", existing.sportAdminId, row.sportAdminId)
+    );
 
     // Reported as changed, never shown — neither value, either side (ADR-022).
     if (entry.personalId !== null && existing.personalId !== entry.personalId) {

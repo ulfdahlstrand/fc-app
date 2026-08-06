@@ -640,7 +640,9 @@
       "personalId": "Matched on personnummer",
       "externalRef": "Matched on member number",
       "nameAndBirthDate": "Matched on name and birth date",
-      "email": "Matched on e-mail"
+      "email": "Matched on e-mail",
+      "sportAdminId": "Matched on SportAdmin id",
+      "name": "Matched on name"
     },
     "rowErrors": {
       "invalidPersonalId": "Not a valid personnummer.",
