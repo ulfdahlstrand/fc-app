@@ -45,6 +45,7 @@ import {
   usePreviewMemberImport,
 } from "../lib/member-import";
 import {
+  looksLikeAttendance,
   parseSheet,
   toImportRows,
   type ColumnPlan,
@@ -247,6 +248,22 @@ function ImportWizard({
               <AlertDescription>{readError}</AlertDescription>
             </Alert>
           )}
+          {sheet && looksLikeAttendance(sheet) && (
+            <Alert variant="destructive">
+              <AlertDescription className="flex flex-col items-start gap-2">
+                <span>
+                  {t("import.looksLikeAttendance", {
+                    count: sheet.dateColumns,
+                  })}
+                </span>
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/import/attendance">
+                    {t("import.goToAttendance")}
+                  </Link>
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
           {sheet && sheet.teamNames.length > 1 && (
             <Alert>
               <AlertDescription>
@@ -260,7 +277,7 @@ function ImportWizard({
         </CardContent>
       </Card>
 
-      {sheet && (
+      {sheet && !looksLikeAttendance(sheet) && (
         <MappingStep
           plans={plans}
           groupValues={groupValues}
@@ -278,7 +295,7 @@ function ImportWizard({
         />
       )}
 
-      {sheet && (
+      {sheet && !looksLikeAttendance(sheet) && (
         <Card>
           <CardContent className="flex flex-wrap items-center justify-between gap-3">
             <div>

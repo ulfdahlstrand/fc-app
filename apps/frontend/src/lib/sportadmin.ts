@@ -99,7 +99,8 @@ function key(header: string): string {
 
 function cell(value: unknown): string | null {
   if (value === null || value === undefined) return null;
-  const text = value instanceof Date ? value.toISOString().slice(0, 10) : String(value);
+  const text =
+    value instanceof Date ? value.toISOString().slice(0, 10) : String(value);
   const trimmed = text.trim();
   return trimmed === "" ? null : trimmed;
 }
@@ -112,7 +113,7 @@ function cell(value: unknown): string | null {
  */
 export function planColumns(
   header: unknown[],
-  rows: unknown[][] = []
+  rows: unknown[][] = [],
 ): ColumnPlan[] {
   const plans: ColumnPlan[] = [];
   let contactIndex = 0;
@@ -134,7 +135,10 @@ export function planColumns(
       };
     } else if (name in BUILTIN_HEADERS) {
       contactIndex = 0;
-      target = { kind: "builtin", field: BUILTIN_HEADERS[name] as BuiltinField };
+      target = {
+        kind: "builtin",
+        field: BUILTIN_HEADERS[name] as BuiltinField,
+      };
     } else if (name === "" || IGNORED_HEADERS.has(name)) {
       contactIndex = 0;
       target = { kind: "skip" };
@@ -143,7 +147,8 @@ export function planColumns(
       target = { kind: "custom", name: text };
     }
 
-    const empty = rows.length > 0 && rows.every((row) => cell(row[index]) === null);
+    const empty =
+      rows.length > 0 && rows.every((row) => cell(row[index]) === null);
 
     plans.push({
       index,
@@ -161,10 +166,10 @@ export function planColumns(
 }
 
 /** A mobile is what a coach rings first; the others are fallbacks. */
-function pickPhone(values: Partial<Record<BuiltinField, string | null>>): string | null {
-  return (
-    values.phoneMobile ?? values.phoneHome ?? values.phoneWork ?? null
-  );
+function pickPhone(
+  values: Partial<Record<BuiltinField, string | null>>,
+): string | null {
+  return values.phoneMobile ?? values.phoneHome ?? values.phoneWork ?? null;
 }
 
 export interface ParsedSheet {
@@ -173,6 +178,30 @@ export interface ParsedSheet {
   rows: unknown[][];
   /** Distinct `Grupp` values — several means the file spans teams. */
   teamNames: string[];
+  /**
+   * How many column headers are dates. An attendance matrix (#86) has one per
+   * activity, and this import would happily turn each into a custom field —
+   * which is how a real file of 55 trainings once became 54 custom fields and
+   * 36 duplicate members. See `looksLikeAttendance`.
+   */
+  dateColumns: number;
+}
+
+/**
+ * A header that is a date, with or without the attendance sheet's pipe
+ * fields: `2026-03-24`, `2026-03-24 | 17:00 | Träning`.
+ */
+function isDateHeader(text: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}(\s*\|.*)?$/.test(text.trim());
+}
+
+/**
+ * A roster export has no date columns at all. Two or more says this is the
+ * attendance matrix, and importing it here would create people and fields
+ * nobody asked for instead of filling the calendar.
+ */
+export function looksLikeAttendance(sheet: ParsedSheet): boolean {
+  return sheet.dateColumns >= 2;
 }
 
 /** Splits a sheet into a column plan and its data rows. */
@@ -181,7 +210,8 @@ export function parseSheet(sheet: unknown[][]): ParsedSheet {
   const plans = planColumns(header, rows);
 
   const teamColumn = plans.find(
-    (plan) => plan.target.kind === "builtin" && plan.target.field === "teamName"
+    (plan) =>
+      plan.target.kind === "builtin" && plan.target.field === "teamName",
   );
   const teamNames =
     teamColumn === undefined
@@ -190,11 +220,16 @@ export function parseSheet(sheet: unknown[][]): ParsedSheet {
           ...new Set(
             rows
               .map((row) => cell(row[teamColumn.index]))
-              .filter((value): value is string => value !== null)
+              .filter((value): value is string => value !== null),
           ),
         ];
 
-  return { plans, rows, teamNames };
+  return {
+    plans,
+    rows,
+    teamNames,
+    dateColumns: plans.filter((plan) => isDateHeader(plan.header)).length,
+  };
 }
 
 /**
@@ -205,7 +240,7 @@ export function parseSheet(sheet: unknown[][]): ParsedSheet {
 export function toImportRow(
   row: unknown[],
   plans: ColumnPlan[],
-  rowNumber: number
+  rowNumber: number,
 ): ImportRow | null {
   const builtins: Partial<Record<BuiltinField, string | null>> = {};
   const customFields: Record<string, string> = {};
@@ -256,7 +291,7 @@ export function toImportRow(
               phone: draft.phone ?? null,
             },
           ]
-        : []
+        : [],
     );
 
   return {
@@ -275,7 +310,10 @@ export function toImportRow(
 }
 
 /** Every importable row of a sheet, numbered as the file numbers them. */
-export function toImportRows(sheet: ParsedSheet, plans: ColumnPlan[]): ImportRow[] {
+export function toImportRows(
+  sheet: ParsedSheet,
+  plans: ColumnPlan[],
+): ImportRow[] {
   return sheet.rows.flatMap((row, offset) => {
     // +2: one for the header, one because spreadsheets count from 1.
     const parsed = toImportRow(row, plans, offset + 2);
