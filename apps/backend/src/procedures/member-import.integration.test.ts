@@ -206,3 +206,68 @@ describe("member import against real data", () => {
     expect(persons).toHaveLength(0);
   });
 });
+
+describe("re-importing must update, never duplicate", () => {
+  it("matches a names-only file against a roster that has birth dates", async () => {
+    // The shape that produced 36 duplicate members: the file has no
+    // personnummer and no ids, the roster has both.
+    const teamId = await createTestTeam(db, club.clubId, "P17");
+    await call(
+      commitMemberImportHandler,
+      { teamId, rows: [row({ personalId: "20170314-2412" })] },
+      { context: admin.context }
+    );
+
+    const again = await call(
+      commitMemberImportHandler,
+      { teamId, rows: [row({ personalId: null })] },
+      { context: admin.context }
+    );
+
+    expect(again.rows[0]?.matchedBy).toBe("name");
+    expect(again.summary.created).toBe(0);
+    expect(
+      await db.selectFrom("members").selectAll().where("team_id", "=", teamId).execute()
+    ).toHaveLength(1);
+  });
+
+  it("adds no second personnummer, member or external id on a re-run", async () => {
+    const teamId = await createTestTeam(db, club.clubId, "P17");
+    const input = {
+      teamId,
+      rows: [row({ personalId: "20170314-2412", sportAdminId: "4214437" })],
+    };
+    await call(commitMemberImportHandler, input, { context: admin.context });
+    const again = await call(commitMemberImportHandler, input, {
+      context: admin.context,
+    });
+
+    expect(again.summary).toMatchObject({ created: 0, updated: 0, unchanged: 1 });
+    expect(await db.selectFrom("members").selectAll().execute()).toHaveLength(1);
+    expect(
+      await db.selectFrom("person_personal_ids").selectAll().execute()
+    ).toHaveLength(1);
+    expect(
+      await db.selectFrom("person_external_ids").selectAll().execute()
+    ).toHaveLength(1);
+  });
+
+  it("overwrites an id that changed rather than keeping both", async () => {
+    const teamId = await createTestTeam(db, club.clubId, "P17");
+    const base = { personalId: "20170314-2412" };
+    await call(
+      commitMemberImportHandler,
+      { teamId, rows: [row({ ...base, sportAdminId: "4214437" })] },
+      { context: admin.context }
+    );
+    await call(
+      commitMemberImportHandler,
+      { teamId, rows: [row({ ...base, sportAdminId: "9999999" })] },
+      { context: admin.context }
+    );
+
+    const ids = await db.selectFrom("person_external_ids").selectAll().execute();
+    expect(ids).toHaveLength(1);
+    expect(ids[0]?.external_id).toBe("9999999");
+  });
+});

@@ -59,8 +59,12 @@ export type ImportRow = z.infer<typeof importRowSchema>;
 /** Which rule matched a row to an existing member; null when it is new. */
 export const importMatchReasonSchema = z.enum([
   "personalId",
+  /** SportAdmin's own member id, recorded on the person (#89). */
+  "sportAdminId",
   "externalRef",
   "nameAndBirthDate",
+  /** Exact, and only when the team has one member of that name. */
+  "name",
   "email",
 ]);
 

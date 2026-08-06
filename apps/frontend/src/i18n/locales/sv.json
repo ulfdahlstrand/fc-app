@@ -640,7 +640,9 @@
       "personalId": "Matchad på personnummer",
       "externalRef": "Matchad på medlemsnummer",
       "nameAndBirthDate": "Matchad på namn och födelsedatum",
-      "email": "Matchad på e-post"
+      "email": "Matchad på e-post",
+      "sportAdminId": "Matchad på SportAdmin-id",
+      "name": "Matchad på namn"
     },
     "rowErrors": {
       "invalidPersonalId": "Ogiltigt personnummer.",
