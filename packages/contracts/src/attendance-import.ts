@@ -151,10 +151,18 @@ export const attendanceChangeSchema = z.object({
   to: z.string(),
 });
 
+/** Which rule found this row's member; null when none did. */
+export const attendanceMatchReasonSchema = z.enum(["externalId", "name"]);
+
 export const attendanceRowResultSchema = z.object({
   rowNumber: z.number().int(),
   name: z.string(),
   memberId: z.string().nullable(),
+  /**
+   * Worth showing: a season matched by name is one bad spelling away from a
+   * row that fails, and by id it is not (#89).
+   */
+  matchedBy: attendanceMatchReasonSchema.nullable(),
   added: z.number().int(),
   changed: z.number().int(),
   unchanged: z.number().int(),

@@ -13,6 +13,10 @@ import type { Kysely } from "kysely";
 import { normaliseForMatch, normaliseName } from "@fc-app/contracts";
 import type { Database } from "../db/types.js";
 import { contactKey, MEMBER_COLUMNS, type ImportPlan } from "./import-plan.js";
+import {
+  recordMemberExternalId,
+  SOURCE_SPORTADMIN_MEMBER_NO,
+} from "./external-ids.js";
 import { setPersonalId } from "./personal-id.js";
 
 function filled(value: string | null): string | null {
@@ -242,6 +246,19 @@ export async function applyImportPlan(
         teamId,
         clubId,
         raw: action.personalId,
+      });
+    }
+
+    // `Medlems Nr` is the club's own number, a different namespace from
+    // SportAdmin's internal member id (#89). Recorded on the person rather
+    // than only on the member row, so a re-import — or an import from
+    // somewhere else entirely — has something stable to match on.
+    if (externalRef !== null) {
+      await recordMemberExternalId(trx, {
+        memberId,
+        clubId,
+        source: SOURCE_SPORTADMIN_MEMBER_NO,
+        externalId: externalRef,
       });
     }
 

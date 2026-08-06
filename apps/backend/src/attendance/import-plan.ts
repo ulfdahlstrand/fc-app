@@ -21,6 +21,10 @@ import {
 } from "@fc-app/contracts";
 import type { z } from "zod";
 import { toInstant } from "../activities/recurrence.js";
+import {
+  loadMemberExternalIds,
+  SOURCE_SPORTADMIN,
+} from "../members/external-ids.js";
 import type { Database } from "../db/types.js";
 
 type Input = z.infer<typeof previewAttendanceImportInputSchema>;
@@ -36,6 +40,12 @@ export interface PlannedActivity {
   /** Set when the column matched an activity the team already has. */
   activityId: string | null;
   skip: boolean;
+}
+
+/** An external id worth remembering, because this row matched some other way. */
+export interface LearnedExternalId {
+  memberId: string;
+  externalId: string;
 }
 
 /** One mark a commit would write. */
@@ -55,11 +65,18 @@ export interface AttendancePlan {
   /** What the commit acts on. Errored and skipped columns never appear here. */
   planned: PlannedActivity[];
   marks: PlannedMark[];
+  /**
+   * Rows that matched by name and carry an id the club does not know yet.
+   * Recording them is what makes the *next* import exact.
+   */
+  learn: LearnedExternalId[];
 }
 
 interface Snapshot {
   /** Normalised "first last" → member ids. More than one means ambiguous. */
   membersByName: Map<string, string[]>;
+  /** SportAdmin's member id → the member of this team who is that person. */
+  membersByExternalId: Map<string, string>;
   memberNames: Map<string, string>;
   /** Normalised type name → id, for types the team already has. */
   typesByName: Map<string, string>;
@@ -77,7 +94,8 @@ interface Snapshot {
 
 async function loadSnapshot(
   db: Kysely<Database>,
-  teamId: string
+  teamId: string,
+  clubId: string
 ): Promise<Snapshot> {
   const [members, types, statuses, activities] = await Promise.all([
     db
@@ -142,6 +160,11 @@ async function loadSnapshot(
 
   return {
     membersByName,
+    membersByExternalId: await loadMemberExternalIds(db, {
+      teamId,
+      clubId,
+      source: SOURCE_SPORTADMIN,
+    }),
     memberNames,
     typesByName: new Map(types.map((t) => [normaliseForMatch(t.name), t.id])),
     typeIds: new Set(types.map((t) => t.id)),
@@ -270,9 +293,10 @@ function planActivities(
 
 export async function buildAttendancePlan(
   db: Kysely<Database>,
-  input: Input
+  input: Input,
+  clubId: string
 ): Promise<AttendancePlan> {
-  const snap = await loadSnapshot(db, input.teamId);
+  const snap = await loadSnapshot(db, input.teamId, clubId);
   const { planned, results, newTypes } = planActivities(input, snap);
 
   const statusOf = new Map(
@@ -290,6 +314,7 @@ export async function buildAttendancePlan(
 
   const rows: AttendanceRowResult[] = [];
   const marks: PlannedMark[] = [];
+  const learn: LearnedExternalId[] = [];
   let marksAdded = 0;
   let marksChanged = 0;
   let marksUnchanged = 0;
@@ -298,10 +323,31 @@ export async function buildAttendancePlan(
   for (const row of input.rows) {
     const errors: AttendanceImportError[] = [];
     const name = `${row.firstName} ${row.lastName}`.trim();
-    const candidates =
-      snap.membersByName.get(normaliseName(row.firstName, row.lastName)) ?? [];
-    if (candidates.length === 0) errors.push(err("memberNotFound", name));
-    if (candidates.length > 1) errors.push(err("ambiguousMember", name));
+
+    // The source's own id first, because it survives what names do not: a
+    // spelling, a marriage, a truncation in the export. A name match is the
+    // fallback that teaches the club the id (#89), so the second import of a
+    // team is exact and the third cannot duplicate anybody.
+    const byId = row.externalRef
+      ? (snap.membersByExternalId.get(row.externalRef) ?? null)
+      : null;
+
+    let memberId = byId;
+    let matchedBy: AttendanceRowResult["matchedBy"] = byId ? "externalId" : null;
+
+    if (!memberId) {
+      const candidates =
+        snap.membersByName.get(normaliseName(row.firstName, row.lastName)) ?? [];
+      if (candidates.length === 0) errors.push(err("memberNotFound", name));
+      if (candidates.length > 1) errors.push(err("ambiguousMember", name));
+      if (candidates.length === 1) {
+        memberId = candidates[0] ?? null;
+        matchedBy = "name";
+        if (memberId && row.externalRef) {
+          learn.push({ memberId, externalId: row.externalRef });
+        }
+      }
+    }
 
     for (const value of Object.values(row.marks)) {
       if (!known.has(value)) {
@@ -310,13 +356,13 @@ export async function buildAttendancePlan(
       }
     }
 
-    const memberId = candidates.length === 1 ? (candidates[0] ?? null) : null;
     if (errors.length > 0 || !memberId) {
       errorCount += 1;
       rows.push({
         rowNumber: row.rowNumber,
         name,
         memberId,
+        matchedBy,
         added: 0,
         changed: 0,
         unchanged: 0,
@@ -387,6 +433,7 @@ export async function buildAttendancePlan(
       rowNumber: row.rowNumber,
       name,
       memberId,
+      matchedBy,
       added,
       changed,
       unchanged,
@@ -412,5 +459,6 @@ export async function buildAttendancePlan(
     newActivityTypes: newTypes,
     planned,
     marks,
+    learn,
   };
 }

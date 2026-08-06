@@ -16,6 +16,10 @@ import { normaliseForMatch } from "@fc-app/contracts";
 import type { previewAttendanceImportInputSchema } from "@fc-app/contracts";
 import type { z } from "zod";
 import type { Database } from "../db/types.js";
+import {
+  recordMemberExternalId,
+  SOURCE_SPORTADMIN,
+} from "../members/external-ids.js";
 import type { AttendancePlan } from "./import-plan.js";
 
 type Input = z.infer<typeof previewAttendanceImportInputSchema>;
@@ -122,9 +126,23 @@ async function ensureActivities(
 export async function applyAttendancePlan(
   trx: Kysely<Database>,
   teamId: string,
+  clubId: string,
   input: Input,
   plan: AttendancePlan
 ): Promise<void> {
+  // Remember what the source calls the people this run matched by name, so
+  // the next import of this team matches on an id instead (#89). Done first:
+  // it is the part that stops the next import going wrong, and it should not
+  // depend on the marks writing cleanly.
+  for (const learned of plan.learn) {
+    await recordMemberExternalId(trx, {
+      memberId: learned.memberId,
+      clubId,
+      source: SOURCE_SPORTADMIN,
+      externalId: learned.externalId,
+    });
+  }
+
   const typeIds = await ensureActivityTypes(trx, teamId, input, plan);
   const activityIds = await ensureActivities(trx, teamId, plan, typeIds);
   if (plan.marks.length === 0) return;
