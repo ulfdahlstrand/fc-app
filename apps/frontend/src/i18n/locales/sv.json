@@ -759,6 +759,11 @@
       "badHeader": "Filen saknar en {{detail}}-kolumn — utan den går ingen rad att matcha.",
       "namelessRow": "Rad {{at}} har inget förnamn och hoppas över.",
       "ignoredColumn": "Kolumn {{at}} ({{detail}}) används inte — matchningen sker på namn."
+    },
+    "matchedBy": "Matchad på",
+    "match": {
+      "externalId": "SportAdmin-id",
+      "name": "namn"
     }
   }
 }

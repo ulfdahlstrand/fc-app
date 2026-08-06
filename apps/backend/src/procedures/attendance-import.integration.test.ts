@@ -417,6 +417,96 @@ describe("commitAttendanceImport", () => {
     ).toHaveLength(2);
   });
 
+  it("matches by external id once it has learned one", async () => {
+    // First run: nothing is known, so the name is what matches — and the id
+    // the source carries is remembered.
+    const first = await commit();
+    expect(first.rows[0]?.matchedBy).toBe("name");
+
+    const learned = await db
+      .selectFrom("person_external_ids")
+      .selectAll()
+      .execute();
+    expect(learned).toHaveLength(1);
+    expect(learned[0]).toMatchObject({
+      source: "sportadmin",
+      external_id: "m1",
+    });
+
+    // Second run with the name spelled differently. This is the shape of the
+    // failure that produced 36 duplicate members before there were ids.
+    const again = await commit({
+      rows: [
+        {
+          rowNumber: 1,
+          firstName: "Ture",
+          lastName: "Dahlstrandh",
+          externalRef: "m1",
+          marks: { "0": "present" },
+        },
+      ],
+    });
+    expect(again.rows[0]?.matchedBy).toBe("externalId");
+    expect(again.rows[0]?.memberId).toBe(tureId);
+    expect(again.summary.marksUnchanged).toBe(1);
+  });
+
+  it("gives a member with no personnummer a person to hang an id off", async () => {
+    const before = await db
+      .selectFrom("members")
+      .select("person_id")
+      .where("id", "=", tureId)
+      .executeTakeFirstOrThrow();
+    expect(before.person_id).toBeNull();
+
+    await commit();
+
+    const after = await db
+      .selectFrom("members")
+      .select("person_id")
+      .where("id", "=", tureId)
+      .executeTakeFirstOrThrow();
+    expect(after.person_id).not.toBeNull();
+    // An anchor and nothing more — no personnummer was invented for them.
+    expect(
+      await db.selectFrom("person_personal_ids").selectAll().execute()
+    ).toEqual([]);
+  });
+
+  it("never adds a person, whatever the file says", async () => {
+    // The roster is the member import's business (#63, #64). This one links
+    // to people who are already there and says so when it cannot — a name
+    // nobody recognises is a row that failed, never a member that appeared.
+    const before = await db.selectFrom("members").selectAll().execute();
+
+    await commit({
+      rows: [
+        {
+          rowNumber: 1,
+          firstName: "Ture",
+          lastName: "Dahlstrand",
+          externalRef: "m1",
+          marks: { "0": "present" },
+        },
+        {
+          rowNumber: 2,
+          firstName: "Någon",
+          lastName: "Heltokänd",
+          externalRef: "m9",
+          marks: { "0": "present" },
+        },
+      ],
+    });
+
+    const after = await db.selectFrom("members").selectAll().execute();
+    expect(after).toHaveLength(before.length);
+    // A person anchor may appear for a row that matched — that is the club's
+    // register learning who somebody is (#89), not a new human on the roster.
+    expect(
+      await db.selectFrom("person_personal_ids").selectAll().execute()
+    ).toEqual([]);
+  });
+
   it("refuses a caller who may record attendance but not import it", async () => {
     const coach = await createTestUser(db, club, { systemKey: "coach" });
     await expect(

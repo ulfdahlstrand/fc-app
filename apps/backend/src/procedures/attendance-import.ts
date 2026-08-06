@@ -48,24 +48,34 @@ export const previewAttendanceImportHandler =
   os.previewAttendanceImport.handler(async ({ input, context }) => {
     const user = requireUser(context);
     const db = getDb();
-    await requireTeamPermission(db, user.id, input.teamId, "attendance.import");
+    const { clubId } = await requireTeamPermission(
+      db,
+      user.id,
+      input.teamId,
+      "attendance.import"
+    );
     assertWithinMarkCap(input);
 
-    return toReport(await buildAttendancePlan(db, input));
+    return toReport(await buildAttendancePlan(db, input, clubId));
   });
 
 export const commitAttendanceImportHandler = os.commitAttendanceImport.handler(
   async ({ input, context }) => {
     const user = requireUser(context);
     const db = getDb();
-    await requireTeamPermission(db, user.id, input.teamId, "attendance.import");
+    const { clubId } = await requireTeamPermission(
+      db,
+      user.id,
+      input.teamId,
+      "attendance.import"
+    );
     assertWithinMarkCap(input);
 
     // Planned and applied inside one transaction, so the calendar cannot move
     // between the two and a failure half-way leaves nothing behind.
     const plan = await db.transaction().execute(async (trx) => {
-      const planned = await buildAttendancePlan(trx, input);
-      await applyAttendancePlan(trx, input.teamId, input, planned);
+      const planned = await buildAttendancePlan(trx, input, clubId);
+      await applyAttendancePlan(trx, input.teamId, clubId, input, planned);
       return planned;
     });
 

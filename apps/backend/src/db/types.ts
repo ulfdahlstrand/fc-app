@@ -114,8 +114,33 @@ export interface MembersTable {
 export interface PersonsTable {
   id: Generated<string>;
   club_id: string;
+  created_at: Timestamp;
+}
+
+/**
+ * The personnummer, keyed by person so there can only ever be one (#89).
+ * Read and written by `members/personal-id.ts` alone — ADR-022's gate.
+ */
+export interface PersonPersonalIdsTable {
+  person_id: string;
+  club_id: string;
   /** Twelve digits, no separator. Unique within the club. */
   personal_id: string;
+  created_at: Timestamp;
+}
+
+/**
+ * What other systems call this person. Several per person is the point: a
+ * club may import from more than one, and one system may know them by more
+ * than one number (#89).
+ */
+export interface PersonExternalIdsTable {
+  id: Generated<string>;
+  person_id: string;
+  club_id: string;
+  /** `sportadmin`, `sportadmin-medlemsnr`, … — see the migration. */
+  source: string;
+  external_id: string;
   created_at: Timestamp;
 }
 
@@ -337,6 +362,8 @@ export interface Database {
   invitations: InvitationsTable;
   members: MembersTable;
   persons: PersonsTable;
+  person_personal_ids: PersonPersonalIdsTable;
+  person_external_ids: PersonExternalIdsTable;
   member_contacts: MemberContactsTable;
   member_field_definitions: MemberFieldDefinitionsTable;
   member_field_values: MemberFieldValuesTable;

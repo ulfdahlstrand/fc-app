@@ -759,6 +759,11 @@
       "badHeader": "The file has no {{detail}} column — without one no row can be matched.",
       "namelessRow": "Row {{at}} has no first name and is skipped.",
       "ignoredColumn": "Column {{at}} ({{detail}}) is not used — matching is by name."
+    },
+    "matchedBy": "Matched by",
+    "match": {
+      "externalId": "SportAdmin id",
+      "name": "name"
     }
   }
 }

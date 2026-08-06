@@ -1,10 +1,11 @@
 /**
- * The only module that reads or writes a personnummer (ADR-022, ADR-023).
+ * The only module that reads or writes a personnummer (ADR-022, ADR-023, #89).
  *
- * `grep persons` should therefore return this file and nothing else: the point
- * of keeping the number out of `members` is that reading it has to be a
- * deliberate act, not something a `selectAll()` does for you. A member row
- * carries only a `person_id` — a uuid, which says nothing about anybody.
+ * `grep person_personal_ids` should therefore return this file and nothing
+ * else: the point of keeping the number out of `members` is that reading it
+ * has to be a deliberate act, not something a `selectAll()` does for you. A
+ * member row carries only a `person_id` — a uuid, which says nothing about
+ * anybody — and since #89 a `selectAll()` on `persons` says nothing either.
  *
  * The permission check and the masking both live here, so a caller cannot leak
  * a full number by forgetting which shape it asked for.
@@ -41,8 +42,12 @@ export async function loadPersonalIds(
 
   const rows = await db
     .selectFrom("members")
-    .innerJoin("persons", "persons.id", "members.person_id")
-    .select(["members.id as member_id", "persons.personal_id"])
+    .innerJoin(
+      "person_personal_ids",
+      "person_personal_ids.person_id",
+      "members.person_id"
+    )
+    .select(["members.id as member_id", "person_personal_ids.personal_id"])
     .where("members.id", "in", memberIds)
     .execute();
 
@@ -81,15 +86,15 @@ export async function loadClubRegister(
   clubId: string
 ): Promise<Map<string, KnownPerson>> {
   const rows = await db
-    .selectFrom("persons")
-    .leftJoin("members", "members.person_id", "persons.id")
+    .selectFrom("person_personal_ids")
+    .leftJoin("members", "members.person_id", "person_personal_ids.person_id")
     .select([
-      "persons.id as person_id",
-      "persons.personal_id",
+      "person_personal_ids.person_id",
+      "person_personal_ids.personal_id",
       "members.id as member_id",
       "members.team_id",
     ])
-    .where("persons.club_id", "=", clubId)
+    .where("person_personal_ids.club_id", "=", clubId)
     .execute();
 
   const register = new Map<string, KnownPerson>();
@@ -177,23 +182,37 @@ export async function setPersonalId(
   };
 }
 
-/** The club's person for this number, creating them the first time. */
+/**
+ * The club's person for this number, creating them the first time.
+ *
+ * Two writes since #89, because the person and their personnummer are two
+ * records now — which is what lets a person exist without one at all. Callers
+ * are inside a transaction; a person with no number attached would otherwise
+ * be the visible half of a failed insert.
+ */
 export async function upsertPerson(
   db: Kysely<Database>,
   clubId: string,
   personalId: string
 ): Promise<{ id: string }> {
   const existing = await db
-    .selectFrom("persons")
-    .select("id")
+    .selectFrom("person_personal_ids")
+    .select("person_id as id")
     .where("club_id", "=", clubId)
     .where("personal_id", "=", personalId)
     .executeTakeFirst();
   if (existing) return existing;
 
-  return await db
+  const person = await db
     .insertInto("persons")
-    .values({ club_id: clubId, personal_id: personalId })
+    .values({ club_id: clubId })
     .returning("id")
     .executeTakeFirstOrThrow();
+
+  await db
+    .insertInto("person_personal_ids")
+    .values({ person_id: person.id, club_id: clubId, personal_id: personalId })
+    .execute();
+
+  return person;
 }

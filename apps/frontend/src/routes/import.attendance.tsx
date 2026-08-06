@@ -688,6 +688,7 @@ function AttendanceImportWizard({
               <TableHeader>
                 <TableRow>
                   <TableHead>{t("attendanceImport.member")}</TableHead>
+                  <TableHead>{t("attendanceImport.matchedBy")}</TableHead>
                   <TableHead>{t("attendanceImport.added")}</TableHead>
                   <TableHead>{t("attendanceImport.changed")}</TableHead>
                   <TableHead>{t("import.unchanged")}</TableHead>
@@ -699,6 +700,11 @@ function AttendanceImportWizard({
                 {result.rows.map((row) => (
                   <TableRow key={row.rowNumber}>
                     <TableCell>{row.name}</TableCell>
+                    <TableCell className="text-muted-foreground text-sm">
+                      {row.matchedBy
+                        ? t(`attendanceImport.match.${row.matchedBy}`)
+                        : "—"}
+                    </TableCell>
                     <TableCell>{row.added}</TableCell>
                     <TableCell>{row.changed}</TableCell>
                     <TableCell>{row.unchanged}</TableCell>
