@@ -38,6 +38,13 @@ export const importRowSchema = z.object({
   /** Raw as it appeared; validated server-side, never trusted from here. */
   personalId: z.string().max(20).nullable(),
   externalRef: z.string().max(100).nullable(),
+  /**
+   * SportAdmin's internal member id (#89). A different namespace from
+   * `Medlems Nr`: the two do not join, so they are recorded under different
+   * sources. Recording it here is what lets the attendance import match on an
+   * id instead of on a name.
+   */
+  sportAdminId: z.string().max(100).nullable(),
   email: z.string().max(255).nullable(),
   phone: z.string().max(50).nullable(),
   /** Group names from `Gruppkoppling` — created on commit if new. */

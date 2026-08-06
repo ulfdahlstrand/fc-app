@@ -20,6 +20,8 @@ export type BuiltinField =
   | "lastName"
   | "personalId"
   | "externalRef"
+  /** SportAdmin's internal member id — the key the attendance import uses. */
+  | "sportAdminId"
   | "email"
   | "phoneMobile"
   | "phoneHome"
@@ -57,6 +59,8 @@ const BUILTIN_HEADERS: Record<string, BuiltinField> = {
   efternamn: "lastName",
   personnummer: "personalId",
   "medlems nr": "externalRef",
+  "sportadmin-id": "sportAdminId",
+  "sportadmin id": "sportAdminId",
   "e-post": "email",
   mobiltelefon: "phoneMobile",
   "telefon hem": "phoneHome",
@@ -261,6 +265,7 @@ export function toImportRow(
     lastName: lastName ?? "",
     personalId: builtins.personalId ?? null,
     externalRef: builtins.externalRef ?? null,
+    sportAdminId: builtins.sportAdminId ?? null,
     email: builtins.email ?? null,
     phone: pickPhone(builtins),
     groups,

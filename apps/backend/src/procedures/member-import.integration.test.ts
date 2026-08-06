@@ -49,6 +49,7 @@ function row(overrides: Partial<ImportRow> = {}): ImportRow {
     lastName: "Dahlstrand",
     personalId: null,
     externalRef: null,
+    sportAdminId: null,
     email: null,
     phone: null,
     groups: [],
