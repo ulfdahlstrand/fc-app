@@ -417,6 +417,36 @@ describe("commitAttendanceImport", () => {
     ).toHaveLength(2);
   });
 
+  it("never adds a person, whatever the file says", async () => {
+    // The roster is the member import's business (#63, #64). This one links
+    // to people who are already there and says so when it cannot — a name
+    // nobody recognises is a row that failed, never a member that appeared.
+    const before = await db.selectFrom("members").selectAll().execute();
+
+    await commit({
+      rows: [
+        {
+          rowNumber: 1,
+          firstName: "Ture",
+          lastName: "Dahlstrand",
+          externalRef: "m1",
+          marks: { "0": "present" },
+        },
+        {
+          rowNumber: 2,
+          firstName: "Någon",
+          lastName: "Heltokänd",
+          externalRef: "m9",
+          marks: { "0": "present" },
+        },
+      ],
+    });
+
+    const after = await db.selectFrom("members").selectAll().execute();
+    expect(after).toHaveLength(before.length);
+    expect(await db.selectFrom("persons").selectAll().execute()).toEqual([]);
+  });
+
   it("refuses a caller who may record attendance but not import it", async () => {
     const coach = await createTestUser(db, club, { systemKey: "coach" });
     await expect(
