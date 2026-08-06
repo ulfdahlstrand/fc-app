@@ -744,6 +744,21 @@
     "fixErrorsFirst": "Fix the errors above first — rows with errors are not imported.",
     "commitError": "The import failed. Nothing was saved.",
     "done": "The import is done. This is what was written.",
-    "toCalendar": "Go to the calendar"
+    "toCalendar": "Go to the calendar",
+    "source": {
+      "sportadmin": "SportAdmin page",
+      "sheet": "Your own file"
+    },
+    "sheetHint": "A matrix: one row per person, one column per activity. A column header is a date, optionally followed by time, type and title separated by |, for example 2026-01-21 | 13:00 | Match | vs Skiljebo SK.\nCSV or Excel. The file is never uploaded; it is read here in the browser.",
+    "sheetReadError": "That file could not be read. Is it a .csv or .xlsx?",
+    "downloadTemplate": "Download a template with the roster",
+    "readSheet": "{{activities}} activities and {{members}} people.",
+    "defaultTime": "Default time",
+    "defaultType": "Default type",
+    "problem": {
+      "badHeader": "The file has no {{detail}} column — without one no row can be matched.",
+      "namelessRow": "Row {{at}} has no first name and is skipped.",
+      "ignoredColumn": "Column {{at}} ({{detail}}) is not used — matching is by name."
+    }
   }
 }

@@ -744,6 +744,21 @@
     "fixErrorsFirst": "Rätta felen ovan först — rader med fel importeras inte.",
     "commitError": "Importen misslyckades. Inget har sparats.",
     "done": "Importen är klar. Det här är vad som skrevs.",
-    "toCalendar": "Till kalendern"
+    "toCalendar": "Till kalendern",
+    "source": {
+      "sportadmin": "SportAdmin-sida",
+      "sheet": "Egen fil"
+    },
+    "sheetHint": "En matris: en rad per person, en kolumn per aktivitet. Kolumnrubriken är ett datum, valfritt följt av tid, typ och titel åtskilda med |, till exempel 2026-01-21 | 13:00 | Match | vs Skiljebo SK.\nCSV eller Excel. Filen laddas aldrig upp, den läses här i webbläsaren.",
+    "sheetReadError": "Filen gick inte att läsa. Är det en .csv eller .xlsx?",
+    "downloadTemplate": "Ladda ner mall med lagets namn",
+    "readSheet": "{{activities}} aktiviteter och {{members}} personer.",
+    "defaultTime": "Standardtid",
+    "defaultType": "Standardtyp",
+    "problem": {
+      "badHeader": "Filen saknar en {{detail}}-kolumn — utan den går ingen rad att matcha.",
+      "namelessRow": "Rad {{at}} har inget förnamn och hoppas över.",
+      "ignoredColumn": "Kolumn {{at}} ({{detail}}) används inte — matchningen sker på namn."
+    }
   }
 }

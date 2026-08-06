@@ -366,6 +366,57 @@ describe("commitAttendanceImport", () => {
     expect(await storedMarks()).toHaveLength(1);
   });
 
+  it("re-runs a source without ids by falling back to the natural key", async () => {
+    // The hand-filled matrix (#86) has no external ref to match on, so the
+    // second run has to recognise the activity by team, type and instant.
+    const noIds = {
+      activities: [activity({ externalRef: null })],
+    };
+    await commit(noIds);
+    const again = await commit(noIds);
+
+    expect(again.summary).toMatchObject({
+      activitiesCreated: 0,
+      activitiesReused: 1,
+      marksAdded: 0,
+      marksUnchanged: 1,
+    });
+    expect(
+      await db.selectFrom("activities").selectAll().execute(),
+    ).toHaveLength(1);
+  });
+
+  it("keeps two id-less columns at the same instant apart by their order", async () => {
+    const twoAtOnce = {
+      activities: [
+        activity({ externalRef: null, date: "2026-04-25", time: "10:00" }),
+        activity({ externalRef: null, date: "2026-04-25", time: "10:00" }),
+      ],
+      rows: [
+        {
+          rowNumber: 1,
+          firstName: "Ture",
+          lastName: "Dahlstrand",
+          externalRef: null,
+          marks: { "0": "present", "1": "present" },
+        },
+      ],
+    };
+    const first = await commit(twoAtOnce);
+    expect(first.summary.activitiesCreated).toBe(2);
+
+    const again = await commit(twoAtOnce);
+    expect(again.summary).toMatchObject({
+      activitiesCreated: 0,
+      activitiesReused: 2,
+      marksAdded: 0,
+      marksUnchanged: 2,
+    });
+    expect(
+      await db.selectFrom("activities").selectAll().execute(),
+    ).toHaveLength(2);
+  });
+
   it("refuses a caller who may record attendance but not import it", async () => {
     const coach = await createTestUser(db, club, { systemKey: "coach" });
     await expect(

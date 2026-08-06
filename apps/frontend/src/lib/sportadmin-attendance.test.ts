@@ -9,6 +9,12 @@
  */
 import { describe, expect, it } from "vitest";
 import {
+  parseAttendanceSheet,
+  parseCsv,
+  toImportInput as sheetToImportInput,
+  type SheetCell,
+} from "./attendance-sheet";
+import {
   assignYears,
   mergePages,
   parseAttendancePage,
@@ -33,7 +39,12 @@ function confirmCell(ref: string, isConfirmed: boolean): string {
   return `<td align="center" class="kort3" bgcolor="CCFFCC"><input type="checkbox" class="check" onclick="if (confirm('Är du säker?')) {${field}.value=${ref};submit();} else this.checked=true"></td>`;
 }
 
-function nameCell(ref: string, name: string, year: string, current = true): string {
+function nameCell(
+  ref: string,
+  name: string,
+  year: string,
+  current = true,
+): string {
   // A former member keeps their profile link; SportAdmin marks them with a
   // leading dash instead, and renders the name without the inner <font>.
   const label = current
@@ -43,7 +54,11 @@ function nameCell(ref: string, name: string, year: string, current = true): stri
   return `<tr><td style="background:#FFF" nowrap id="m${ref}"><div style="float:right"><font style="color:#AAAAAA"> ${year}&nbsp;</font></div>${inner}</td></tr>`;
 }
 
-function gridCell(activityRef: string, memberRef: string, present: boolean): string {
+function gridCell(
+  activityRef: string,
+  memberRef: string,
+  present: boolean,
+): string {
   const style = present ? "background:#CCFFCC;height:20px" : "height:20px";
   const body = present ? '<font color="999999">&nbsp;</font>' : "&nbsp;";
   return `<td align="center" style="${style}" class="kort3" onmouseover="aOn(a${activityRef},m${memberRef},this)" onmouseout="aOff(a${activityRef},m${memberRef},this)">${body}</td>`;
@@ -93,8 +108,8 @@ function page(): string {
       ${MEMBERS.map(
         (m) =>
           `<tr>${ACTIVITY_REFS.map((a, i) =>
-            gridCell(a, m.ref, attendance[m.ref]![i]!)
-          ).join("")}</tr>`
+            gridCell(a, m.ref, attendance[m.ref]![i]!),
+          ).join("")}</tr>`,
       ).join("")}
     </table>
   </body></html>`;
@@ -181,15 +196,26 @@ describe("parseAttendancePage", () => {
 
 describe("toImportInput", () => {
   it("writes no mark at all for an unconfirmed column", () => {
-    const { activities, rows } = toImportInput(parseAttendancePage(page()), 2026);
+    const { activities, rows } = toImportInput(
+      parseAttendancePage(page()),
+      2026,
+    );
     expect(activities[3]?.confirmed).toBe(false);
     for (const row of rows) expect(row.marks["3"]).toBeUndefined();
   });
 
   it("carries absence from a confirmed column", () => {
     const { rows } = toImportInput(parseAttendancePage(page()), 2026);
-    expect(rows[0]?.marks).toEqual({ "0": "present", "1": "absent", "2": "present" });
-    expect(rows[1]?.marks).toEqual({ "0": "absent", "1": "present", "2": "absent" });
+    expect(rows[0]?.marks).toEqual({
+      "0": "present",
+      "1": "absent",
+      "2": "present",
+    });
+    expect(rows[1]?.marks).toEqual({
+      "0": "absent",
+      "1": "present",
+      "2": "absent",
+    });
   });
 
   it("dates the columns from the chosen year", () => {
@@ -241,5 +267,51 @@ describe("mergePages", () => {
     expect(merged.activities).toHaveLength(4);
     expect(merged.members).toHaveLength(3);
     expect(merged.marks.size).toBe(8);
+  });
+});
+
+describe("the two sources agree", () => {
+  /**
+   * #86's matrix and #84's page are different files describing the same
+   * season. They meet at the wire rows, and everything downstream — the
+   * planner, the preview, the commit — only ever sees those. If the two
+   * disagree here, the backend has quietly learned a second format.
+   */
+  it("describes the same season the same way", () => {
+    const fromPage = toImportInput(parseAttendancePage(page()), 2026);
+    const fromSheet = sheetToImportInput(
+      parseAttendanceSheet(
+        parseCsv(
+          [
+            "Förnamn;Efternamn;2026-03-24 | 17:00 | Träning;2026-03-28 | 09:35 | Tävling;2026-04-02 | 14:00 | Tävling",
+            "Adam;Görling;N;F;N",
+            "Alexander;Eklund-Morén;F;N;F",
+          ].join("\n"),
+        ) as SheetCell[][],
+        { time: "18:00", typeName: "Träning" },
+      ),
+    );
+
+    // The unconfirmed fourth column is absent from the sheet on purpose: a
+    // column somebody typed exists because they typed it.
+    expect(
+      fromSheet.activities.map((a) => [a.date, a.time, a.typeName]),
+    ).toEqual(
+      fromPage.activities
+        .filter((a) => a.confirmed)
+        .map((a) => [a.date, a.time, a.typeName]),
+    );
+
+    expect(fromSheet.rows.map((r) => [r.firstName, r.lastName])).toEqual(
+      fromPage.rows
+        .filter((r) => r.firstName !== "Leo")
+        .map((r) => [r.firstName, r.lastName]),
+    );
+    // Same cells filled in, whatever the two files call the values.
+    expect(fromSheet.rows.map((r) => Object.keys(r.marks))).toEqual(
+      fromPage.rows
+        .filter((r) => r.firstName !== "Leo")
+        .map((r) => Object.keys(r.marks)),
+    );
   });
 });
