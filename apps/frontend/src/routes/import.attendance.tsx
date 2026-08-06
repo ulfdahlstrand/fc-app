@@ -1,5 +1,10 @@
 /**
- * Importing a season of attendance from SportAdmin's närvaro page (#84).
+ * Importing a season of attendance (#84, #85, #86).
+ *
+ * Two sources, one pipeline. SportAdmin's own page is exact but only helps
+ * teams coming from SportAdmin; a hand-filled matrix serves everyone else.
+ * Both normalise to the same wire rows here, so the planner, the preview and
+ * the commit never learn that a second format exists.
  *
  * Its own route beside the roster import, for the same reasons: the wizard
  * owns the screen for several steps, and backfilling half a season is
@@ -32,20 +37,29 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { readSheet } from "read-excel-file/browser";
 import { useActivityTypes } from "../lib/activity-types";
 import {
   useCommitAttendanceImport,
   usePreviewAttendanceImport,
 } from "../lib/attendance-import";
+import {
+  attendanceTemplate,
+  parseAttendanceSheet,
+  parseCsv,
+  toImportInput as sheetToImportInput,
+  type SheetCell,
+} from "../lib/attendance-sheet";
 import { useAttendanceStatuses } from "../lib/attendance-statuses";
 import { ensureMe } from "../lib/auth";
 import { useIsPhone } from "../lib/breakpoint";
 import { ensureMyClubs, useHasPermission, useSelectedTeam } from "../lib/clubs";
+import { useMembers } from "../lib/members";
 import {
   decodeSportAdminPage,
   mergePages,
   parseAttendancePage,
-  toImportInput,
+  toImportInput as pageToImportInput,
   yearFromGroupName,
   type ParsedPage,
 } from "../lib/sportadmin-attendance";
@@ -62,6 +76,9 @@ export const Route = createFileRoute("/import/attendance")({
 
 /** Where a Swedish club's wall clock lives; changeable, rarely changed. */
 const DEFAULT_TIME_ZONE = "Europe/Stockholm";
+
+/** SportAdmin's own page, or a file somebody filled in. */
+type Source = "sportadmin" | "sheet";
 
 function AttendanceImportPage() {
   const { t } = useTranslation();
@@ -116,7 +133,12 @@ function AttendanceImportWizard({
   teamName: string;
 }) {
   const { t } = useTranslation();
+  const [source, setSource] = useState<Source>("sportadmin");
   const [page, setPage] = useState<ParsedPage | null>(null);
+  /** The sheet as read, kept raw so changing a default re-parses it. */
+  const [grid, setGrid] = useState<SheetCell[][] | null>(null);
+  const [defaultTime, setDefaultTime] = useState("18:00");
+  const [defaultType, setDefaultType] = useState("Träning");
   const [year, setYear] = useState<number>(new Date().getFullYear());
   const [readError, setReadError] = useState<string | null>(null);
   const [statusFor, setStatusFor] = useState<Record<string, string>>({});
@@ -125,12 +147,25 @@ function AttendanceImportWizard({
 
   const statuses = useAttendanceStatuses(teamId);
   const types = useActivityTypes(teamId);
+  const members = useMembers(teamId, {});
   const preview = usePreviewAttendanceImport(teamId);
   const commit = useCommitAttendanceImport(teamId);
 
+  const parsedSheet = useMemo(
+    () =>
+      grid
+        ? parseAttendanceSheet(grid, {
+            time: defaultTime,
+            typeName: defaultType,
+          })
+        : null,
+    [grid, defaultTime, defaultType],
+  );
+
   const wire = useMemo(() => {
+    if (parsedSheet) return sheetToImportInput(parsedSheet);
     if (!page) return null;
-    const { activities, rows } = toImportInput(page, year);
+    const { activities, rows } = pageToImportInput(page, year);
     const former = new Set(
       page.members.filter((m) => m.former).map((m) => m.externalRef),
     );
@@ -140,7 +175,7 @@ function AttendanceImportWizard({
         ? rows.filter((row) => !former.has(row.externalRef ?? ""))
         : rows,
     } satisfies { activities: ImportActivity[]; rows: ImportAttendanceRow[] };
-  }, [page, year, skipFormer]);
+  }, [parsedSheet, page, year, skipFormer]);
 
   /** The types the file names, in the order the season met them. */
   const sourceTypes = useMemo(() => {
@@ -176,32 +211,12 @@ function AttendanceImportWizard({
         );
       }
       const merged = mergePages(parsed);
+      setGrid(null);
       setPage(merged);
       setYear(yearFromGroupName(merged.groupName) ?? new Date().getFullYear());
-      // Sensible starting points, all overridable: the first status that
-      // counts as present for "present", the first that does not for
-      // "absent", and a type of the same name where the team has one.
-      const present = statuses.data?.attendanceStatuses.find(
-        (s) => s.countsAsPresent,
-      );
-      const away = statuses.data?.attendanceStatuses.find(
-        (s) => !s.countsAsPresent,
-      );
-      setStatusFor({
-        ...(present ? { present: present.id } : {}),
-        ...(away ? { absent: away.id } : {}),
-      });
-      setTypeFor(
-        Object.fromEntries(
-          [...new Set(merged.activities.map((a) => a.typeName))].flatMap(
-            (name) => {
-              const match = types.data?.activityTypes.find(
-                (type) => type.name.toLowerCase() === name.toLowerCase(),
-              );
-              return match ? [[name, match.id] as const] : [];
-            },
-          ),
-        ),
+      suggestMappings(
+        [...new Set(merged.activities.map((a) => a.typeName))],
+        ["present", "absent"],
       );
     } catch (error) {
       setReadError(
@@ -211,6 +226,79 @@ function AttendanceImportWizard({
       );
       setPage(null);
     }
+  }
+
+  /**
+   * Starting points, all overridable: a status that counts as present for a
+   * value that reads like presence, one that does not for the rest, and a
+   * type of the same name where the team already has one.
+   */
+  function suggestMappings(typeNames: string[], values: string[]): void {
+    const present = statuses.data?.attendanceStatuses.find(
+      (s) => s.countsAsPresent,
+    );
+    const away = statuses.data?.attendanceStatuses.find(
+      (s) => !s.countsAsPresent,
+    );
+    const PRESENT_LIKE = new Set(["present", "n", "x", "1", "j", "ja"]);
+    setStatusFor(
+      Object.fromEntries(
+        values.flatMap((value) => {
+          const guess = PRESENT_LIKE.has(value.toLowerCase()) ? present : away;
+          return guess ? [[value, guess.id] as const] : [];
+        }),
+      ),
+    );
+    setTypeFor(
+      Object.fromEntries(
+        typeNames.flatMap((name) => {
+          const match = types.data?.activityTypes.find(
+            (type) => type.name.toLowerCase() === name.toLowerCase(),
+          );
+          return match ? [[name, match.id] as const] : [];
+        }),
+      ),
+    );
+  }
+
+  /** A `.csv` or `.xlsx` matrix. */
+  async function onSheet(file: File): Promise<void> {
+    setReadError(null);
+    preview.reset();
+    commit.reset();
+    try {
+      const cells: SheetCell[][] = file.name.toLowerCase().endsWith(".csv")
+        ? parseCsv(await file.text())
+        : ((await readSheet(file)) as SheetCell[][]);
+      const parsed = parseAttendanceSheet(cells, {
+        time: defaultTime,
+        typeName: defaultType,
+      });
+      setPage(null);
+      setGrid(cells);
+      suggestMappings(
+        [...new Set(parsed.columns.map((c) => c.typeName))],
+        parsed.values,
+      );
+    } catch {
+      setReadError(t("attendanceImport.sheetReadError"));
+      setGrid(null);
+    }
+  }
+
+  function downloadTemplate(): void {
+    const csv = attendanceTemplate(
+      members.data?.members ?? [],
+      statuses.data?.attendanceStatuses ?? [],
+    );
+    const url = URL.createObjectURL(
+      new Blob([csv], { type: "text/csv;charset=utf-8" }),
+    );
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `narvaro-${teamName}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
   }
 
   function payload() {
@@ -266,18 +354,66 @@ function AttendanceImportWizard({
           <h2 className="font-display text-xl">
             {t("attendanceImport.step1")}
           </h2>
-          <Input
-            type="file"
-            accept=".html,.htm"
-            multiple
-            onChange={(event) => {
-              const files = event.target.files;
-              if (files && files.length > 0) void onFiles(files);
-            }}
-          />
-          <p className="text-xs text-muted-foreground whitespace-pre-line">
-            {t("attendanceImport.fileHint")}
-          </p>
+          <div className="flex flex-wrap gap-2">
+            {(["sportadmin", "sheet"] as const).map((option) => (
+              <Button
+                key={option}
+                size="sm"
+                variant={source === option ? "default" : "outline"}
+                onClick={() => {
+                  setSource(option);
+                  setPage(null);
+                  setGrid(null);
+                  setReadError(null);
+                  preview.reset();
+                  commit.reset();
+                }}
+              >
+                {t(`attendanceImport.source.${option}`)}
+              </Button>
+            ))}
+          </div>
+
+          {source === "sportadmin" ? (
+            <>
+              <Input
+                type="file"
+                accept=".html,.htm"
+                multiple
+                onChange={(event) => {
+                  const files = event.target.files;
+                  if (files && files.length > 0) void onFiles(files);
+                }}
+              />
+              <p className="text-xs whitespace-pre-line text-muted-foreground">
+                {t("attendanceImport.fileHint")}
+              </p>
+            </>
+          ) : (
+            <>
+              <Input
+                type="file"
+                accept=".csv,.xlsx"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) void onSheet(file);
+                }}
+              />
+              <p className="text-xs whitespace-pre-line text-muted-foreground">
+                {t("attendanceImport.sheetHint")}
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="self-start"
+                disabled={!members.data}
+                onClick={downloadTemplate}
+              >
+                {t("attendanceImport.downloadTemplate")}
+              </Button>
+            </>
+          )}
+
           {readError && (
             <Alert variant="destructive">
               <AlertDescription>{readError}</AlertDescription>
@@ -292,32 +428,93 @@ function AttendanceImportWizard({
               })}
             </p>
           )}
+          {parsedSheet && (
+            <p className="text-sm">
+              {t("attendanceImport.readSheet", {
+                activities: parsedSheet.columns.length,
+                members: parsedSheet.rows.length,
+              })}
+            </p>
+          )}
+          {parsedSheet && parsedSheet.problems.length > 0 && (
+            <Alert>
+              <AlertDescription>
+                <ul className="list-disc pl-4">
+                  {parsedSheet.problems.map((problem) => (
+                    <li key={`${problem.kind}-${problem.at}`}>
+                      {t(`attendanceImport.problem.${problem.kind}`, {
+                        at: problem.at,
+                        detail: problem.detail,
+                      })}
+                    </li>
+                  ))}
+                </ul>
+              </AlertDescription>
+            </Alert>
+          )}
         </CardContent>
       </Card>
 
-      {page && (
+      {wire && (
         <Card>
           <CardContent className="flex flex-col gap-4">
             <h2 className="font-display text-xl">
               {t("attendanceImport.step2")}
             </h2>
 
-            <label className="flex flex-col gap-1">
-              <span className="text-sm">{t("attendanceImport.year")}</span>
-              <Input
-                type="number"
-                className="w-32"
-                value={year}
-                onChange={(event) => {
-                  setYear(Number(event.target.value));
-                  preview.reset();
-                  commit.reset();
-                }}
-              />
-              <span className="text-xs text-muted-foreground">
-                {t("attendanceImport.yearHint")}
-              </span>
-            </label>
+            {page && (
+              <label className="flex flex-col gap-1">
+                <span className="text-sm">{t("attendanceImport.year")}</span>
+                <Input
+                  type="number"
+                  className="w-32"
+                  value={year}
+                  onChange={(event) => {
+                    setYear(Number(event.target.value));
+                    preview.reset();
+                    commit.reset();
+                  }}
+                />
+                <span className="text-xs text-muted-foreground">
+                  {t("attendanceImport.yearHint")}
+                </span>
+              </label>
+            )}
+
+            {/* A sheet dates every column, but names the time and the type
+                only where they differ — so the common case is set once. */}
+            {parsedSheet && (
+              <div className="flex flex-wrap gap-4">
+                <label className="flex flex-col gap-1">
+                  <span className="text-sm">
+                    {t("attendanceImport.defaultTime")}
+                  </span>
+                  <Input
+                    className="w-32"
+                    value={defaultTime}
+                    onChange={(event) => {
+                      setDefaultTime(event.target.value);
+                      preview.reset();
+                      commit.reset();
+                    }}
+                  />
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className="text-sm">
+                    {t("attendanceImport.defaultType")}
+                  </span>
+                  <Input
+                    className="w-48"
+                    value={defaultType}
+                    onChange={(event) => {
+                      setDefaultType(event.target.value);
+                      preview.reset();
+                      commit.reset();
+                    }}
+                  />
+                </label>
+              </div>
+            )}
 
             {formerCount > 0 && (
               <label className="flex items-center gap-2 text-sm">
