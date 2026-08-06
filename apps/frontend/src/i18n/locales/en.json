@@ -692,7 +692,9 @@
     "commitSkipped_one": "{{count}} row is skipped.",
     "commitSkipped_other": "{{count}} rows are skipped.",
     "desktopOnly": "Do this one at a computer",
-    "desktopOnlyHint": "The import matches your spreadsheet's columns onto member fields. That is careful work that wants a wide screen — and getting it wrong writes bad data into the roster."
+    "desktopOnlyHint": "The import matches your spreadsheet's columns onto member fields. That is careful work that wants a wide screen — and getting it wrong writes bad data into the roster.",
+    "looksLikeAttendance": "This looks like an attendance file — {{count}} of its columns are dates. Imported here it would create people and custom fields instead of putting the sessions in the calendar.",
+    "goToAttendance": "Go to Import attendance"
   },
   "attendanceImport": {
     "title": "Import attendance",

@@ -6,6 +6,7 @@
  */
 import { describe, expect, it } from "vitest";
 import {
+  looksLikeAttendance,
   parseSheet,
   planColumns,
   toImportRow,
@@ -301,5 +302,38 @@ describe("SportAdmin's internal member id", () => {
     expect(
       toImportRow(sheet.rows[0]!, sheet.plans, 2)?.sportAdminId,
     ).toBeNull();
+  });
+});
+
+describe("looksLikeAttendance", () => {
+  /**
+   * The guard exists because of a real incident: an attendance matrix run
+   * through this import created 36 duplicate members and turned 54 training
+   * sessions into custom fields. A roster export has no date columns at all.
+   */
+  it("recognises the attendance matrix by its date columns", () => {
+    const sheet = parseSheet([
+      ["Förnamn", "Efternamn", "2026-03-24 | 17:00 | Träning", "2026-03-26"],
+      ["Ture", "Dahlstrand", "N", "F"],
+    ]);
+    expect(sheet.dateColumns).toBe(2);
+    expect(looksLikeAttendance(sheet)).toBe(true);
+  });
+
+  it("leaves a real member export alone", () => {
+    const sheet = parseSheet([
+      ["Grupp", "Förnamn", "Efternamn", "Personnummer", "Start År"],
+      ["P17", "Ture", "Dahlstrand", "20170314-2412", "2024"],
+    ]);
+    expect(sheet.dateColumns).toBe(0);
+    expect(looksLikeAttendance(sheet)).toBe(false);
+  });
+
+  it("does not trip on a single date-named column", () => {
+    const sheet = parseSheet([
+      ["Förnamn", "Efternamn", "2026-01-01"],
+      ["Ture", "Dahlstrand", "x"],
+    ]);
+    expect(looksLikeAttendance(sheet)).toBe(false);
   });
 });
