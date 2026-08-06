@@ -22,6 +22,7 @@ const TURE: ExistingMember = {
   phone: null,
   externalRef: null,
   personalId: "201703142412",
+  sportAdminId: null,
 };
 
 const ULF: ExistingMember = {
@@ -33,12 +34,14 @@ const ULF: ExistingMember = {
   phone: "0700838161",
   externalRef: "4711",
   personalId: "198508223578",
+  sportAdminId: null,
 };
 
 function row(overrides: Partial<RowIdentity> = {}): RowIdentity {
   return {
     rowNumber: 1,
     personalId: null,
+    sportAdminId: null,
     externalRef: null,
     firstName: "Ture",
     lastName: "Dahlstrand",
@@ -110,8 +113,50 @@ describe("matchImportRow", () => {
     });
   });
 
-  it("does not match on a name without a birth date", () => {
-    expect(matchImportRow(index, row(), NO_GUARDIANS)).toEqual({ kind: "none" });
+  it("matches on an exact name when nothing stronger is on offer", () => {
+    // This used to be `kind: "none"`, on the reasoning that a name is not an
+    // identity. It is not — but refusing to match on one meant a file
+    // carrying only names duplicated an entire roster, which is worse than
+    // the risk it avoided. Ambiguity is still refused, below.
+    expect(matchImportRow(index, row(), NO_GUARDIANS)).toEqual({
+      kind: "matched",
+      memberId: "member-ture",
+      matchedBy: "name",
+    });
+  });
+
+  it("refuses to choose between two members of the same name", () => {
+    const twins = buildMatchIndex([
+      { ...TURE, id: "member-a", personalId: null, birthDate: null },
+      { ...TURE, id: "member-b", personalId: null, birthDate: null },
+    ]);
+    expect(matchImportRow(twins, row(), NO_GUARDIANS)).toEqual({
+      kind: "ambiguous",
+      matchedBy: "name",
+    });
+  });
+
+  it("prefers an external id over the personnummer and the name", () => {
+    const withId = buildMatchIndex([
+      { ...TURE, id: "member-by-id", sportAdminId: "4214437" },
+      { ...ULF, id: "member-other" },
+    ]);
+    expect(
+      matchImportRow(
+        withId,
+        row({
+          sportAdminId: "4214437",
+          personalId: null,
+          firstName: "Ture",
+          lastName: "Dahlstrandh",
+        }),
+        NO_GUARDIANS
+      )
+    ).toEqual({
+      kind: "matched",
+      memberId: "member-by-id",
+      matchedBy: "sportAdminId",
+    });
   });
 
   it("matches on e-mail only when it is nobody's guardian address", () => {

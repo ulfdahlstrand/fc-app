@@ -15,6 +15,7 @@ import type { Database } from "../db/types.js";
 import { contactKey, MEMBER_COLUMNS, type ImportPlan } from "./import-plan.js";
 import {
   recordMemberExternalId,
+  SOURCE_SPORTADMIN,
   SOURCE_SPORTADMIN_MEMBER_NO,
 } from "./external-ids.js";
 import { setPersonalId } from "./personal-id.js";
@@ -259,6 +260,19 @@ export async function applyImportPlan(
         clubId,
         source: SOURCE_SPORTADMIN_MEMBER_NO,
         externalId: externalRef,
+      });
+    }
+
+    // The internal id, when the file carries one. This is the column the
+    // attendance import matches on, so filling it here is what stops a
+    // second import from having to trust names at all (#89).
+    const sportAdminId = filled(row.sportAdminId);
+    if (sportAdminId !== null) {
+      await recordMemberExternalId(trx, {
+        memberId,
+        clubId,
+        source: SOURCE_SPORTADMIN,
+        externalId: sportAdminId,
       });
     }
 
