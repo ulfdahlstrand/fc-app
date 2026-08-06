@@ -692,7 +692,9 @@
     "commitSkipped_one": "{{count}} rad hoppas över.",
     "commitSkipped_other": "{{count}} rader hoppas över.",
     "desktopOnly": "Gör den här vid datorn",
-    "desktopOnlyHint": "Importen matchar kolumnerna i ditt kalkylark mot fälten på medlemmarna. Det är noggrant arbete som behöver en bred skärm — och blir det fel hamnar felaktiga uppgifter i registret."
+    "desktopOnlyHint": "Importen matchar kolumnerna i ditt kalkylark mot fälten på medlemmarna. Det är noggrant arbete som behöver en bred skärm — och blir det fel hamnar felaktiga uppgifter i registret.",
+    "looksLikeAttendance": "Det här ser ut som en närvarofil — {{count}} av kolumnerna är datum. Importeras den här skapas personer och egna fält i stället för att träningarna hamnar i kalendern.",
+    "goToAttendance": "Gå till Importera närvaro"
   },
   "attendanceImport": {
     "title": "Importera närvaro",
