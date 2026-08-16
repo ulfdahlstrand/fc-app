@@ -64,7 +64,12 @@ import {
   type ParsedPage,
 } from "../lib/sportadmin-attendance";
 
-export const Route = createFileRoute("/import/attendance")({
+// `import_` rather than `import`: the trailing underscore opts this route out
+// of nesting under `/import`, which is the member import — a full page with no
+// <Outlet />, so as its child this one never rendered and clicking through to
+// it showed the member import instead. Same convention as
+// `members_.$memberId`. The URL is still /import/attendance.
+export const Route = createFileRoute("/import_/attendance")({
   beforeLoad: async () => {
     const user = await ensureMe();
     if (!user) throw redirect({ to: "/login" });

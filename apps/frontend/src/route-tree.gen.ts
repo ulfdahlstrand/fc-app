@@ -25,7 +25,7 @@ import { Route as SettingsTeamRouteImport } from './routes/settings.team'
 import { Route as SettingsClubRouteImport } from './routes/settings.club'
 import { Route as MembersMemberIdRouteImport } from './routes/members_.$memberId'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
-import { Route as ImportAttendanceRouteImport } from './routes/import.attendance'
+import { Route as ImportAttendanceRouteImport } from './routes/import_.attendance'
 import { Route as ActivitiesActivityIdRouteImport } from './routes/activities_.$activityId'
 
 const TrackingRoute = TrackingRouteImport.update({
@@ -109,9 +109,9 @@ const InviteTokenRoute = InviteTokenRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const ImportAttendanceRoute = ImportAttendanceRouteImport.update({
-  id: '/attendance',
-  path: '/attendance',
-  getParentRoute: () => ImportRoute,
+  id: '/import_/attendance',
+  path: '/import/attendance',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ActivitiesActivityIdRoute = ActivitiesActivityIdRouteImport.update({
   id: '/activities_/$activityId',
@@ -124,7 +124,7 @@ export interface FileRoutesByFullPath {
   '/activities': typeof ActivitiesRoute
   '/callups': typeof CallupsRoute
   '/groups': typeof GroupsRoute
-  '/import': typeof ImportRouteWithChildren
+  '/import': typeof ImportRoute
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
   '/onboarding': typeof OnboardingRoute
@@ -144,7 +144,7 @@ export interface FileRoutesByTo {
   '/activities': typeof ActivitiesRoute
   '/callups': typeof CallupsRoute
   '/groups': typeof GroupsRoute
-  '/import': typeof ImportRouteWithChildren
+  '/import': typeof ImportRoute
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
   '/onboarding': typeof OnboardingRoute
@@ -165,7 +165,7 @@ export interface FileRoutesById {
   '/activities': typeof ActivitiesRoute
   '/callups': typeof CallupsRoute
   '/groups': typeof GroupsRoute
-  '/import': typeof ImportRouteWithChildren
+  '/import': typeof ImportRoute
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
   '/onboarding': typeof OnboardingRoute
@@ -174,7 +174,7 @@ export interface FileRoutesById {
   '/statistics': typeof StatisticsRoute
   '/tracking': typeof TrackingRoute
   '/activities_/$activityId': typeof ActivitiesActivityIdRoute
-  '/import/attendance': typeof ImportAttendanceRoute
+  '/import_/attendance': typeof ImportAttendanceRoute
   '/invite/$token': typeof InviteTokenRoute
   '/members_/$memberId': typeof MembersMemberIdRoute
   '/settings/club': typeof SettingsClubRoute
@@ -236,7 +236,7 @@ export interface FileRouteTypes {
     | '/statistics'
     | '/tracking'
     | '/activities_/$activityId'
-    | '/import/attendance'
+    | '/import_/attendance'
     | '/invite/$token'
     | '/members_/$memberId'
     | '/settings/club'
@@ -248,7 +248,7 @@ export interface RootRouteChildren {
   ActivitiesRoute: typeof ActivitiesRoute
   CallupsRoute: typeof CallupsRoute
   GroupsRoute: typeof GroupsRoute
-  ImportRoute: typeof ImportRouteWithChildren
+  ImportRoute: typeof ImportRoute
   LoginRoute: typeof LoginRoute
   MembersRoute: typeof MembersRoute
   OnboardingRoute: typeof OnboardingRoute
@@ -257,6 +257,7 @@ export interface RootRouteChildren {
   StatisticsRoute: typeof StatisticsRoute
   TrackingRoute: typeof TrackingRoute
   ActivitiesActivityIdRoute: typeof ActivitiesActivityIdRoute
+  ImportAttendanceRoute: typeof ImportAttendanceRoute
   InviteTokenRoute: typeof InviteTokenRoute
   MembersMemberIdRoute: typeof MembersMemberIdRoute
   SettingsClubRoute: typeof SettingsClubRoute
@@ -377,12 +378,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InviteTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/import/attendance': {
-      id: '/import/attendance'
-      path: '/attendance'
+    '/import_/attendance': {
+      id: '/import_/attendance'
+      path: '/import/attendance'
       fullPath: '/import/attendance'
       preLoaderRoute: typeof ImportAttendanceRouteImport
-      parentRoute: typeof ImportRoute
+      parentRoute: typeof rootRouteImport
     }
     '/activities_/$activityId': {
       id: '/activities_/$activityId'
@@ -394,23 +395,12 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface ImportRouteChildren {
-  ImportAttendanceRoute: typeof ImportAttendanceRoute
-}
-
-const ImportRouteChildren: ImportRouteChildren = {
-  ImportAttendanceRoute: ImportAttendanceRoute,
-}
-
-const ImportRouteWithChildren =
-  ImportRoute._addFileChildren(ImportRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ActivitiesRoute: ActivitiesRoute,
   CallupsRoute: CallupsRoute,
   GroupsRoute: GroupsRoute,
-  ImportRoute: ImportRouteWithChildren,
+  ImportRoute: ImportRoute,
   LoginRoute: LoginRoute,
   MembersRoute: MembersRoute,
   OnboardingRoute: OnboardingRoute,
@@ -419,6 +409,7 @@ const rootRouteChildren: RootRouteChildren = {
   StatisticsRoute: StatisticsRoute,
   TrackingRoute: TrackingRoute,
   ActivitiesActivityIdRoute: ActivitiesActivityIdRoute,
+  ImportAttendanceRoute: ImportAttendanceRoute,
   InviteTokenRoute: InviteTokenRoute,
   MembersMemberIdRoute: MembersMemberIdRoute,
   SettingsClubRoute: SettingsClubRoute,
