@@ -14,6 +14,7 @@ import {
   isChartable,
   latestAndDelta,
   polylinePoints,
+  scaleLabelFor,
   seriesForMetric,
   sparklinePoints,
   useDeleteDevelopmentAssessment,
@@ -184,14 +185,21 @@ export function MemberDevelopmentSection({
 
 type Translate = (key: string) => string;
 
-/** How one stored reading reads on screen. */
+/**
+ * How one stored reading reads on screen. A named step leads with its name and
+ * keeps the number beside it — the number is what the chart plots and what the
+ * delta counts, so dropping it would make "+1" unexplainable.
+ */
 function readingLabel(
   metric: DevelopmentMetric,
   number: number | null,
   text: string | null,
   t: Translate,
 ): string {
-  if (number !== null) return formatMetricNumber(metric, number);
+  if (number !== null) {
+    const named = scaleLabelFor(metric, number);
+    return named ? `${named} (${number})` : formatMetricNumber(metric, number);
+  }
   if (metric.valueType === "boolean") {
     return text === "true" ? t("common.yes") : t("common.no");
   }
@@ -265,14 +273,26 @@ function MetricCard({
   if (!reading) return null;
 
   const points = sparklinePoints(series, chartBounds(metric));
+  const latestName = scaleLabelFor(metric, reading.latest.value);
 
   return (
     <Card metric={metric}>
-      <div className="flex items-end justify-between gap-3">
-        <div className="flex items-baseline gap-2">
-          <span className="text-2xl font-bold">
-            {formatMetricNumber(metric, reading.latest.value)}
-          </span>
+      <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-1">
+        <div className="flex min-w-0 flex-wrap items-baseline gap-x-2">
+          {/* A named step leads with its name; the number follows quietly,
+              because it is what the line below plots and what the chip counts. */}
+          {latestName ? (
+            <>
+              <span className="text-xl font-bold">{latestName}</span>
+              <span className="text-muted-foreground text-sm font-semibold">
+                {reading.latest.value}
+              </span>
+            </>
+          ) : (
+            <span className="text-2xl font-bold">
+              {formatMetricNumber(metric, reading.latest.value)}
+            </span>
+          )}
           {reading.delta !== null && reading.delta !== 0 && (
             <span
               className={cn(
@@ -305,10 +325,14 @@ function MetricCard({
           preserveAspectRatio="none"
           className="mt-2 h-10 w-full"
           role="img"
+          // Named steps read better than their numbers in a screen reader:
+          // "from Lätt to Svår" is the sentence a coach would say.
           aria-label={t("development.trendLabel", {
             metric: metric.name,
-            from: series[0]!.value,
-            to: series.at(-1)!.value,
+            from: scaleLabelFor(metric, series[0]!.value) ?? series[0]!.value,
+            to:
+              scaleLabelFor(metric, series.at(-1)!.value) ??
+              series.at(-1)!.value,
           })}
         >
           <polyline

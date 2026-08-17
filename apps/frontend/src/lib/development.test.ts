@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { DevelopmentAssessment } from "@fc-app/contracts";
 import {
   chartBounds,
+  labelledSteps,
   latestAndDelta,
   metricFormToInput,
   scaleSteps,
@@ -10,6 +11,8 @@ import {
   sparklinePoints,
   type SeriesPoint,
 } from "./development";
+
+const DIFFICULTY = ["Extra lätt", "Lätt", "Medel", "Svår", "Extra svår"];
 
 const scale = {
   id: "niva",
@@ -196,6 +199,30 @@ describe("scaleSteps", () => {
   });
 });
 
+describe("labelledSteps", () => {
+  it("pairs each step with its name", () => {
+    expect(
+      labelledSteps({ scaleMin: 1, scaleMax: 5, scaleLabels: DIFFICULTY }),
+    ).toEqual([
+      { step: 1, label: "Extra lätt" },
+      { step: 2, label: "Lätt" },
+      { step: 3, label: "Medel" },
+      { step: 4, label: "Svår" },
+      { step: 5, label: "Extra svår" },
+    ]);
+  });
+
+  it("leaves the names null on a scale of bare numbers", () => {
+    expect(
+      labelledSteps({ scaleMin: 1, scaleMax: 3, scaleLabels: [] }),
+    ).toEqual([
+      { step: 1, label: null },
+      { step: 2, label: null },
+      { step: 3, label: null },
+    ]);
+  });
+});
+
 describe("metricFormToInput", () => {
   const base = {
     name: "Nivå",
@@ -204,6 +231,48 @@ describe("metricFormToInput", () => {
     scaleMax: 5,
     higherIsBetter: true,
   };
+
+  it("keeps a fully named scale, trimmed", () => {
+    expect(
+      metricFormToInput({
+        ...base,
+        valueType: "scale",
+        scaleLabels: ["  Extra lätt ", "Lätt", "Medel", "Svår", "Extra svår"],
+      }).scaleLabels,
+    ).toEqual(DIFFICULTY);
+  });
+
+  it("treats an all-blank set of names as no names", () => {
+    expect(
+      metricFormToInput({
+        ...base,
+        valueType: "scale",
+        scaleLabels: ["", "  ", "", "", ""],
+      }).scaleLabels,
+    ).toEqual([]);
+  });
+
+  it("keeps the blanks in a half-named scale, so the handler can refuse it", () => {
+    // Silently dropping them would send two names for a five-step scale and
+    // produce a length error instead of "name every step".
+    expect(
+      metricFormToInput({
+        ...base,
+        valueType: "scale",
+        scaleLabels: ["Lätt", "", "", "Svår", ""],
+      }).scaleLabels,
+    ).toEqual(["Lätt", "", "", "Svår", ""]);
+  });
+
+  it("drops names a non-scale may not carry", () => {
+    expect(
+      metricFormToInput({
+        ...base,
+        valueType: "number",
+        scaleLabels: DIFFICULTY,
+      }).scaleLabels,
+    ).toEqual([]);
+  });
 
   it("drops the unit a scale may not carry", () => {
     expect(metricFormToInput({ ...base, valueType: "scale" })).toMatchObject({

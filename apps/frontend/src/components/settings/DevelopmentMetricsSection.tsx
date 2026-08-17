@@ -37,6 +37,7 @@ import { Switch } from "@/components/ui/switch";
 import { useZodResolver } from "@/lib/form";
 import {
   DEVELOPMENT_VALUE_TYPES,
+  MAX_SCALE_SPAN,
   metricFormSchema,
   metricFormToInput,
   useArchiveDevelopmentMetric,
@@ -98,6 +99,10 @@ export function DevelopmentMetrics({ teamId }: { teamId: string }) {
                   {metric.valueType === "scale" && (
                     <span className="text-muted-foreground text-sm">
                       {metric.scaleMin}–{metric.scaleMax}
+                      {/* Ends only: enough to recognise the scale without the
+                          row growing to the width of every step's name. */}
+                      {metric.scaleLabels.length > 0 &&
+                        ` · ${metric.scaleLabels[0]} … ${metric.scaleLabels.at(-1)}`}
                     </span>
                   )}
                   {metric.unit && (
@@ -192,16 +197,36 @@ function MetricDialog({
       unit: metric?.unit ?? "",
       scaleMin: metric?.scaleMin ?? 1,
       scaleMax: metric?.scaleMax ?? 5,
+      scaleLabels: metric?.scaleLabels ?? [],
       higherIsBetter: metric?.higherIsBetter ?? true,
     },
   });
 
   const valueType = form.watch("valueType");
+  const scaleMin = form.watch("scaleMin");
+  const scaleMax = form.watch("scaleMax");
+
+  /**
+   * One box per step of the current range. Editing a bound while creating
+   * re-sizes the list, keeping whatever names were already typed against the
+   * steps they belong to.
+   */
+  const steps =
+    valueType === "scale" && Number.isInteger(scaleMin) &&
+    Number.isInteger(scaleMax) && scaleMax > scaleMin &&
+    scaleMax - scaleMin <= MAX_SCALE_SPAN
+      ? Array.from({ length: scaleMax - scaleMin + 1 }, (_, i) => scaleMin + i)
+      : [];
   const pending = createMetric.isPending || updateMetric.isPending;
   const error = createMetric.error ?? updateMetric.error;
 
   const handleSave = form.handleSubmit(async (data) => {
-    const input = metricFormToInput(data);
+    // Trim the names to the range actually in force, padding any the user left
+    // untouched. Editing a bound mid-form otherwise leaves orphans behind the
+    // end of the scale, and a half-named scale should fail as "name them all"
+    // rather than as a length mismatch.
+    const named = steps.map((_, index) => data.scaleLabels[index] ?? "");
+    const input = metricFormToInput({ ...data, scaleLabels: named });
 
     // The same cross-field rule the handler runs (ADR-010), so an impossible
     // combination is refused before it becomes a round trip.
@@ -217,6 +242,7 @@ function MetricDialog({
         metricId: metric.id,
         name: input.name,
         unit: input.unit,
+        scaleLabels: input.scaleLabels,
         higherIsBetter: input.higherIsBetter,
       });
     } else {
@@ -357,6 +383,46 @@ function MetricDialog({
                   </div>
                 )}
               </>
+            )}
+
+            {/* Names for the steps, so 1–5 can read "Extra lätt … Extra
+                svår". Editable even on an existing metric: renaming a step
+                leaves every stored value exactly as true as it was, which is
+                what separates this from the range itself. */}
+            {valueType === "scale" && steps.length > 0 && (
+              <div className="flex flex-col gap-1.5">
+                <Label>{t("settings.team.scaleLabels")}</Label>
+                <p className="text-muted-foreground text-sm">
+                  {t("settings.team.scaleLabelsHint")}
+                </p>
+                <div className="flex flex-col gap-2">
+                  {steps.map((step, index) => (
+                    <FormField
+                      key={step}
+                      control={form.control}
+                      name={`scaleLabels.${index}`}
+                      render={({ field: formField }) => (
+                        <FormItem className="flex items-center gap-3">
+                          <span className="text-muted-foreground w-6 shrink-0 text-sm font-semibold">
+                            {step}
+                          </span>
+                          <FormControl>
+                            <Input
+                              {...formField}
+                              value={formField.value ?? ""}
+                              maxLength={60}
+                              placeholder={t(
+                                "settings.team.scaleLabelPlaceholder",
+                              )}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  ))}
+                </div>
+              </div>
             )}
 
             {valueType === "number" && (

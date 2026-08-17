@@ -5,17 +5,19 @@ import {
   formatMetricNumber,
   isChartable,
   MAX_SCALE_SPAN,
+  scaleLabelFor,
   validateMetricDefinition,
   type DevelopmentAssessment,
   type DevelopmentMetric,
   type DevelopmentValueType,
 } from "@fc-app/contracts";
+import { z } from "zod";
 import { orpc } from "../orpc-client";
 import { queryClient } from "../query-client";
 import { requiredText } from "./form";
 import { orpcQuery } from "./orpc-query";
 
-export { formatMetricNumber, isChartable, MAX_SCALE_SPAN };
+export { formatMetricNumber, isChartable, MAX_SCALE_SPAN, scaleLabelFor };
 
 export const DEVELOPMENT_VALUE_TYPES: readonly DevelopmentValueType[] = [
   "scale",
@@ -45,6 +47,9 @@ export const metricFormSchema = createDevelopmentMetricInputSchema
       .unwrap(),
     higherIsBetter: createDevelopmentMetricInputSchema.shape.higherIsBetter
       .unwrap(),
+    // Free-form here rather than the contract's `min(1)`: the form holds one
+    // box per step and an all-blank set legitimately means "no names".
+    scaleLabels: z.array(z.string().max(60)),
   });
 
 /**
@@ -57,6 +62,7 @@ export function metricFormToInput(values: {
   unit: string;
   scaleMin: number;
   scaleMax: number;
+  scaleLabels?: string[];
   higherIsBetter: boolean;
 }): {
   name: string;
@@ -64,18 +70,34 @@ export function metricFormToInput(values: {
   unit: string | null;
   scaleMin: number | null;
   scaleMax: number | null;
+  scaleLabels: string[];
   higherIsBetter: boolean;
 } {
   const isScale = values.valueType === "scale";
   const isNumber = values.valueType === "number";
+  const labels = (values.scaleLabels ?? []).map((label) => label.trim());
   return {
     name: values.name,
     valueType: values.valueType,
     unit: isNumber && values.unit.trim() !== "" ? values.unit.trim() : null,
     scaleMin: isScale ? values.scaleMin : null,
     scaleMax: isScale ? values.scaleMax : null,
+    // Naming the steps is all or nothing, so a form left entirely blank sends
+    // none rather than a row of empty strings the handler would reject.
+    scaleLabels:
+      isScale && labels.some((label) => label !== "") ? labels : [],
     higherIsBetter: values.higherIsBetter,
   };
+}
+
+/** The steps of a scale paired with their names, for rendering a picker. */
+export function labelledSteps(
+  metric: Pick<DevelopmentMetric, "scaleMin" | "scaleMax" | "scaleLabels">,
+): { step: number; label: string | null }[] {
+  return scaleSteps(metric).map((step) => ({
+    step,
+    label: scaleLabelFor(metric, step),
+  }));
 }
 
 export { validateMetricDefinition };
@@ -119,6 +141,7 @@ export function useCreateDevelopmentMetric(teamId: string) {
       unit: string | null;
       scaleMin: number | null;
       scaleMax: number | null;
+      scaleLabels: string[];
       higherIsBetter: boolean;
     }) => orpc.createDevelopmentMetric({ teamId, ...input }),
     onSuccess: () => invalidateDevelopment(teamId),
@@ -131,6 +154,7 @@ export function useUpdateDevelopmentMetric(teamId: string) {
       metricId: string;
       name?: string;
       unit?: string | null;
+      scaleLabels?: string[];
       higherIsBetter?: boolean;
       sortOrder?: number;
     }) => orpc.updateDevelopmentMetric({ teamId, ...input }),

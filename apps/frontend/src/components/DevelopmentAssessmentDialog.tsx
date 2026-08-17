@@ -23,7 +23,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { toDateInput } from "@/lib/dates";
-import { scaleSteps, useSaveDevelopmentAssessment } from "@/lib/development";
+import { labelledSteps, useSaveDevelopmentAssessment } from "@/lib/development";
 import { cn } from "@/lib/utils";
 
 /** The raw string each metric's control holds, keyed by metric id. */
@@ -200,12 +200,20 @@ function MetricField({
   );
 
   if (metric.valueType === "scale") {
-    const steps = scaleSteps(metric);
+    const steps = labelledSteps(metric);
+    const named = metric.scaleLabels.length > 0;
+
     return (
       <div className="flex flex-col gap-1.5">
         <Label>{label}</Label>
-        <div className="flex flex-wrap gap-1.5" role="group">
-          {steps.map((step) => {
+        {/* Named steps stack: "Extra svår" beside four siblings would wrap into
+            an unreadable hedge on a phone, and the name is the thing being
+            chosen. Bare numbers stay a compact row. */}
+        <div
+          className={cn(named ? "flex flex-col gap-1.5" : "flex flex-wrap gap-1.5")}
+          role="group"
+        >
+          {steps.map(({ step, label: stepLabel }) => {
             const selected = value === String(step);
             return (
               <button
@@ -216,20 +224,29 @@ function MetricField({
                 // way back to "not measured" once something is picked.
                 onClick={() => onChange(selected ? "" : String(step))}
                 className={cn(
-                  "h-9 min-w-9 rounded-md px-2 text-sm font-semibold transition-colors",
+                  "rounded-md text-sm font-semibold transition-colors",
+                  named
+                    ? "flex h-9 items-center gap-3 px-3 text-left"
+                    : "h-9 min-w-9 px-2",
                   selected
                     ? "bg-brand text-white"
                     : "bg-[var(--neutral-150)] text-[var(--neutral-650)] hover:bg-[var(--neutral-200)]",
                 )}
               >
-                {step}
+                <span className={cn(named && "w-4 shrink-0 opacity-70")}>
+                  {step}
+                </span>
+                {stepLabel && <span className="min-w-0">{stepLabel}</span>}
               </button>
             );
           })}
           {value !== "" && (
             <button
               type="button"
-              className="text-muted-foreground h-9 px-2 text-sm underline"
+              className={cn(
+                "text-muted-foreground text-sm underline",
+                named ? "self-start py-1" : "h-9 px-2",
+              )}
               onClick={() => onChange("")}
             >
               {t("development.clear")}

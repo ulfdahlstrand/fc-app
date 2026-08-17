@@ -30,6 +30,16 @@ export const developmentMetricSchema = z.object({
   scaleMin: z.number().int().nullable(),
   scaleMax: z.number().int().nullable(),
   /**
+   * A name for each step of a `scale`, lowest first — "Extra lätt", "Lätt",
+   * "Medel", "Svår", "Extra svår". Empty when the steps are just numbers.
+   *
+   * All or nothing: a partly named scale would leave the reader guessing what
+   * the unnamed steps meant. Unlike the bounds, these stay editable — renaming
+   * "Medel" to "Mellan" changes no stored value, it only changes what the same
+   * 3 is called.
+   */
+  scaleLabels: z.array(z.string()),
+  /**
    * Whether a rise counts as progress. A sprint time falls when a player gets
    * better, so the arrow cannot be read off the sign of the change alone.
    */
@@ -168,16 +178,21 @@ export function validateMetricDefinition(input: {
   unit?: string | null | undefined;
   scaleMin?: number | null | undefined;
   scaleMax?: number | null | undefined;
+  scaleLabels?: string[] | null | undefined;
 }): { ok: true } | { ok: false; error: string } {
   const hasUnit = input.unit !== null && input.unit !== undefined && input.unit !== "";
   const min = input.scaleMin ?? null;
   const max = input.scaleMax ?? null;
+  const labels = input.scaleLabels ?? [];
 
   if (input.valueType !== "scale" && (min !== null || max !== null)) {
     return { ok: false, error: "Only a scale has a range" };
   }
   if (input.valueType !== "number" && hasUnit) {
     return { ok: false, error: "Only a number has a unit" };
+  }
+  if (input.valueType !== "scale" && labels.length > 0) {
+    return { ok: false, error: "Only a scale has named steps" };
   }
 
   if (input.valueType === "scale") {
@@ -199,9 +214,34 @@ export function validateMetricDefinition(input: {
         error: `A scale may span at most ${MAX_SCALE_SPAN} steps`,
       };
     }
+    if (labels.length > 0) {
+      const steps = max - min + 1;
+      if (labels.length !== steps) {
+        return {
+          ok: false,
+          error: `Name every step or none: expected ${steps} names, got ${labels.length}`,
+        };
+      }
+      if (labels.some((label) => label.trim() === "")) {
+        return { ok: false, error: "Every named step needs a name" };
+      }
+    }
   }
 
   return { ok: true };
+}
+
+/**
+ * What a step of a scale is called, or null when the steps are just numbers.
+ * Out-of-range values return null rather than throwing: a stored 3 must still
+ * render if its metric's names were somehow shortened underneath it.
+ */
+export function scaleLabelFor(
+  metric: Pick<DevelopmentMetric, "scaleMin" | "scaleLabels">,
+  value: number
+): string | null {
+  if (metric.scaleLabels.length === 0 || metric.scaleMin === null) return null;
+  return metric.scaleLabels[value - metric.scaleMin] ?? null;
 }
 
 /** A stored number with its metric's unit appended — "4.6 s", or "3" for a scale. */
@@ -230,6 +270,11 @@ export const createDevelopmentMetricInputSchema = z.object({
   unit: z.string().max(20).nullable().optional(),
   scaleMin: z.number().int().min(-1000).max(1000).nullable().optional(),
   scaleMax: z.number().int().min(-1000).max(1000).nullable().optional(),
+  /** One name per step, lowest first; empty for a scale of bare numbers. */
+  scaleLabels: z
+    .array(z.string().min(1).max(60))
+    .max(MAX_SCALE_SPAN + 1)
+    .optional(),
   higherIsBetter: z.boolean().optional(),
 });
 
@@ -242,12 +287,20 @@ export const createDevelopmentMetricOutputSchema = z.object({
  * scale to 1–5 would leave stored 8s outside their own metric, and flipping a
  * type would leave every stored value meaning nothing (ADR-014). Archive it and
  * make a new one instead.
+ *
+ * `scaleLabels` *is* editable, because the distinction is what a change would
+ * invalidate: renaming step 3 from "Medel" to "Mellan" leaves every stored 3
+ * exactly as true as it was.
  */
 export const updateDevelopmentMetricInputSchema = z.object({
   teamId: z.string(),
   metricId: z.string(),
   name: z.string().min(1).max(100).optional(),
   unit: z.string().max(20).nullable().optional(),
+  scaleLabels: z
+    .array(z.string().min(1).max(60))
+    .max(MAX_SCALE_SPAN + 1)
+    .optional(),
   higherIsBetter: z.boolean().optional(),
   sortOrder: z.number().int().optional(),
 });

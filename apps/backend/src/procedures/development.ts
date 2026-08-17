@@ -29,6 +29,7 @@ function toMetric(
     unit: row.unit,
     scaleMin: row.scale_min,
     scaleMax: row.scale_max,
+    scaleLabels: row.scale_labels,
     higherIsBetter: row.higher_is_better,
     sortOrder: row.sort_order,
     archived: row.archived,
@@ -222,6 +223,9 @@ export const createDevelopmentMetricHandler =
         unit: input.unit ?? null,
         scale_min: input.scaleMin ?? null,
         scale_max: input.scaleMax ?? null,
+        scale_labels: JSON.stringify(
+          input.valueType === "scale" ? (input.scaleLabels ?? []) : []
+        ),
         higher_is_better: input.higherIsBetter ?? true,
         sort_order: (max?.max ?? -1) + 1,
       })
@@ -238,12 +242,15 @@ export const updateDevelopmentMetricHandler =
 
     const existing = await loadMetric(db, input.teamId, input.metricId);
 
-    if (input.unit !== undefined) {
+    // Re-check the whole shape against the columns that cannot move, so a new
+    // set of step names has to fit the range the metric was created with.
+    if (input.unit !== undefined || input.scaleLabels !== undefined) {
       const shape = validateMetricDefinition({
         valueType: existing.value_type as DevelopmentValueType,
-        unit: input.unit,
+        unit: input.unit ?? existing.unit,
         scaleMin: existing.scale_min,
         scaleMax: existing.scale_max,
+        scaleLabels: input.scaleLabels ?? existing.scale_labels,
       });
       if (!shape.ok) {
         throw new ORPCError("BAD_REQUEST", { message: shape.error });
@@ -257,6 +264,9 @@ export const updateDevelopmentMetricHandler =
     const updates: Record<string, unknown> = {};
     if (input.name !== undefined) updates["name"] = input.name;
     if (input.unit !== undefined) updates["unit"] = input.unit;
+    if (input.scaleLabels !== undefined) {
+      updates["scale_labels"] = JSON.stringify(input.scaleLabels);
+    }
     if (input.higherIsBetter !== undefined) {
       updates["higher_is_better"] = input.higherIsBetter;
     }

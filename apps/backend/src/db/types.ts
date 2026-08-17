@@ -342,6 +342,8 @@ export interface DevelopmentMetricsTable {
   /** Inclusive bounds of a `scale`; null for every other type. */
   scale_min: number | null;
   scale_max: number | null;
+  /** One name per step, lowest first; empty when the steps are bare numbers. */
+  scale_labels: ColumnType<string[], string, string>;
   higher_is_better: Generated<boolean>;
   sort_order: Generated<number>;
   archived: Generated<boolean>;

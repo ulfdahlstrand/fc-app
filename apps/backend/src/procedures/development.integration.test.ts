@@ -31,6 +31,7 @@ import {
   listDevelopmentMetricsHandler,
   memberDevelopmentHandler,
   saveDevelopmentAssessmentHandler,
+  updateDevelopmentMetricHandler,
 } from "./development.js";
 
 let db: Kysely<Database>;
@@ -47,6 +48,7 @@ async function createMetric(input: {
   unit?: string | null;
   scaleMin?: number | null;
   scaleMax?: number | null;
+  scaleLabels?: string[];
   higherIsBetter?: boolean;
 }): Promise<string> {
   const result = await call(
@@ -155,6 +157,109 @@ describe("metric definitions", () => {
       { context: admin.context }
     );
     expect(all.metrics).toHaveLength(1);
+  });
+
+  it("stores names for the steps of a scale and reads them back in order", async () => {
+    const labels = ["Extra lätt", "Lätt", "Medel", "Svår", "Extra svår"];
+    await createMetric({
+      name: "Svårighet",
+      valueType: "scale",
+      scaleMin: 1,
+      scaleMax: 5,
+      scaleLabels: labels,
+    });
+
+    const { metrics } = await call(
+      listDevelopmentMetricsHandler,
+      { teamId },
+      { context: coach.context }
+    );
+    expect(metrics[0]!.scaleLabels).toEqual(labels);
+  });
+
+  it("refuses a half-named scale", async () => {
+    await expect(
+      createMetric({
+        name: "Svårighet",
+        valueType: "scale",
+        scaleMin: 1,
+        scaleMax: 5,
+        scaleLabels: ["Lätt", "Svår"],
+      })
+    ).rejects.toThrow(ORPCError);
+  });
+
+  it("leaves an unnamed scale with no names rather than inventing any", async () => {
+    await createMetric({
+      name: "Nivå",
+      valueType: "scale",
+      scaleMin: 1,
+      scaleMax: 5,
+    });
+    const { metrics } = await call(
+      listDevelopmentMetricsHandler,
+      { teamId },
+      { context: coach.context }
+    );
+    expect(metrics[0]!.scaleLabels).toEqual([]);
+  });
+
+  it("renames a step without touching what is already recorded", async () => {
+    const id = await createMetric({
+      name: "Svårighet",
+      valueType: "scale",
+      scaleMin: 1,
+      scaleMax: 5,
+      scaleLabels: ["Extra lätt", "Lätt", "Medel", "Svår", "Extra svår"],
+    });
+    await call(
+      saveDevelopmentAssessmentHandler,
+      {
+        teamId,
+        memberId,
+        assessedOn: "2026-03-01",
+        note: null,
+        values: [{ metricId: id, value: "3" }],
+      },
+      { context: coach.context }
+    );
+
+    await call(
+      updateDevelopmentMetricHandler,
+      {
+        teamId,
+        metricId: id,
+        scaleLabels: ["Extra lätt", "Lätt", "Mellan", "Svår", "Extra svår"],
+      },
+      { context: admin.context }
+    );
+
+    const { metrics, assessments } = await call(
+      memberDevelopmentHandler,
+      { teamId, memberId },
+      { context: coach.context }
+    );
+    expect(metrics[0]!.scaleLabels[2]).toBe("Mellan");
+    // The stored value is the number, so a rename moves nothing.
+    expect(assessments[0]!.values[0]).toMatchObject({ number: 3 });
+  });
+
+  it("refuses a rename that does not cover the range it was created with", async () => {
+    const id = await createMetric({
+      name: "Svårighet",
+      valueType: "scale",
+      scaleMin: 1,
+      scaleMax: 5,
+      scaleLabels: ["Extra lätt", "Lätt", "Medel", "Svår", "Extra svår"],
+    });
+
+    await expect(
+      call(
+        updateDevelopmentMetricHandler,
+        { teamId, metricId: id, scaleLabels: ["Lätt", "Svår"] },
+        { context: admin.context }
+      )
+    ).rejects.toThrow(/expected 5 names/);
   });
 
   it("refuses a metric id belonging to another team", async () => {

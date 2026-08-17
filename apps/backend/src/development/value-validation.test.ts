@@ -5,9 +5,12 @@ import {
   isChartable,
   MAX_SCALE_SPAN,
   metricValueColumn,
+  scaleLabelFor,
   validateDevelopmentValue,
   validateMetricDefinition,
 } from "@fc-app/contracts";
+
+const DIFFICULTY = ["Extra lätt", "Lätt", "Medel", "Svår", "Extra svår"];
 
 const scale = { valueType: "scale" as const, scaleMin: 1, scaleMax: 5 };
 const number = { valueType: "number" as const, scaleMin: null, scaleMax: null };
@@ -174,6 +177,97 @@ describe("validateMetricDefinition", () => {
     expect(validateMetricDefinition({ valueType: "boolean" })).toEqual({
       ok: true,
     });
+  });
+});
+
+describe("named scale steps", () => {
+  it("accepts exactly one name per step", () => {
+    expect(
+      validateMetricDefinition({
+        valueType: "scale",
+        scaleMin: 1,
+        scaleMax: 5,
+        scaleLabels: DIFFICULTY,
+      })
+    ).toEqual({ ok: true });
+  });
+
+  it("refuses a partly named scale, saying how many it wanted", () => {
+    const result = validateMetricDefinition({
+      valueType: "scale",
+      scaleMin: 1,
+      scaleMax: 5,
+      scaleLabels: ["Lätt", "Svår"],
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error).toContain("expected 5 names, got 2");
+  });
+
+  it("refuses a blank name among named steps", () => {
+    expect(
+      validateMetricDefinition({
+        valueType: "scale",
+        scaleMin: 1,
+        scaleMax: 5,
+        scaleLabels: ["Extra lätt", "Lätt", "   ", "Svår", "Extra svår"],
+      }).ok
+    ).toBe(false);
+  });
+
+  it("still allows a scale of bare numbers", () => {
+    expect(
+      validateMetricDefinition({
+        valueType: "scale",
+        scaleMin: 1,
+        scaleMax: 5,
+        scaleLabels: [],
+      })
+    ).toEqual({ ok: true });
+  });
+
+  it("gives named steps only to a scale", () => {
+    expect(
+      validateMetricDefinition({
+        valueType: "number",
+        scaleLabels: ["Lätt"],
+      }).ok
+    ).toBe(false);
+  });
+
+  it("counts steps from the scale's own floor, not from one", () => {
+    expect(
+      validateMetricDefinition({
+        valueType: "scale",
+        scaleMin: 0,
+        scaleMax: 2,
+        scaleLabels: ["Noll", "Ett", "Två"],
+      })
+    ).toEqual({ ok: true });
+  });
+});
+
+describe("scaleLabelFor", () => {
+  const metric = { scaleMin: 1, scaleLabels: DIFFICULTY };
+
+  it("names each step, both ends included", () => {
+    expect(scaleLabelFor(metric, 1)).toBe("Extra lätt");
+    expect(scaleLabelFor(metric, 3)).toBe("Medel");
+    expect(scaleLabelFor(metric, 5)).toBe("Extra svår");
+  });
+
+  it("offsets by the scale's floor rather than assuming it starts at one", () => {
+    expect(scaleLabelFor({ scaleMin: 0, scaleLabels: ["Noll", "Ett"] }, 0)).toBe(
+      "Noll"
+    );
+  });
+
+  it("has no name when the steps are bare numbers", () => {
+    expect(scaleLabelFor({ scaleMin: 1, scaleLabels: [] }, 3)).toBeNull();
+  });
+
+  it("returns null out of range rather than throwing", () => {
+    expect(scaleLabelFor(metric, 9)).toBeNull();
+    expect(scaleLabelFor(metric, 0)).toBeNull();
   });
 });
 
