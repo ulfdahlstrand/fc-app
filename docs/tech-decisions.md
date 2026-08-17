@@ -903,3 +903,63 @@ than deduplicating by the one identifier that does not change.
 - The migration folds duplicates: two members of one club holding the same
   number become one person. That is the point, and it is not reversible in the
   sense that the down migration cannot know they were ever separate.
+
+---
+
+## ADR-024 — 2026-08-17 — Developer tools live outside the workspaces
+
+**Status:** Accepted
+
+**Context:**
+`tools/demo-video` (#96) drives the app in a real browser and records a demo
+video. It needs Playwright and ffmpeg — roughly 80 MB of packages plus a
+browser download — for something almost nobody runs.
+
+Everything else in this repo that has a `package.json` is a workspace, and the
+root `npm install` installs every workspace's dependencies for everyone, CI
+included. So the question the tool raised was not "where do scripts go" but
+"what does the repo owe a directory that is not part of the running system".
+Without a rule the next tool lands in `packages/` by default and quietly adds
+its weight to every install.
+
+**Decision:**
+A directory that is **not part of the deployed system** and carries heavy or
+specialised dependencies lives in `tools/<name>/`, with its own `package.json`
+and its own `npm install`. It is deliberately left out of the `workspaces`
+array in the root `package.json`.
+
+Three consequences follow from that placement, and they are the reason for it
+rather than side effects:
+
+- **Turbo does not see it.** `build`, `lint`, `typecheck` and `test` only
+  traverse workspaces, so a tool is not part of CI.
+- **Tailwind cannot reach it.** Source scanning starts from `apps/frontend`, so
+  a tool's files never contribute stray utilities to the app's CSS.
+- **The root install stays the size of the app.**
+
+A tool's output is gitignored — `tools/demo-video/out/` is the first entry.
+
+The rule is about **weight and audience**, not about being a script. Something
+small and shared that the app or CI actually depends on still belongs in
+`packages/`, where it is typechecked and linted with everything else.
+
+**Alternatives considered:**
+- **Adding `tools/*` to `workspaces`.** The obvious move, and the reason this
+  ADR exists. It puts Playwright and ffmpeg into every `npm install`, including
+  CI's, to serve a capability CI never uses.
+- **`packages/demo-video`.** Same install cost, and it implies the application
+  depends on the tool, which it does not.
+- **Leaving the scripts out of the repo.** Where they were. The first recording
+  found two bugs the unit tests, the integration tests and a manual pass had all
+  missed (`ef87cf4`) — driving the app at a real window size is its own kind of
+  check, and one worth being able to repeat.
+
+**Consequences:**
+- **A tool is not typechecked or linted by CI.** That is the price, stated
+  plainly: a broken tool is found by running it, not by a red build. It is
+  acceptable because tools are run by hand and fail loudly. If one ever becomes
+  load-bearing, promoting it to a workspace is the deliberate next step rather
+  than something that should creep in.
+- Using a tool means running `npm install` inside its directory first. Its
+  README says so; nothing in the root install hints that it exists.
+- `docs/architecture.md`'s monorepo structure now lists `tools/`.
