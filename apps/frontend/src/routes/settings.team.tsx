@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ActivityTypes } from "@/components/settings/ActivityTypesSection";
 import { AttendanceStatuses } from "@/components/settings/AttendanceStatusesSection";
+import { DevelopmentMetrics } from "@/components/settings/DevelopmentMetricsSection";
 import { MemberFields } from "@/components/settings/MemberFieldsSection";
 import { Seasons } from "@/components/settings/SeasonsSection";
 import { TrackingLists } from "@/components/settings/TrackingListsSection";
@@ -51,6 +52,7 @@ function TeamSettingsPage() {
       <Seasons teamId={selected.team.id} />
       <MemberFields teamId={selected.team.id} />
       <TrackingLists teamId={selected.team.id} />
+      <DevelopmentMetrics teamId={selected.team.id} />
     </div>
   );
 }

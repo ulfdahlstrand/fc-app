@@ -34,6 +34,9 @@ Thumbs.db
 # Testing
 coverage/
 
+# Demo recordings — artefacts, regenerated on demand (tools/demo-video)
+tools/demo-video/out/
+
 # Local design reference (Kit design system export — not tracked)
 design-reference.zip
 

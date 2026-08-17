@@ -162,7 +162,8 @@
     "posts.manage": "Manage posts",
     "tracking.manage": "Manage tracking lists",
     "settings.team": "Team settings",
-    "settings.club": "Club settings"
+    "settings.club": "Club settings",
+    "development.manage": "Manage development metrics"
   },
   "settings": {
     "club": {
@@ -229,7 +230,25 @@
       "trackingEmpty": "No tracking lists yet.",
       "trackingPlaceholder": "Grönt kort",
       "trackingTypeLabel": "Type",
-      "trackingTypeFixed": "cannot be changed once created"
+      "trackingTypeFixed": "cannot be changed once created",
+      "development": "Development metrics",
+      "developmentHint": "What you want to follow per player over time — level, tests, skills.",
+      "developmentEmpty": "No development metrics yet.",
+      "newMetric": "New metric",
+      "editMetric": "Edit metric",
+      "metricPlaceholder": "Level",
+      "metricTypeLabel": "Type",
+      "metricTypeFixed": "cannot be changed once created",
+      "scaleMin": "Lowest value",
+      "scaleMax": "Highest value",
+      "scaleLabels": "Step names",
+      "scaleLabelsHint": "Optional. Name every step or none — e.g. Very easy, Easy, Medium, Hard, Very hard.",
+      "scaleLabelPlaceholder": "Name of the step",
+      "unit": "Unit",
+      "unitPlaceholder": "s",
+      "higherIsBetterLabel": "Higher is better",
+      "higherIsBetterHint": "Turn off for metrics where a lower value is progress, like a run time.",
+      "lowerIsBetter": "Lower is better"
     }
   },
   "invitations": {
@@ -431,6 +450,31 @@
     "done": "Done / not done",
     "date": "Date",
     "text": "Text"
+  },
+  "development": {
+    "heading": "Development",
+    "occasions": "Assessments",
+    "newAssessment": "New assessment",
+    "editAssessment": "Edit assessment",
+    "date": "Date",
+    "note": "Note",
+    "notePlaceholder": "After the development talk",
+    "empty": "No assessments yet.",
+    "noMetrics": "This team has no metrics to fill in.",
+    "noMetricsHint": "Set up what you want to follow in team settings first.",
+    "someone": "Someone",
+    "clear": "Clear",
+    "readings_one": "{{count}} reading",
+    "readings_other": "{{count}} readings",
+    "trendLabel": "{{metric}}: from {{from}} to {{to}}",
+    "loadError": "Could not load development.",
+    "saveError": "Could not save that."
+  },
+  "developmentType": {
+    "scale": "Scale",
+    "number": "Number with a unit",
+    "text": "Text",
+    "boolean": "Yes / no"
   },
   "callups": {
     "draft": "Draft — nobody has been told yet",

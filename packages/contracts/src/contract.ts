@@ -19,6 +19,7 @@ import { createPostInputSchema, createPostOutputSchema, deletePostInputSchema, d
 import { createRoleInputSchema, createRoleOutputSchema, deleteRoleInputSchema, deleteRoleOutputSchema, listRolesInputSchema, listRolesOutputSchema, updateRoleInputSchema, updateRoleOutputSchema } from "./roles.js";
 import { createSeasonInputSchema, createSeasonOutputSchema, deleteSeasonInputSchema, deleteSeasonOutputSchema, listSeasonsInputSchema, listSeasonsOutputSchema, updateSeasonInputSchema, updateSeasonOutputSchema } from "./seasons.js";
 import { archiveTrackingDefinitionInputSchema, archiveTrackingDefinitionOutputSchema, createTrackingDefinitionInputSchema, createTrackingDefinitionOutputSchema, listTrackingDefinitionsInputSchema, listTrackingDefinitionsOutputSchema, memberTrackingInputSchema, memberTrackingOutputSchema, setTrackingEntryInputSchema, setTrackingEntryOutputSchema, trackingMatrixInputSchema, trackingMatrixOutputSchema, updateTrackingDefinitionInputSchema, updateTrackingDefinitionOutputSchema } from "./tracking.js";
+import { archiveDevelopmentMetricInputSchema, archiveDevelopmentMetricOutputSchema, createDevelopmentMetricInputSchema, createDevelopmentMetricOutputSchema, deleteDevelopmentAssessmentInputSchema, deleteDevelopmentAssessmentOutputSchema, listDevelopmentMetricsInputSchema, listDevelopmentMetricsOutputSchema, memberDevelopmentInputSchema, memberDevelopmentOutputSchema, saveDevelopmentAssessmentInputSchema, saveDevelopmentAssessmentOutputSchema, updateDevelopmentMetricInputSchema, updateDevelopmentMetricOutputSchema } from "./development.js";
 
 export const contract = oc.router({
   // Explicit GET route so plain `curl /health` (e.g. the Docker Compose
@@ -359,6 +360,34 @@ export const contract = oc.router({
     .route({ method: "GET", path: "/tracking/member" })
     .input(memberTrackingInputSchema)
     .output(memberTrackingOutputSchema),
+  listDevelopmentMetrics: oc
+    .route({ method: "GET", path: "/development/metrics" })
+    .input(listDevelopmentMetricsInputSchema)
+    .output(listDevelopmentMetricsOutputSchema),
+  createDevelopmentMetric: oc
+    .route({ method: "POST", path: "/development/metrics" })
+    .input(createDevelopmentMetricInputSchema)
+    .output(createDevelopmentMetricOutputSchema),
+  updateDevelopmentMetric: oc
+    .route({ method: "POST", path: "/development/metrics/update" })
+    .input(updateDevelopmentMetricInputSchema)
+    .output(updateDevelopmentMetricOutputSchema),
+  archiveDevelopmentMetric: oc
+    .route({ method: "POST", path: "/development/metrics/archive" })
+    .input(archiveDevelopmentMetricInputSchema)
+    .output(archiveDevelopmentMetricOutputSchema),
+  memberDevelopment: oc
+    .route({ method: "GET", path: "/development/member" })
+    .input(memberDevelopmentInputSchema)
+    .output(memberDevelopmentOutputSchema),
+  saveDevelopmentAssessment: oc
+    .route({ method: "POST", path: "/development/assessments" })
+    .input(saveDevelopmentAssessmentInputSchema)
+    .output(saveDevelopmentAssessmentOutputSchema),
+  deleteDevelopmentAssessment: oc
+    .route({ method: "POST", path: "/development/assessments/delete" })
+    .input(deleteDevelopmentAssessmentInputSchema)
+    .output(deleteDevelopmentAssessmentOutputSchema),
   dashboard: oc
     .route({ method: "GET", path: "/dashboard" })
     .input(dashboardInputSchema)

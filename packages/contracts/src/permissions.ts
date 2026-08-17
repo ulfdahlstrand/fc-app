@@ -24,6 +24,13 @@ export const PERMISSIONS = [
   "callups.respond",
   "posts.manage",
   "tracking.manage",
+  /**
+   * Defining what a team measures about a player, and reading or recording
+   * those measurements (#96). Gates the **reads** too, unlike the rest of the
+   * roster: an assessment of a child is a coach's judgement, and holding
+   * `members.view` is not the same as being entitled to read it (ADR-011).
+   */
+  "development.manage",
   "settings.team",
   "settings.club",
 ] as const;
