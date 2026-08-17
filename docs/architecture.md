@@ -52,6 +52,8 @@ The technical foundation is adopted from the `project-enigma` codebase
 │   ├── architecture.md    # This file
 │   ├── tech-decisions.md  # ADR log
 │   └── product/           # Product specification
+├── tools/                 # Developer tools — NOT workspaces (ADR-024)
+│   └── demo-video/        # Records click-through videos; own npm install
 ├── turbo.json
 ├── package.json           # Root workspace definition (npm workspaces)
 └── tsconfig.json          # Root TS config — extends @fc-app/tsconfig base
