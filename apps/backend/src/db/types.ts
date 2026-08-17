@@ -331,6 +331,46 @@ export interface TrackingEntriesTable {
   updated_at: ColumnType<Date, Date | undefined, Date>;
 }
 
+export interface DevelopmentMetricsTable {
+  id: Generated<string>;
+  team_id: string;
+  name: string;
+  /** scale | number | text | boolean — see `developmentValueTypeSchema`. */
+  value_type: string;
+  /** Display-only suffix on a `number` metric; null for every other type. */
+  unit: string | null;
+  /** Inclusive bounds of a `scale`; null for every other type. */
+  scale_min: number | null;
+  scale_max: number | null;
+  higher_is_better: Generated<boolean>;
+  sort_order: Generated<number>;
+  archived: Generated<boolean>;
+  created_at: Timestamp;
+}
+
+export interface DevelopmentAssessmentsTable {
+  id: Generated<string>;
+  member_id: string;
+  /** DATE column: an assessment belongs to a day, not to an instant. */
+  assessed_on: ColumnType<string, string, string>;
+  note: string | null;
+  /** Null once the account that recorded it is gone; the assessment stays. */
+  created_by: string | null;
+  created_at: Generated<Date>;
+  updated_at: ColumnType<Date, Date | undefined, Date>;
+}
+
+export interface DevelopmentValuesTable {
+  assessment_id: string;
+  metric_id: string;
+  /**
+   * `numeric` arrives from the driver as a string; the handler's mapper is the
+   * one place that turns it back into a number.
+   */
+  value_number: ColumnType<string | null, number | null, number | null>;
+  value_text: string | null;
+}
+
 export interface PostsTable {
   id: Generated<string>;
   team_id: string;
@@ -380,6 +420,9 @@ export interface Database {
   callup_invitations: CallupInvitationsTable;
   tracking_definitions: TrackingDefinitionsTable;
   tracking_entries: TrackingEntriesTable;
+  development_metrics: DevelopmentMetricsTable;
+  development_assessments: DevelopmentAssessmentsTable;
+  development_values: DevelopmentValuesTable;
   posts: PostsTable;
   post_targets: PostTargetsTable;
 }

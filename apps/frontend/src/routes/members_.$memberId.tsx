@@ -18,6 +18,7 @@ import { ComingOfAgeNoticeForTeam } from "../components/ComingOfAgeNotice";
 import { GuardiansSection } from "../components/GuardiansSection";
 import { formatFieldValue } from "../components/memberFieldDisplay";
 import { MemberAttendanceSection } from "../components/MemberAttendanceSection";
+import { MemberDevelopmentSection } from "../components/MemberDevelopmentSection";
 import { MemberFieldValuesDialog } from "../components/MemberFieldValuesDialog";
 import { MemberFormDialog } from "../components/MemberFormDialog";
 import { MemberTrackingSection } from "../components/MemberTrackingSection";
@@ -71,6 +72,9 @@ function MemberDetail({
 }) {
   const { t } = useTranslation();
   const canManage = useHasPermission("members.manage");
+  // Reading a coach's assessment of a child is its own question, so seeing the
+  // roster is not enough to be shown this section (ADR-011).
+  const canSeeDevelopment = useHasPermission("development.manage");
   const member = useMember(teamId, memberId);
   const fields = useMemberFields(teamId);
   const memberGroups = useMemberGroups(teamId, memberId);
@@ -206,6 +210,10 @@ function MemberDetail({
       />
 
       <MemberTrackingSection teamId={teamId} memberId={m.id} />
+
+      {canSeeDevelopment && (
+        <MemberDevelopmentSection teamId={teamId} memberId={m.id} />
+      )}
 
       <MemberAttendanceSection teamId={teamId} memberId={m.id} />
 

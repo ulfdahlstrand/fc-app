@@ -27,6 +27,7 @@ export const DEFAULT_ROLES: DefaultRole[] = [
       "callups.manage",
       "posts.manage",
       "tracking.manage",
+      "development.manage",
       "settings.team",
     ],
   },

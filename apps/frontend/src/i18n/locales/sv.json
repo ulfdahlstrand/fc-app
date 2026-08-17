@@ -162,7 +162,8 @@
     "posts.manage": "Hantera anslag",
     "tracking.manage": "Hantera uppföljningslistor",
     "settings.team": "Laginställningar",
-    "settings.club": "Klubbinställningar"
+    "settings.club": "Klubbinställningar",
+    "development.manage": "Hantera utvecklingsmått"
   },
   "settings": {
     "club": {
@@ -229,7 +230,22 @@
       "trackingEmpty": "Inga uppföljningslistor än.",
       "trackingPlaceholder": "Grönt kort",
       "trackingTypeLabel": "Typ",
-      "trackingTypeFixed": "kan inte ändras efter att listan skapats"
+      "trackingTypeFixed": "kan inte ändras efter att listan skapats",
+      "development": "Utvecklingsmått",
+      "developmentHint": "Det ni vill följa per spelare över tid — nivå, tester, färdigheter.",
+      "developmentEmpty": "Inga utvecklingsmått än.",
+      "newMetric": "Nytt mått",
+      "editMetric": "Redigera mått",
+      "metricPlaceholder": "Nivå",
+      "metricTypeLabel": "Typ",
+      "metricTypeFixed": "kan inte ändras efter att måttet skapats",
+      "scaleMin": "Lägsta värde",
+      "scaleMax": "Högsta värde",
+      "unit": "Enhet",
+      "unitPlaceholder": "s",
+      "higherIsBetterLabel": "Högre är bättre",
+      "higherIsBetterHint": "Slå av för mått där ett lägre värde är framsteg, som en löptid.",
+      "lowerIsBetter": "Lägre är bättre"
     }
   },
   "invitations": {
@@ -431,6 +447,31 @@
     "done": "Klart / inte klart",
     "date": "Datum",
     "text": "Text"
+  },
+  "development": {
+    "heading": "Utveckling",
+    "occasions": "Bedömningstillfällen",
+    "newAssessment": "Ny bedömning",
+    "editAssessment": "Redigera bedömning",
+    "date": "Datum",
+    "note": "Anteckning",
+    "notePlaceholder": "Efter utvecklingssamtalet",
+    "empty": "Inga bedömningar än.",
+    "noMetrics": "Laget har inga mått att fylla i.",
+    "noMetricsHint": "Lägg upp det ni vill följa i laginställningarna först.",
+    "someone": "Någon",
+    "clear": "Rensa",
+    "readings_one": "{{count}} mätning",
+    "readings_other": "{{count}} mätningar",
+    "trendLabel": "{{metric}}: från {{from}} till {{to}}",
+    "loadError": "Kunde inte ladda utvecklingen.",
+    "saveError": "Kunde inte spara det."
+  },
+  "developmentType": {
+    "scale": "Skala",
+    "number": "Tal med enhet",
+    "text": "Text",
+    "boolean": "Ja / nej"
   },
   "callups": {
     "draft": "Utkast – ingen är meddelad än",

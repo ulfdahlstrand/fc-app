@@ -155,3 +155,29 @@ export async function requireTeamPermission(
   }
   return access;
 }
+
+/**
+ * Like requireTeamPermission, but any one of `permissions` is enough.
+ *
+ * For a question two different authorities both answer yes to. "What does this
+ * team measure?" is the case it exists for: whoever records a development
+ * assessment needs the list, and so does whoever configures it in team
+ * settings, and those are `development.manage` and `settings.team` (ADR-011).
+ */
+export async function requireAnyTeamPermission(
+  db: Kysely<Database>,
+  userId: string,
+  teamId: string,
+  permissions: readonly Permission[]
+): Promise<{ teamId: string; clubId: string; membership: Membership }> {
+  const access = await requireTeamAccess(db, userId, teamId);
+  const granted = permissions.some((permission) =>
+    access.membership.permissions.includes(permission)
+  );
+  if (!granted) {
+    throw new ORPCError("FORBIDDEN", {
+      message: `Missing permission: ${permissions.join(" or ")}`,
+    });
+  }
+  return access;
+}

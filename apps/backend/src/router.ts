@@ -118,6 +118,15 @@ import {
   trackingMatrixHandler,
   updateTrackingDefinitionHandler,
 } from "./procedures/tracking.js";
+import {
+  archiveDevelopmentMetricHandler,
+  createDevelopmentMetricHandler,
+  deleteDevelopmentAssessmentHandler,
+  listDevelopmentMetricsHandler,
+  memberDevelopmentHandler,
+  saveDevelopmentAssessmentHandler,
+  updateDevelopmentMetricHandler,
+} from "./procedures/development.js";
 import { os } from "./orpc.js";
 
 /** The oRPC router — implements every procedure defined in the @fc-app/contracts package. */
@@ -205,6 +214,13 @@ export const router = os.router({
   trackingMatrix: trackingMatrixHandler,
   setTrackingEntry: setTrackingEntryHandler,
   memberTracking: memberTrackingHandler,
+  listDevelopmentMetrics: listDevelopmentMetricsHandler,
+  createDevelopmentMetric: createDevelopmentMetricHandler,
+  updateDevelopmentMetric: updateDevelopmentMetricHandler,
+  archiveDevelopmentMetric: archiveDevelopmentMetricHandler,
+  memberDevelopment: memberDevelopmentHandler,
+  saveDevelopmentAssessment: saveDevelopmentAssessmentHandler,
+  deleteDevelopmentAssessment: deleteDevelopmentAssessmentHandler,
   dashboard: dashboardHandler,
 });
 
