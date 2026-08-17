@@ -271,9 +271,15 @@ function MetricDialog({
         )}
 
         <Form {...form}>
+          {/* A named scale puts one box per step in here — up to
+              MAX_SCALE_SPAN + 1 rows — so this is the dialog that outgrows a
+              short screen. The fields scroll rather than the whole dialog, so
+              the save button stays pinned and reachable. Only above the `kit`
+              breakpoint: below it the dialog is already a bottom sheet that
+              caps and scrolls itself (DDR-010). */}
           <form
             id="metric-form"
-            className="flex flex-col gap-4"
+            className="kit:max-h-[60vh] kit:overflow-y-auto flex flex-col gap-4"
             onSubmit={handleSave}
           >
             <FormField

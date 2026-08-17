@@ -106,7 +106,7 @@ export function DevelopmentAssessmentDialog({
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>
             {assessment
@@ -123,7 +123,11 @@ export function DevelopmentAssessmentDialog({
           </Alert>
         )}
 
-        <div className="flex flex-col gap-4">
+        {/* One field per metric, so this grows with what the team measures.
+            The fields scroll rather than the whole dialog, keeping the save
+            button pinned. Above the `kit` breakpoint only — below it the
+            dialog is a bottom sheet that caps and scrolls itself (DDR-010). */}
+        <div className="kit:max-h-[60vh] kit:overflow-y-auto flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="assessed-on">{t("development.date")}</Label>
             <Input

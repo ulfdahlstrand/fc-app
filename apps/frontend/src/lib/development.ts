@@ -47,9 +47,19 @@ export const metricFormSchema = createDevelopmentMetricInputSchema
       .unwrap(),
     higherIsBetter: createDevelopmentMetricInputSchema.shape.higherIsBetter
       .unwrap(),
-    // Free-form here rather than the contract's `min(1)`: the form holds one
-    // box per step and an all-blank set legitimately means "no names".
-    scaleLabels: z.array(z.string().max(60)),
+    /**
+     * Free-form here rather than the contract's `min(1)`: the form holds one
+     * box per step and an all-blank set legitimately means "no names".
+     *
+     * Entries are `nullish` because an untouched box registers as `undefined`,
+     * and the dialog opens on `scale` — so switching the type to `number`
+     * unmounts five boxes while react-hook-form keeps their values. Rejecting
+     * those would block submit on fields that are no longer on screen, which
+     * shows the user nothing at all.
+     */
+    scaleLabels: z
+      .array(z.string().max(60).nullish().transform((value) => value ?? ""))
+      .default([]),
   });
 
 /**

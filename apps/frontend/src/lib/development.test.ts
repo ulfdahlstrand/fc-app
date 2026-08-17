@@ -5,6 +5,7 @@ import {
   chartBounds,
   labelledSteps,
   latestAndDelta,
+  metricFormSchema,
   metricFormToInput,
   scaleSteps,
   seriesForMetric,
@@ -196,6 +197,50 @@ describe("scaleSteps", () => {
 
   it("has no steps without a range", () => {
     expect(scaleSteps({ scaleMin: null, scaleMax: null })).toEqual([]);
+  });
+});
+
+describe("metricFormSchema", () => {
+  const base = {
+    name: "30 m sprint",
+    valueType: "number" as const,
+    unit: "s",
+    scaleMin: 1,
+    scaleMax: 5,
+    higherIsBetter: false,
+  };
+
+  /**
+   * The dialog opens on `scale`, so five name boxes mount and register as
+   * `undefined`. Switching to `number` unmounts them but keeps their values —
+   * rejecting those blocked submit on fields nobody could see any more.
+   */
+  it("accepts untouched name boxes left behind by a type change", () => {
+    const parsed = metricFormSchema.parse({
+      ...base,
+      scaleLabels: [undefined, undefined, undefined, undefined, undefined],
+    });
+    expect(parsed.scaleLabels).toEqual(["", "", "", "", ""]);
+  });
+
+  it("accepts a scale nobody named", () => {
+    const parsed = metricFormSchema.parse({
+      ...base,
+      valueType: "scale",
+      unit: "",
+      scaleLabels: [undefined, undefined],
+    });
+    expect(parsed.scaleLabels).toEqual(["", ""]);
+  });
+
+  it("keeps names that were typed", () => {
+    const parsed = metricFormSchema.parse({
+      ...base,
+      valueType: "scale",
+      unit: "",
+      scaleLabels: ["Lätt", undefined, "Svår"],
+    });
+    expect(parsed.scaleLabels).toEqual(["Lätt", "", "Svår"]);
   });
 });
 
