@@ -18,6 +18,7 @@ export * from "./member-import.js";
 export * from "./personal-id.js";
 export * from "./coming-of-age.js";
 export * from "./guardians.js";
+export * from "./coaches.js";
 export * from "./groups.js";
 export * from "./activities.js";
 export * from "./seasons.js";

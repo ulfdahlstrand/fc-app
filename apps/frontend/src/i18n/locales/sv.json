@@ -148,6 +148,7 @@
     "delete": "Ta bort",
     "save": "Spara",
     "close": "Stäng",
+    "back": "Tillbaka",
     "yes": "Ja",
     "no": "Nej"
   },
@@ -248,7 +249,45 @@
       "unitPlaceholder": "s",
       "higherIsBetterLabel": "Högre är bättre",
       "higherIsBetterHint": "Slå av för mått där ett lägre värde är framsteg, som en löptid.",
-      "lowerIsBetter": "Lägre är bättre"
+      "lowerIsBetter": "Lägre är bättre",
+      "coaches": "Tränare",
+      "coachesHint": "Vilka konton som är tränare för det här laget. Rollen Coach kommer från klubben; en person kan vara tränare för flera lag.",
+      "coachesEmpty": "Inga tränare för laget än.",
+      "addCoach": "Lägg till tränare",
+      "addCoachTitle": "Lägg till tränare",
+      "addCoachError": "Kunde inte lägga till tränaren. Försök igen.",
+      "removeCoach": "Ta bort",
+      "removeCoachError": "Kunde inte ta bort tränaren. Försök igen.",
+      "coachPerson": "Person",
+      "coachFromTeam": "Medlemmar i laget",
+      "coachFromClub": "Konton i klubben",
+      "coachNoRole": "ingen roll i laget",
+      "coachWiderAccess": "har redan bredare behörighet i klubben",
+      "coachHasAccount": "har konto, blir tränare direkt",
+      "coachUsesAccount": "använder kontot {{name}} ({{email}})",
+      "coachCreatesAccount": "konto skapas för {{email}}",
+      "coachBlocked": {
+        "noEmail": "saknar e-postadress – lägg till en på medlemmen först",
+        "widerAccess": "har redan bredare behörighet i klubben"
+      },
+      "noCandidates": "Alla i klubben är redan tränare för laget. Lägg till någon ny via e-postadress.",
+      "coachByEmail": "Finns inte i listorna – lägg till via e-postadress",
+      "coachByEmailTitle": "Lägg till tränare via e-post",
+      "coachByEmailError": "Kunde inte lägga till tränaren. Adressen kanske redan är tränare för laget.",
+      "coachName": "Namn",
+      "coachEmail": "E-post",
+      "coachEmailHint": "Personen blir tränare direkt. När hen loggar in med den här adressen hamnar hen på kontot.",
+      "coachInvitesHeading": "Inbjudningar som väntar",
+      "coachInvitePending": "Inbjuden",
+      "coachValidation": {
+        "name": {
+          "too_small": "Ange ett namn."
+        },
+        "email": {
+          "invalid_format": "Ange en giltig e-postadress.",
+          "too_small": "Ange en e-postadress."
+        }
+      }
     }
   },
   "invitations": {

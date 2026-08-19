@@ -7,6 +7,7 @@ import { AttendanceStatuses } from "@/components/settings/AttendanceStatusesSect
 import { DevelopmentMetrics } from "@/components/settings/DevelopmentMetricsSection";
 import { MemberFields } from "@/components/settings/MemberFieldsSection";
 import { Seasons } from "@/components/settings/SeasonsSection";
+import { TeamCoaches } from "@/components/settings/TeamCoachesSection";
 import { TrackingLists } from "@/components/settings/TrackingListsSection";
 import { ensureMe } from "../lib/auth";
 import { ensureMyClubs, useHasPermission, useSelectedTeam } from "../lib/clubs";
@@ -25,6 +26,10 @@ function TeamSettingsPage() {
   const { t } = useTranslation();
   const selected = useSelectedTeam();
   const canManage = useHasPermission("settings.team");
+  // Appointing coaches grants access to the club, which is an admin's call
+  // however narrow the grant — so it is not shown to the coach whose other
+  // settings these are.
+  const canManageCoaches = useHasPermission("settings.club");
 
   if (!selected) {
     return (
@@ -47,6 +52,9 @@ function TeamSettingsPage() {
         <h1 className="font-display text-4xl">{t("settings.team.heading")}</h1>
         <p className="text-muted-foreground">{selected.team.name}</p>
       </div>
+      {canManageCoaches && (
+        <TeamCoaches clubId={selected.club.id} teamId={selected.team.id} />
+      )}
       <ActivityTypes teamId={selected.team.id} />
       <AttendanceStatuses teamId={selected.team.id} />
       <Seasons teamId={selected.team.id} />

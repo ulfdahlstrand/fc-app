@@ -74,11 +74,20 @@ export interface TestUser {
 /**
  * A user with a membership in the club. `systemKey` picks which seeded role
  * they hold, which is how a test asks "what does a coach see?".
+ *
+ * `teamId` scopes the membership to one team instead of the whole club — the
+ * shape a coach of a single team actually has, and the one a club-wide row
+ * shadows (ADR-003, #74).
  */
 export async function createTestUser(
   db: Kysely<Database>,
   club: TestClub,
-  options: { email?: string; name?: string; systemKey?: string } = {}
+  options: {
+    email?: string;
+    name?: string;
+    systemKey?: string;
+    teamId?: string;
+  } = {}
 ): Promise<TestUser> {
   const email = options.email ?? `user-${crypto.randomUUID()}@example.test`;
   const name = options.name ?? "Test User";
@@ -99,7 +108,7 @@ export async function createTestUser(
     .values({
       user_id: user.id,
       club_id: club.clubId,
-      team_id: null,
+      team_id: options.teamId ?? null,
       role_id: roleId,
     })
     .execute();
