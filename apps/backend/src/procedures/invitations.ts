@@ -12,7 +12,7 @@ import { requireClubPermission } from "../tenancy/membership.js";
 const DEFAULT_EXPIRY_DAYS = 14;
 
 /** Row shape shared by the admin-facing queries (invitation + joined names). */
-interface InvitationJoinRow {
+export interface InvitationJoinRow {
   id: string;
   club_id: string;
   team_id: string | null;
@@ -27,7 +27,7 @@ interface InvitationJoinRow {
   created_at: Date;
 }
 
-function toInvitation(row: InvitationJoinRow): Invitation {
+export function toInvitation(row: InvitationJoinRow): Invitation {
   return {
     id: row.id,
     clubId: row.club_id,
@@ -47,7 +47,7 @@ function toInvitation(row: InvitationJoinRow): Invitation {
   };
 }
 
-function invitationSelect(db: Kysely<Database>) {
+export function invitationSelect(db: Kysely<Database>) {
   return db
     .selectFrom("invitations")
     .innerJoin("roles", "roles.id", "invitations.role_id")

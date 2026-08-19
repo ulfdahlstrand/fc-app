@@ -7,6 +7,7 @@ import { commitAttendanceImportInputSchema, commitAttendanceImportOutputSchema, 
 import { meInputSchema, meOutputSchema } from "./auth.js";
 import { getCallupInputSchema, getCallupOutputSchema, listCallupsInputSchema, listCallupsOutputSchema, myCallupsInputSchema, myCallupsOutputSchema, respondToCallupInputSchema, respondToCallupOutputSchema, setCallupSquadInputSchema, setCallupSquadOutputSchema, updateCallupInputSchema, updateCallupOutputSchema } from "./callups.js";
 import { createClubInputSchema, createClubOutputSchema, myClubsInputSchema, myClubsOutputSchema } from "./clubs.js";
+import { addCoachByEmailInputSchema, addCoachByEmailOutputSchema, addMemberAsCoachInputSchema, addMemberAsCoachOutputSchema, addTeamCoachInputSchema, addTeamCoachOutputSchema, listTeamCoachesInputSchema, listTeamCoachesOutputSchema, removeTeamCoachInputSchema, removeTeamCoachOutputSchema } from "./coaches.js";
 import { dashboardInputSchema, dashboardOutputSchema } from "./dashboard.js";
 import { archiveActivityTypeInputSchema, archiveActivityTypeOutputSchema, createActivityTypeInputSchema, createActivityTypeOutputSchema, createGroupInputSchema, createGroupOutputSchema, deleteGroupInputSchema, deleteGroupOutputSchema, listActivityTypesInputSchema, listActivityTypesOutputSchema, listGroupMembersInputSchema, listGroupMembersOutputSchema, listGroupsInputSchema, listGroupsOutputSchema, listMemberGroupsInputSchema, listMemberGroupsOutputSchema, renameGroupInputSchema, renameGroupOutputSchema, setGroupMembersInputSchema, setGroupMembersOutputSchema, updateActivityTypeInputSchema, updateActivityTypeOutputSchema } from "./groups.js";
 import { inviteMemberContactsInputSchema, inviteMemberContactsOutputSchema, listMemberContactsInputSchema, listMemberContactsOutputSchema, pendingContactInvitesInputSchema, pendingContactInvitesOutputSchema } from "./guardians.js";
@@ -150,6 +151,26 @@ export const contract = oc.router({
     .route({ method: "POST", path: "/members/guardians/remove" })
     .input(removeGuardianInputSchema)
     .output(removeGuardianOutputSchema),
+  listTeamCoaches: oc
+    .route({ method: "GET", path: "/teams/coaches" })
+    .input(listTeamCoachesInputSchema)
+    .output(listTeamCoachesOutputSchema),
+  addTeamCoach: oc
+    .route({ method: "POST", path: "/teams/coaches" })
+    .input(addTeamCoachInputSchema)
+    .output(addTeamCoachOutputSchema),
+  addMemberAsCoach: oc
+    .route({ method: "POST", path: "/teams/coaches/from-member" })
+    .input(addMemberAsCoachInputSchema)
+    .output(addMemberAsCoachOutputSchema),
+  removeTeamCoach: oc
+    .route({ method: "POST", path: "/teams/coaches/remove" })
+    .input(removeTeamCoachInputSchema)
+    .output(removeTeamCoachOutputSchema),
+  addCoachByEmail: oc
+    .route({ method: "POST", path: "/teams/coaches/by-email" })
+    .input(addCoachByEmailInputSchema)
+    .output(addCoachByEmailOutputSchema),
   listClubUsers: oc
     .route({ method: "GET", path: "/club-users" })
     .input(listClubUsersInputSchema)

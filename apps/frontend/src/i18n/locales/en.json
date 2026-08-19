@@ -148,6 +148,7 @@
     "delete": "Delete",
     "save": "Save",
     "close": "Close",
+    "back": "Back",
     "yes": "Yes",
     "no": "No"
   },
@@ -248,7 +249,45 @@
       "unitPlaceholder": "s",
       "higherIsBetterLabel": "Higher is better",
       "higherIsBetterHint": "Turn off for metrics where a lower value is progress, like a run time.",
-      "lowerIsBetter": "Lower is better"
+      "lowerIsBetter": "Lower is better",
+      "coaches": "Coaches",
+      "coachesHint": "Which accounts coach this team. The Coach role belongs to the club; one person can coach several teams.",
+      "coachesEmpty": "No coaches for this team yet.",
+      "addCoach": "Add coach",
+      "addCoachTitle": "Add coach",
+      "addCoachError": "Could not add the coach. Try again.",
+      "removeCoach": "Remove",
+      "removeCoachError": "Could not remove the coach. Try again.",
+      "coachPerson": "Person",
+      "coachFromTeam": "Members of the team",
+      "coachFromClub": "Accounts in the club",
+      "coachNoRole": "no role in this team",
+      "coachWiderAccess": "already has wider access in the club",
+      "coachHasAccount": "has an account, becomes a coach right away",
+      "coachUsesAccount": "uses the account {{name}} ({{email}})",
+      "coachCreatesAccount": "an account is created for {{email}}",
+      "coachBlocked": {
+        "noEmail": "has no email address – add one to the member first",
+        "widerAccess": "already has wider access in the club"
+      },
+      "noCandidates": "Everyone in the club already coaches this team. Add someone new by email address.",
+      "coachByEmail": "Not in the lists – add by email address",
+      "coachByEmailTitle": "Add coach by email",
+      "coachByEmailError": "Could not add the coach. The address may already coach this team.",
+      "coachName": "Name",
+      "coachEmail": "Email",
+      "coachEmailHint": "They become a coach right away. Signing in with this address lands on the account.",
+      "coachInvitesHeading": "Invitations still open",
+      "coachInvitePending": "Invited",
+      "coachValidation": {
+        "name": {
+          "too_small": "Enter a name."
+        },
+        "email": {
+          "invalid_format": "Enter a valid email address.",
+          "too_small": "Enter an email address."
+        }
+      }
     }
   },
   "invitations": {

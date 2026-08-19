@@ -63,7 +63,7 @@ tracked items) is **configuration data, not code**.
 | Statistics | `/statistics` | Attendance statistics per member, period, and activity type |
 | Posts | `/posts` | Announcements to the whole team or targeted groups |
 | Tracking lists | `/tracking` | Matrix (members × items) of configurable checklists — e.g. "Grönt kort", "picked up discount booklets" |
-| Team settings | `/settings/team` | Activity types, attendance statuses, member field definitions, tracking list definitions, seasons |
+| Team settings | `/settings/team` | Coaches of the team (admin only), activity types, attendance statuses, member field definitions, tracking list definitions, seasons |
 | Club settings | `/settings/club` | Club profile, teams, roles & permissions, users & invitations |
 | My profile | `/profile` | Own account, linked members, language |
 
@@ -73,6 +73,24 @@ tracked items) is **configuration data, not code**.
 - OAuth sign-in (Google first; Apple when a developer account is in place — ADR-004).
 - Create club → creates first team, seeds default configuration, makes creator `Admin`.
 - Invite users by link/email with a preset role; configurable roles per club.
+- **Coaches per team** (`/settings/team`, `settings.club`): a membership scoped
+  to one team, holding the club's `Coach` role — so the same person can coach
+  several teams, and stop coaching one without leaving the club. Somebody whose
+  club-wide role is wider than `Coach` cannot be added: a team-scoped role
+  replaces the club-wide one inside that team, so it would take their access
+  away exactly there (#74).
+  **Every appointment takes effect immediately** — an admin administering the
+  club does not wait for anybody to accept anything. The picker offers two
+  lists, the **team's own roster** and the **club's accounts**, and a third way
+  in by address for somebody in neither. Where no account holds the address
+  yet, one is created and holds the role from that moment; signing in with that
+  address later lands on it, because sign-in resolves an OAuth profile to an
+  existing user by e-mail. Each roster row says which account it will appoint
+  before it is pressed — including *whose* account, when the address belongs to
+  someone under another name, since a child's row usually carries a parent's.
+  A member with no address at all cannot be appointed; give them one on the
+  roster first. Coach invitations issued elsewhere are still shown, and are
+  retired automatically when an appointment overtakes them.
 
 ### 2. Members
 - Roster CRUD; core fields kept minimal (name, birth year, contact) with one

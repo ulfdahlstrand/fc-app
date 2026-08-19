@@ -43,6 +43,13 @@ import {
   listActivityTypesHandler,
   updateActivityTypeHandler,
 } from "./procedures/activity-types.js";
+import {
+  addCoachByEmailHandler,
+  addMemberAsCoachHandler,
+  addTeamCoachHandler,
+  listTeamCoachesHandler,
+  removeTeamCoachHandler,
+} from "./procedures/coaches.js";
 import { createClubHandler } from "./procedures/create-club.js";
 import {
   inviteMemberContactsHandler,
@@ -164,6 +171,11 @@ export const router = os.router({
   listMemberGuardians: listMemberGuardiansHandler,
   addGuardian: addGuardianHandler,
   removeGuardian: removeGuardianHandler,
+  listTeamCoaches: listTeamCoachesHandler,
+  addTeamCoach: addTeamCoachHandler,
+  addMemberAsCoach: addMemberAsCoachHandler,
+  removeTeamCoach: removeTeamCoachHandler,
+  addCoachByEmail: addCoachByEmailHandler,
   listClubUsers: listClubUsersHandler,
   myMembers: myMembersHandler,
   listGroups: listGroupsHandler,
