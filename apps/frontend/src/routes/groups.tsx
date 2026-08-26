@@ -374,8 +374,13 @@ function ManageGroupMembersDialog({
                     key={member.id}
                     htmlFor={id}
                     // A checkbox row is a tap target like any other, and 44px
-                    // is Kit's floor for one.
-                    className="flex min-h-tap items-center gap-2 text-sm kit:min-h-0"
+                    // is Kit's floor for one. `kit:min-h-0` lifts that floor on
+                    // a mouse — but a column flex item with no min-height will
+                    // shrink to nothing inside the capped, scrolling list, and
+                    // the names then paint on top of each other. `shrink-0`
+                    // keeps the row at its content height and lets the
+                    // container scroll instead of compressing.
+                    className="flex min-h-tap shrink-0 items-center gap-2 text-sm kit:min-h-0"
                   >
                     <Checkbox
                       id={id}
