@@ -43,7 +43,7 @@ describe("toCsv", () => {
 });
 
 describe("statsToCsv", () => {
-  it("writes a header row and one row per member, names quoted", () => {
+  it("writes a header row and one row per member, named as on screen", () => {
     const csv = statsToCsv(
       [
         member("Alva", "Bergström", 15, 16, 94),
@@ -52,10 +52,13 @@ describe("statsToCsv", () => {
       headers,
     );
 
+    // `Förnamn Efternamn`, like every list in the app (#101). No comma in
+    // the field any more, so nothing to quote — `toCsv` is tested for that
+    // above, on a field that does contain one.
     expect(csv.split("\r\n")).toEqual([
       "Name,Attended,Marked,Rate %",
-      '"Bergström, Alva",15,16,94',
-      '"Persson, Otto",0,0,',
+      "Alva Bergström,15,16,94",
+      "Otto Persson,0,0,",
     ]);
   });
 

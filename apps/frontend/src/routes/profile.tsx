@@ -16,6 +16,7 @@ import i18n, { supportedLanguages } from "../i18n/i18n";
 import { ensureMe, logout, meQueryOptions } from "../lib/auth";
 import { selectTeam } from "../lib/clubs";
 import { useMyMembers } from "../lib/guardians";
+import { formatMemberName } from "../lib/members";
 
 export const Route = createFileRoute("/profile")({
   beforeLoad: async () => {
@@ -133,7 +134,7 @@ function MyMembers() {
             >
               <div>
                 <p className="font-medium">
-                  {member.firstName} {member.lastName}
+                  {formatMemberName(member)}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {member.clubName} — {member.teamName}
@@ -146,7 +147,7 @@ function MyMembers() {
             {/* Below the member it is about, or it reads as belonging to the
                 card above. */}
             <ComingOfAgeNoticeForGuardian
-              name={`${member.firstName} ${member.lastName}`}
+              name={formatMemberName(member)}
               birthDate={member.birthDate}
             />
           </div>

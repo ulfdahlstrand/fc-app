@@ -1,6 +1,11 @@
 /** Answering a call-up, and the coach's overview (ADR-013, ADR-016). */
 import { ORPCError } from "@orpc/server";
-import type { CallupResponse, CallupSummary, MyCallup } from "@fc-app/contracts";
+import {
+  formatMemberName,
+  type CallupResponse,
+  type CallupSummary,
+  type MyCallup,
+} from "@fc-app/contracts";
 import {
   decideResponder,
   isLinkedMember,
@@ -151,7 +156,10 @@ export async function loadMyCallups(
     location: row.location,
     callupNote: row.callup_note,
     memberId: row.member_id,
-    memberName: `${row.first_name} ${row.last_name}`,
+    memberName: formatMemberName({
+      firstName: row.first_name,
+      lastName: row.last_name,
+    }),
     response: row.response as CallupResponse,
     responseNote: row.response_note,
     respondedBy:

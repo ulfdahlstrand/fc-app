@@ -3,6 +3,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import type { ActivityType, MemberAttendanceStats } from "@fc-app/contracts";
+import { formatMemberName } from "../lib/members";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -343,7 +344,7 @@ function MemberRow({ member }: { member: MemberAttendanceStats }) {
           here — and the fraction becomes its qualifier. */}
       <span className="flex min-w-0 flex-1 flex-col kit:contents">
         <span className="truncate font-semibold kit:min-w-0 kit:flex-1">
-          {member.firstName} {member.lastName}
+          {formatMemberName(member)}
         </span>
         <AttendanceMeter member={member} />
         <span className="text-muted-foreground text-sm font-semibold tabular-nums kit:w-20 kit:shrink-0 kit:text-right">

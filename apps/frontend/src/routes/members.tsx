@@ -36,7 +36,11 @@ import {
 } from "../lib/guardians";
 import { useGroups } from "../lib/groups";
 import { useMemberFields } from "../lib/member-fields";
-import { useCreateMember, useMembers } from "../lib/members";
+import {
+  formatMemberName,
+  useCreateMember,
+  useMembers,
+} from "../lib/members";
 
 /** Sentinel select value for "all groups" — Radix disallows an empty-string item value. */
 const ALL_GROUPS = "__all__";
@@ -242,7 +246,7 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
                   }
                 >
                   <TableCell>
-                    {member.lastName}, {member.firstName}
+                    {formatMemberName(member)}
                     {member.archived && (
                       <Badge variant="secondary" className="ml-2">
                         {t("members.archived")}
@@ -307,7 +311,7 @@ function MemberRow({ member }: { member: Member }) {
       </span>
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="truncate font-semibold">
-          {member.lastName}, {member.firstName}
+          {formatMemberName(member)}
         </span>
         {meta !== "" && (
           <span className="text-muted-foreground truncate text-sm">{meta}</span>

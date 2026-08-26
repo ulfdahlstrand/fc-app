@@ -7,6 +7,12 @@ import { queryClient } from "../query-client";
 import { optionalNumber, optionalText, requiredText } from "./form";
 import { orpcQuery } from "./orpc-query";
 
+/**
+ * How a member is written and how a list of them is ordered — one rule for
+ * both sides of the wire (ADR-010), re-exported rather than restated.
+ */
+export { compareMemberNames, formatMemberName } from "@fc-app/contracts";
+
 export interface MemberListFilters {
   includeArchived?: boolean;
   search?: string;

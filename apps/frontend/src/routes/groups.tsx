@@ -43,7 +43,7 @@ import {
   type GroupFormValues,
   type GroupNameInput,
 } from "../lib/groups";
-import { useMembers } from "../lib/members";
+import { formatMemberName, useMembers } from "../lib/members";
 
 export const Route = createFileRoute("/groups")({
   beforeLoad: async () => {
@@ -387,7 +387,7 @@ function ManageGroupMembersDialog({
                       checked={currentIds.includes(member.id)}
                       onCheckedChange={() => toggle(member.id)}
                     />
-                    {member.lastName}, {member.firstName}
+                    {formatMemberName(member)}
                   </label>
                 );
               })}

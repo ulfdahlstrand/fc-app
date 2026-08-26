@@ -23,7 +23,7 @@ import {
 } from "@/lib/callups";
 import { useHasPermission } from "@/lib/clubs";
 import { useGroupMembers, useGroups } from "@/lib/groups";
-import { useMembers } from "@/lib/members";
+import { formatMemberName, useMembers } from "@/lib/members";
 
 export function CallupSection({
   teamId,
@@ -315,7 +315,7 @@ function SquadRow({
 
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="truncate font-semibold">
-          {member.firstName} {member.lastName}
+          {formatMemberName(member)}
         </span>
         <span className="text-muted-foreground flex flex-wrap items-center gap-x-1.5 text-xs">
           {inSquad ? label : t("callups.notCalled")}
@@ -383,7 +383,7 @@ function SquadRow({
           type="button"
           onClick={onToggle}
           aria-pressed={inSquad}
-          aria-label={`${member.firstName} ${member.lastName} — ${
+          aria-label={`${formatMemberName(member)} — ${
             inSquad ? label : t("callups.notCalled")
           }`}
           className={cn(

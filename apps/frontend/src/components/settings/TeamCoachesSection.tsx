@@ -56,6 +56,7 @@ import {
 } from "@/lib/coaches";
 import { invitationLink } from "@/lib/invitations";
 import type { Invitation, MemberCoachCandidate } from "@fc-app/contracts";
+import { formatMemberName } from "@/lib/members";
 
 /** Which list a picked row came from — see the note on `selected` below. */
 const MEMBER_PREFIX = "member:";
@@ -300,7 +301,7 @@ function AddCoachDialog({
                               value={`${MEMBER_PREFIX}${candidate.memberId}`}
                               disabled={candidate.action === "blocked"}
                             >
-                              {candidate.firstName} {candidate.lastName} ·{" "}
+                              {formatMemberName(candidate)} ·{" "}
                               {memberNote(candidate)}
                             </SelectItem>
                           ))}

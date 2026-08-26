@@ -28,6 +28,39 @@ export const memberSchema = z.object({
 
 export type Member = z.infer<typeof memberSchema>;
 
+/** What a member is called, everywhere: `Ulf Dahlstrand` (ADR-010). */
+export function formatMemberName(
+  member: Pick<Member, "firstName" | "lastName">
+): string {
+  // An imported attendance file can carry a one-word name — the SportAdmin
+  // page gives a full name that is split on the first space — so the join
+  // has to survive an empty half without leaving a stray space behind.
+  return [member.firstName.trim(), member.lastName.trim()]
+    .filter((part) => part !== "")
+    .join(" ");
+}
+
+/**
+ * The one order member names are listed in: **by first name, then last** —
+ * the same string `formatMemberName` renders, sorted the way it reads.
+ *
+ * Most membership registers sort by surname, and this app did too, which left
+ * every list looking unordered to anyone who does not know the surnames.
+ *
+ * `sv` collation, so `Å Ä Ö` fall after `Z`. The SQL `ORDER BY` clauses that
+ * mirror this for performance name it explicitly (ADR-010): see
+ * `procedures/members.ts`, `tracking.ts`, `coaches.ts` and `guardians.ts`.
+ */
+export function compareMemberNames(
+  a: Pick<Member, "firstName" | "lastName">,
+  b: Pick<Member, "firstName" | "lastName">
+): number {
+  return (
+    a.firstName.localeCompare(b.firstName, "sv") ||
+    a.lastName.localeCompare(b.lastName, "sv")
+  );
+}
+
 export const memberFieldTypeSchema = z.enum([
   "text",
   "number",
