@@ -82,6 +82,8 @@
     "add": "Add member",
     "search": "Search name",
     "showArchived": "Show archived",
+    "groupByGroup": "Group by group",
+    "ungrouped": "No group",
     "name": "Name",
     "birthYear": "Birth year",
     "personalId": "Personnummer",

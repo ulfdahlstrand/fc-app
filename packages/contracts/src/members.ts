@@ -157,6 +157,13 @@ export const listMembersInputSchema = z.object({
 
 export const listMembersOutputSchema = z.object({
   members: z.array(memberSchema),
+  /**
+   * Member id → the groups it belongs to (#10), **ordered by group name** so
+   * a client can take the first without resolving the names. Only the roster
+   * asks about groups, so this rides on the list rather than on
+   * `memberSchema`, where every mutation response would have to invent it.
+   */
+  groupIds: z.record(z.string(), z.array(z.string())),
 });
 
 export const getMemberInputSchema = z.object({
