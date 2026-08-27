@@ -1,6 +1,9 @@
 /** Attendance statistics (issue #15). */
 import { useQuery } from "@tanstack/react-query";
-import type { MemberAttendanceStats } from "@fc-app/contracts";
+import {
+  formatMemberName,
+  type MemberAttendanceStats,
+} from "@fc-app/contracts";
 import { orpcQuery } from "./orpc-query";
 
 export interface StatsFilters {
@@ -70,7 +73,7 @@ export function statsToCsv(
   return toCsv([
     [headers.name, headers.attended, headers.marked, headers.rate],
     ...members.map((member) => [
-      `${member.lastName}, ${member.firstName}`,
+      formatMemberName(member),
       String(member.attended),
       String(member.marked),
       member.rate === null ? "" : String(member.rate),

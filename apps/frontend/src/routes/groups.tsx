@@ -43,7 +43,7 @@ import {
   type GroupFormValues,
   type GroupNameInput,
 } from "../lib/groups";
-import { useMembers } from "../lib/members";
+import { formatMemberName, useMembers } from "../lib/members";
 
 export const Route = createFileRoute("/groups")({
   beforeLoad: async () => {
@@ -374,15 +374,20 @@ function ManageGroupMembersDialog({
                     key={member.id}
                     htmlFor={id}
                     // A checkbox row is a tap target like any other, and 44px
-                    // is Kit's floor for one.
-                    className="flex min-h-tap items-center gap-2 text-sm kit:min-h-0"
+                    // is Kit's floor for one. `kit:min-h-0` lifts that floor on
+                    // a mouse — but a column flex item with no min-height will
+                    // shrink to nothing inside the capped, scrolling list, and
+                    // the names then paint on top of each other. `shrink-0`
+                    // keeps the row at its content height and lets the
+                    // container scroll instead of compressing.
+                    className="flex min-h-tap shrink-0 items-center gap-2 text-sm kit:min-h-0"
                   >
                     <Checkbox
                       id={id}
                       checked={currentIds.includes(member.id)}
                       onCheckedChange={() => toggle(member.id)}
                     />
-                    {member.lastName}, {member.firstName}
+                    {formatMemberName(member)}
                   </label>
                 );
               })}

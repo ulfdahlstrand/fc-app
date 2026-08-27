@@ -19,7 +19,7 @@ import {
 } from "@/lib/attendance";
 import { useAttendanceStatuses } from "@/lib/attendance-statuses";
 import { useHasPermission } from "@/lib/clubs";
-import { useMembers } from "@/lib/members";
+import { formatMemberName, useMembers } from "@/lib/members";
 
 export function AttendanceSection({
   teamId,
@@ -230,7 +230,7 @@ function AttendanceRow({
 
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="truncate font-semibold">
-          {member.firstName} {member.lastName}
+          {formatMemberName(member)}
         </span>
         <span className="text-muted-foreground text-xs">{label}</span>
       </span>
@@ -241,7 +241,7 @@ function AttendanceRow({
         <button
           type="button"
           onClick={onCycle}
-          aria-label={`${member.firstName} ${member.lastName} — ${label}`}
+          aria-label={`${formatMemberName(member)} — ${label}`}
           className={cn(
             "flex size-12 shrink-0 items-center justify-center rounded-full text-lg font-bold transition-transform duration-[120ms] ease-standard active:scale-[0.97]",
             status

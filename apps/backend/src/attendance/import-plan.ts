@@ -11,6 +11,7 @@
 import type { Kysely } from "kysely";
 import {
   normaliseForMatch,
+  formatMemberName,
   normaliseName,
   type AttendanceActivityResult,
   type AttendanceImportError,
@@ -126,7 +127,10 @@ async function loadSnapshot(
   for (const m of members) {
     const key = normaliseName(m.first_name, m.last_name);
     membersByName.set(key, [...(membersByName.get(key) ?? []), m.id]);
-    memberNames.set(m.id, `${m.first_name} ${m.last_name}`.trim());
+    memberNames.set(
+      m.id,
+      formatMemberName({ firstName: m.first_name, lastName: m.last_name })
+    );
   }
 
   const activitiesByRef = new Map<string, string>();
@@ -322,7 +326,7 @@ export async function buildAttendancePlan(
 
   for (const row of input.rows) {
     const errors: AttendanceImportError[] = [];
-    const name = `${row.firstName} ${row.lastName}`.trim();
+    const name = formatMemberName(row);
 
     // The source's own id first, because it survives what names do not: a
     // spelling, a marriage, a truncation in the export. A name match is the

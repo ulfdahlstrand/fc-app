@@ -12,15 +12,17 @@
  */
 import { ORPCError } from "@orpc/server";
 import type { Kysely } from "kysely";
-import type {
-  CoachCandidate,
-  Invitation,
-  MemberCoachCandidate,
-  Permission,
-  TeamCoach,
+import {
+  formatMemberName,
+  type CoachCandidate,
+  type Invitation,
+  type MemberCoachCandidate,
+  type Permission,
+  type TeamCoach,
 } from "@fc-app/contracts";
 import { getDb } from "../db/client.js";
 import type { Database } from "../db/types.js";
+import { memberNameOrder } from "../members/name-order.js";
 import { os, requireUser } from "../orpc.js";
 import { isDemotion } from "../tenancy/narrowing.js";
 import {
@@ -192,6 +194,7 @@ async function loadTeamMembers(
   db: Kysely<Database>,
   teamId: string,
 ): Promise<TeamMemberRow[]> {
+  const [byFirstName, byLastName] = memberNameOrder("members");
   const rows = await db
     .selectFrom("members")
     .leftJoin("member_guardians", (join) =>
@@ -208,8 +211,8 @@ async function loadTeamMembers(
     ])
     .where("members.team_id", "=", teamId)
     .where("members.archived", "=", false)
-    .orderBy("members.last_name")
-    .orderBy("members.first_name")
+    .orderBy(byFirstName)
+    .orderBy(byLastName)
     .execute();
 
   return rows.map((row) => ({
@@ -626,7 +629,7 @@ export const addMemberAsCoachHandler = os.addMemberAsCoach.handler(
       : await resolveOrCreateAccount(
           db,
           email,
-          `${member.firstName} ${member.lastName}`.trim(),
+          formatMemberName(member),
         );
 
     const clubUsers = await loadClubUsers(db, clubId);

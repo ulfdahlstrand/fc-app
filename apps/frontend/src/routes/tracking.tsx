@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import type { TrackingDefinition, TrackingEntry } from "@fc-app/contracts";
+import { formatMemberName } from "../lib/members";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import {
@@ -219,7 +220,7 @@ function Matrix({
                     // target, with no negative margins to reason about.
                     className="flex min-w-0 flex-1 items-center self-stretch truncate text-sm font-semibold hover:underline"
                   >
-                    {member.firstName} {member.lastName}
+                    {formatMemberName(member)}
                   </Link>
                   <span className="flex-none">
                     <Cell
@@ -320,7 +321,7 @@ function Matrix({
                     params={{ memberId: member.memberId }}
                     className="hover:underline"
                   >
-                    {member.firstName} {member.lastName}
+                    {formatMemberName(member)}
                   </Link>
                 </th>
                 {definitions.map((definition) => (

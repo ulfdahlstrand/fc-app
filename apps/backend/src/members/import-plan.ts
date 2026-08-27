@@ -10,6 +10,7 @@
  */
 import type { Kysely } from "kysely";
 import {
+  formatMemberName,
   normaliseForMatch,
   parsePersonalId,
   type ImportChange,
@@ -355,7 +356,7 @@ export async function buildImportPlan(
       newCustomFields.push(field);
     }
 
-    const name = `${row.firstName} ${row.lastName}`.trim();
+    const name = formatMemberName(row);
     const existing = entry.memberId ? byId.get(entry.memberId) : undefined;
 
     if (errors.length > 0) {

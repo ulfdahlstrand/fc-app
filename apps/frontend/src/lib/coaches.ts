@@ -1,6 +1,9 @@
 /** Team coach data hooks (#98). */
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { addCoachByEmailInputSchema } from "@fc-app/contracts";
+import {
+  addCoachByEmailInputSchema,
+  compareMemberNames,
+} from "@fc-app/contracts";
 import type { CoachCandidate, MemberCoachCandidate } from "@fc-app/contracts";
 import { z } from "zod";
 import { orpc } from "../orpc-client";
@@ -107,9 +110,6 @@ export function sortMemberCandidates(
     const blocked =
       Number(a.action === "blocked") - Number(b.action === "blocked");
     if (blocked !== 0) return blocked;
-    return (
-      a.lastName.localeCompare(b.lastName, "sv") ||
-      a.firstName.localeCompare(b.firstName, "sv")
-    );
+    return compareMemberNames(a, b);
   });
 }

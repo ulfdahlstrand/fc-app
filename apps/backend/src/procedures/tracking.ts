@@ -9,6 +9,7 @@ import {
 } from "@fc-app/contracts";
 import { getDb } from "../db/client.js";
 import type { Database, TrackingDefinitionsTable } from "../db/types.js";
+import { memberNameOrder } from "../members/name-order.js";
 import { os, requireUser } from "../orpc.js";
 import { requireTeamPermission } from "../tenancy/membership.js";
 
@@ -246,7 +247,8 @@ export const trackingMatrixHandler = os.trackingMatrix.handler(
               .where("group_id", "=", input.groupId)
           );
         }
-        return query.orderBy("last_name").orderBy("first_name").execute();
+        const [byFirstName, byLastName] = memberNameOrder();
+        return query.orderBy(byFirstName).orderBy(byLastName).execute();
       })(),
     ]);
 

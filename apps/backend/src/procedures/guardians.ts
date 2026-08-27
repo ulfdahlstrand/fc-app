@@ -8,6 +8,7 @@ import type {
 } from "@fc-app/contracts";
 import { getDb } from "../db/client.js";
 import type { Database } from "../db/types.js";
+import { memberNameOrder } from "../members/name-order.js";
 import { os, requireUser } from "../orpc.js";
 import { requireTeamPermission } from "../tenancy/membership.js";
 
@@ -152,6 +153,7 @@ export const myMembersHandler = os.myMembers.handler(async ({ context }) => {
   const user = requireUser(context);
   const db = getDb();
 
+  const [byFirstName, byLastName] = memberNameOrder("members");
   const rows = await db
     .selectFrom("member_guardians")
     .innerJoin("members", "members.id", "member_guardians.member_id")
@@ -169,7 +171,8 @@ export const myMembersHandler = os.myMembers.handler(async ({ context }) => {
     ])
     .where("member_guardians.user_id", "=", user.id)
     .orderBy("clubs.name")
-    .orderBy("members.last_name")
+    .orderBy(byFirstName)
+    .orderBy(byLastName)
     .execute();
 
   const members: LinkedMember[] = rows.map((row) => ({

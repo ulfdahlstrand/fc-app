@@ -1,5 +1,5 @@
 /** Members roster (issue #7) — the team's list of members. */
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import type { Member } from "@fc-app/contracts";
@@ -35,8 +35,13 @@ import {
   usePendingContactInvites,
 } from "../lib/guardians";
 import { useGroups } from "../lib/groups";
+import { groupMembers, type MemberSection } from "../lib/member-grouping";
 import { useMemberFields } from "../lib/member-fields";
-import { useCreateMember, useMembers } from "../lib/members";
+import {
+  formatMemberName,
+  useCreateMember,
+  useMembers,
+} from "../lib/members";
 
 /** Sentinel select value for "all groups" — Radix disallows an empty-string item value. */
 const ALL_GROUPS = "__all__";
@@ -86,6 +91,10 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
   const [search, setSearch] = useState("");
   const [includeArchived, setIncludeArchived] = useState(false);
   const [groupId, setGroupId] = useState("");
+  // A per-visit view toggle, and grouped is the point — so `useState`, not
+  // storage. `lib/clubs.ts` has the localStorage pattern if that turns out
+  // to be wrong.
+  const [groupByGroup, setGroupByGroup] = useState(true);
   const [creating, setCreating] = useState(false);
 
   const members = useMembers(teamId, {
@@ -99,6 +108,24 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
   const pendingInvites = usePendingContactInvites(teamId, canInvite);
   const inviteContacts = useInviteMemberContacts(teamId);
   const customColumns = fields.data?.fields ?? [];
+  const teamGroups = groups.data?.groups ?? [];
+  // A team with no groups sees no grouping at all, mirroring the filter. And
+  // when the filter already names one group, a single heading repeating that
+  // label above the list says nothing — so that renders flat.
+  const canGroup = teamGroups.length > 0 && groupId === "";
+  const sections: MemberSection[] | null =
+    canGroup && groupByGroup && members.data
+      ? groupMembers(
+          members.data.members,
+          members.data.groupIds,
+          teamGroups,
+          t("members.ungrouped")
+        )
+      : null;
+  /** One nameless section when grouping is off, so the table has one shape. */
+  const tableSections: MemberSection[] = sections ?? [
+    { groupId: null, name: "", members: members.data?.members ?? [] },
+  ];
 
   return (
     <div className="flex flex-col gap-6">
@@ -161,6 +188,16 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
           />
           <Label htmlFor="show-archived">{t("members.showArchived")}</Label>
         </div>
+        {canGroup && (
+          <div className="flex items-center gap-2 pb-2">
+            <Switch
+              id="group-by-group"
+              checked={groupByGroup}
+              onCheckedChange={setGroupByGroup}
+            />
+            <Label htmlFor="group-by-group">{t("members.groupByGroup")}</Label>
+          </div>
+        )}
         {(groups.data?.groups.length ?? 0) > 0 && (
           <div className="flex flex-1 flex-col gap-1.5 kit:flex-none">
             <Label htmlFor="group-filter">{t("groups.filterLabel")}</Label>
@@ -212,9 +249,25 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
            horizontal scroll for an unbounded number of them would be the
            clipping Kit forbids. */
         <div className="flex flex-col gap-[11px]">
-          {members.data.members.map((member) => (
-            <MemberRow key={member.id} member={member} />
-          ))}
+          {sections === null
+            ? members.data.members.map((member) => (
+                <MemberRow key={member.id} member={member} />
+              ))
+            : sections.map((section) => (
+                <div
+                  key={section.groupId ?? "ungrouped"}
+                  className="flex flex-col gap-[11px]"
+                >
+                  {/* The count is the rows drawn, never `group.memberCount`
+                      — a member in two groups is drawn once. */}
+                  <p className="kit-overline text-muted-foreground mt-2">
+                    {section.name} ({section.members.length})
+                  </p>
+                  {section.members.map((member) => (
+                    <MemberRow key={member.id} member={member} />
+                  ))}
+                </div>
+              ))}
         </div>
       ) : (
         <div className="rounded-xl bg-card px-2">
@@ -230,7 +283,23 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {members.data.members.map((member) => (
+              {tableSections.map((section) => (
+                <Fragment key={section.groupId ?? "ungrouped"}>
+                  {sections !== null && (
+                    <TableRow className="hover:bg-transparent">
+                      {/* The span has to track the custom columns, or the
+                          layout breaks the moment a team defines a field.
+                          The count is the rows drawn, never
+                          `group.memberCount`. */}
+                      <TableCell
+                        colSpan={3 + customColumns.length}
+                        className="kit-overline text-muted-foreground pt-6"
+                      >
+                        {section.name} ({section.members.length})
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {section.members.map((member) => (
                 <TableRow
                   key={member.id}
                   className="cursor-pointer"
@@ -242,7 +311,7 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
                   }
                 >
                   <TableCell>
-                    {member.lastName}, {member.firstName}
+                    {formatMemberName(member)}
                     {member.archived && (
                       <Badge variant="secondary" className="ml-2">
                         {t("members.archived")}
@@ -257,6 +326,8 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
                     </TableCell>
                   ))}
                 </TableRow>
+                  ))}
+                </Fragment>
               ))}
             </TableBody>
           </Table>
@@ -307,7 +378,7 @@ function MemberRow({ member }: { member: Member }) {
       </span>
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="truncate font-semibold">
-          {member.lastName}, {member.firstName}
+          {formatMemberName(member)}
         </span>
         {meta !== "" && (
           <span className="text-muted-foreground truncate text-sm">{meta}</span>

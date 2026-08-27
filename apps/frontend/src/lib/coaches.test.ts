@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import type { CoachCandidate, MemberCoachCandidate } from "@fc-app/contracts";
+import {
+  formatMemberName,
+  type CoachCandidate,
+  type MemberCoachCandidate,
+} from "@fc-app/contracts";
 import { sortCandidates, sortMemberCandidates } from "./coaches";
 
 function candidate(
@@ -89,16 +93,19 @@ describe("sortMemberCandidates", () => {
     ]);
   });
 
-  it("sorts by last name then first name, Swedish order", () => {
+  it("sorts by first name then last name, Swedish order (#101)", () => {
     const sorted = sortMemberCandidates([
       member("Ek", "add", "Örjan"),
       member("Ek", "add", "Anna"),
       member("Åberg", "add", "Bo"),
     ]);
-    expect(sorted.map((row) => `${row.firstName} ${row.lastName}`)).toEqual([
+    // The order the row reads in, and `Örjan` after `Bo` because Ö follows Z
+    // in Swedish. Delegated to `compareMemberNames`, so this list and the
+    // roster cannot drift apart.
+    expect(sorted.map(formatMemberName)).toEqual([
       "Anna Ek",
-      "Örjan Ek",
       "Bo Åberg",
+      "Örjan Ek",
     ]);
   });
 

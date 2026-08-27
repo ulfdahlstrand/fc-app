@@ -4,6 +4,8 @@ import type { Kysely } from "kysely";
 import type { Member, Permission } from "@fc-app/contracts";
 import { getDb } from "../db/client.js";
 import type { Database } from "../db/types.js";
+import { loadMemberGroupIds } from "../members/group-ids.js";
+import { memberNameOrder } from "../members/name-order.js";
 import { loadPersonalIds, setPersonalId } from "../members/personal-id.js";
 import { toMember } from "../members/to-member.js";
 import { loadMemberValues } from "../members/values.js";
@@ -77,9 +79,10 @@ export const listMembersHandler = os.listMembers.handler(
       );
     }
 
+    const [byFirstName, byLastName] = memberNameOrder();
     const rows = await query
-      .orderBy("last_name")
-      .orderBy("first_name")
+      .orderBy(byFirstName)
+      .orderBy(byLastName)
       .execute();
     const memberIds = rows.map((row) => row.id);
     const values = await loadMemberValues(db, memberIds);
@@ -88,10 +91,12 @@ export const listMembersHandler = os.listMembers.handler(
       memberIds,
       access.membership.permissions
     );
+    const groupIds = await loadMemberGroupIds(db, input.teamId, memberIds);
     return {
       members: rows.map((row) =>
         toMember(row, values.get(row.id) ?? {}, personalIds.get(row.id) ?? null)
       ),
+      groupIds: Object.fromEntries(groupIds),
     };
   }
 );

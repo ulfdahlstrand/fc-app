@@ -1,5 +1,8 @@
 /** Attendance aggregation. The rate is attended ÷ marked (ADR-012). */
-import type { MemberAttendanceStats } from "@fc-app/contracts";
+import {
+  compareMemberNames,
+  type MemberAttendanceStats,
+} from "@fc-app/contracts";
 
 export interface SummariseMember {
   id: string;
@@ -59,11 +62,11 @@ export function summariseAttendance(input: SummariseInput): SummariseOutput {
 
   members.sort((a, b) => {
     if (a.rate === null && b.rate === null) {
-      return compareNames(a, b);
+      return compareMemberNames(a, b);
     }
     if (a.rate === null) return 1;
     if (b.rate === null) return -1;
-    return a.rate - b.rate || compareNames(a, b);
+    return a.rate - b.rate || compareMemberNames(a, b);
   });
 
   const totalAttended = members.reduce((sum, m) => sum + m.attended, 0);
@@ -74,14 +77,4 @@ export function summariseAttendance(input: SummariseInput): SummariseOutput {
     activities: input.activities,
     teamRate: rateOf(totalAttended, totalMarked),
   };
-}
-
-function compareNames(
-  a: { lastName: string; firstName: string },
-  b: { lastName: string; firstName: string }
-): number {
-  return (
-    a.lastName.localeCompare(b.lastName, "sv") ||
-    a.firstName.localeCompare(b.firstName, "sv")
-  );
 }

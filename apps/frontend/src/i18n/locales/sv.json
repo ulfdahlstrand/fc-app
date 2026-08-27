@@ -82,6 +82,8 @@
     "add": "Lägg till medlem",
     "search": "Sök namn",
     "showArchived": "Visa arkiverade",
+    "groupByGroup": "Gruppera på grupper",
+    "ungrouped": "Utan grupp",
     "name": "Namn",
     "birthYear": "Födelseår",
     "personalId": "Personnummer",
