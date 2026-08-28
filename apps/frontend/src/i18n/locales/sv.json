@@ -104,6 +104,17 @@
     "customFields": "Egna fält",
     "editFields": "Redigera fält",
     "noFields": "Inga egna fält är definierade för laget.",
+    "fillFields": "Fyll i fält",
+    "chooseFields": "Välj fält",
+    "noFieldsPicked": "Inga fält valda. Välj minst ett fält ovan.",
+    "cellSaveError": "Kunde inte spara värdet.",
+    "invalidValue": {
+      "text": "Det värdet går inte att spara.",
+      "number": "Ange ett tal.",
+      "date": "Ange ett datum (ÅÅÅÅ-MM-DD).",
+      "boolean": "Ange ja eller nej.",
+      "select": "Välj ett av alternativen."
+    },
     "empty": "Inga medlemmar ännu.",
     "noTeam": "Välj ett lag för att se medlemmar.",
     "forbidden": "Du har inte behörighet att se medlemmar i det här laget.",
