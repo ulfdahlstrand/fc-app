@@ -104,6 +104,17 @@
     "customFields": "Custom fields",
     "editFields": "Edit fields",
     "noFields": "No custom fields are defined for this team.",
+    "fillFields": "Fill in fields",
+    "chooseFields": "Choose fields",
+    "noFieldsPicked": "No fields picked. Pick at least one above.",
+    "cellSaveError": "Could not save the value.",
+    "invalidValue": {
+      "text": "That value cannot be saved.",
+      "number": "Enter a number.",
+      "date": "Enter a date (YYYY-MM-DD).",
+      "boolean": "Enter yes or no.",
+      "select": "Pick one of the options."
+    },
     "empty": "No members yet.",
     "noTeam": "Select a team to see members.",
     "forbidden": "You do not have permission to view members in this team.",
