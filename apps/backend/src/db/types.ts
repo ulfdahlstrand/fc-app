@@ -172,6 +172,8 @@ export interface MemberFieldDefinitionsTable {
   required: Generated<boolean>;
   sort_order: Generated<number>;
   show_in_list: Generated<boolean>;
+  /** The one field drawn before the name; at most one per team. */
+  presentation: Generated<boolean>;
   archived: Generated<boolean>;
   created_at: Timestamp;
 }

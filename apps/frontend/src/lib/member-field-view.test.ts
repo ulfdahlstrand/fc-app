@@ -2,12 +2,15 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { Member, MemberFieldDefinition } from "@fc-app/contracts";
 import {
+  canMoveField,
   commitFieldValue,
   filledCount,
   listFields,
   moveField,
   pickedFieldsKey,
+  presentationCircle,
   readPickedFieldIds,
+  rosterColumns,
   visibleFields,
   writePickedFieldIds,
 } from "./member-field-view";
@@ -25,6 +28,7 @@ function field(
     required: false,
     sortOrder: 0,
     showInList: true,
+    presentation: false,
     archived: false,
     ...overrides,
   };
@@ -183,6 +187,89 @@ describe("commitFieldValue", () => {
       action: "save",
       value: null,
     });
+  });
+});
+
+describe("rosterColumns", () => {
+  it("holds the presentation field apart from the columns", () => {
+    const number = field("number", { presentation: true });
+    const { presentation, rest } = rosterColumns([
+      number,
+      field("size"),
+      field("note", { showInList: false }),
+    ]);
+    expect(presentation).toBe(number);
+    expect(rest.map((f) => f.id)).toEqual(["size"]);
+  });
+
+  it("answers null for a team that has not named one", () => {
+    const { presentation, rest } = rosterColumns([field("size")]);
+    expect(presentation).toBeNull();
+    expect(rest.map((f) => f.id)).toEqual(["size"]);
+  });
+
+  it("does not lead with a field the team took off the list", () => {
+    // The server refuses the pair, so this is a stale definition rather than
+    // a reachable state — the roster still must not draw a hidden column.
+    const { presentation, rest } = rosterColumns([
+      field("number", { presentation: true, showInList: false }),
+    ]);
+    expect(presentation).toBeNull();
+    expect(rest).toEqual([]);
+  });
+});
+
+describe("presentationCircle", () => {
+  it("puts a short value where the initials were", () => {
+    expect(presentationCircle("7", "UD")).toEqual({
+      circle: "7",
+      fromField: true,
+      meta: null,
+    });
+  });
+
+  it("keeps the initials when there is no value", () => {
+    expect(presentationCircle(undefined, "UD")).toEqual({
+      circle: "UD",
+      fromField: false,
+      meta: null,
+    });
+    expect(presentationCircle("  ", "UD")).toEqual({
+      circle: "UD",
+      fromField: false,
+      meta: null,
+    });
+  });
+
+  it("spills a value too long for a circle into the meta line", () => {
+    expect(presentationCircle("Målvakt", "UD")).toEqual({
+      circle: "UD",
+      fromField: false,
+      meta: "Målvakt",
+    });
+  });
+});
+
+describe("canMoveField", () => {
+  const fields = [
+    field("number", { presentation: true }),
+    field("size"),
+    field("fee"),
+  ];
+
+  it("does not move the presentation field, or anything past it", () => {
+    expect(canMoveField(fields, 0, 1)).toBe(false);
+    expect(canMoveField(fields, 1, -1)).toBe(false);
+  });
+
+  it("still moves the rest among themselves", () => {
+    expect(canMoveField(fields, 1, 1)).toBe(true);
+    expect(moveField(fields, 1, 1)).toEqual(["number", "fee", "size"]);
+  });
+
+  it("refuses either end", () => {
+    expect(canMoveField(fields, 2, 1)).toBe(false);
+    expect(moveField(fields, 2, 1)).toEqual(["number", "size", "fee"]);
   });
 });
 

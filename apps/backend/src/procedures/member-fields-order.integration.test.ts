@@ -204,3 +204,162 @@ describe("showInList", () => {
     expect(result.fields[0]?.showInList).toBe(false);
   });
 });
+
+/**
+ * The presentation field — the one custom field drawn before the name. Its
+ * rules are all about rows other than the one being written, so they are
+ * tested here rather than against a stub: "one per team" is a claim about the
+ * team's other fields, and the partial unique index behind it is real.
+ */
+describe("the presentation field", () => {
+  async function presentationField(name: string): Promise<string> {
+    const result = await call(
+      createMemberFieldHandler,
+      {
+        teamId: club.teamId,
+        name,
+        fieldType: "number",
+        presentation: true,
+      },
+      { context: admin.context }
+    );
+    return result.field.id;
+  }
+
+  it("is off until a team says otherwise", async () => {
+    await createField("Tröjnummer");
+    const result = await call(
+      listMemberFieldsHandler,
+      { teamId: club.teamId },
+      { context: admin.context }
+    );
+    expect(result.fields[0]?.presentation).toBe(false);
+  });
+
+  it("comes back first, wherever it sits in the team's own order", async () => {
+    await createField("Storlek");
+    await createField("Avgift");
+    const number = await createField("Tröjnummer");
+
+    await call(
+      updateMemberFieldHandler,
+      { teamId: club.teamId, fieldId: number, presentation: true },
+      { context: admin.context }
+    );
+
+    expect(await fieldNames()).toEqual(["Tröjnummer", "Storlek", "Avgift"]);
+  });
+
+  it("is one per team — granting it takes it off the one that had it", async () => {
+    const number = await presentationField("Tröjnummer");
+    const memberNo = await presentationField("Medlemsnummer");
+
+    const result = await call(
+      listMemberFieldsHandler,
+      { teamId: club.teamId },
+      { context: admin.context }
+    );
+    const flags = new Map(
+      result.fields.map((field) => [field.id, field.presentation])
+    );
+    expect(flags.get(memberNo)).toBe(true);
+    expect(flags.get(number)).toBe(false);
+  });
+
+  it("is in the list whether the caller remembered to say so", async () => {
+    const number = await presentationField("Tröjnummer");
+
+    const result = await call(
+      listMemberFieldsHandler,
+      { teamId: club.teamId },
+      { context: admin.context }
+    );
+    expect(result.fields.find((f) => f.id === number)?.showInList).toBe(true);
+  });
+
+  it("refuses to be both the list's lead and kept off it", async () => {
+    const number = await presentationField("Tröjnummer");
+
+    await expect(
+      call(
+        updateMemberFieldHandler,
+        { teamId: club.teamId, fieldId: number, showInList: false },
+        { context: admin.context }
+      )
+    ).rejects.toThrow(ORPCError);
+  });
+
+  it("refuses a type that cannot stand in for a name", async () => {
+    await expect(
+      call(
+        createMemberFieldHandler,
+        {
+          teamId: club.teamId,
+          name: "Registrerad",
+          fieldType: "date",
+          presentation: true,
+        },
+        { context: admin.context }
+      )
+    ).rejects.toThrow(ORPCError);
+
+    const size = await call(
+      createMemberFieldHandler,
+      {
+        teamId: club.teamId,
+        name: "Storlek",
+        fieldType: "select",
+        options: ["S", "M"],
+      },
+      { context: admin.context }
+    );
+    await expect(
+      call(
+        updateMemberFieldHandler,
+        { teamId: club.teamId, fieldId: size.field.id, presentation: true },
+        { context: admin.context }
+      )
+    ).rejects.toThrow(ORPCError);
+  });
+
+  it("can be handed back, leaving the team without one", async () => {
+    const number = await presentationField("Tröjnummer");
+
+    await call(
+      updateMemberFieldHandler,
+      { teamId: club.teamId, fieldId: number, presentation: false },
+      { context: admin.context }
+    );
+
+    const result = await call(
+      listMemberFieldsHandler,
+      { teamId: club.teamId },
+      { context: admin.context }
+    );
+    expect(result.fields.every((field) => !field.presentation)).toBe(true);
+  });
+
+  it("survives a reorder that does not mention it", async () => {
+    const number = await presentationField("Tröjnummer");
+    await createField("Storlek");
+    const fee = await createField("Avgift");
+
+    await call(
+      reorderMemberFieldsHandler,
+      { teamId: club.teamId, fieldIds: [fee] },
+      { context: admin.context }
+    );
+
+    const result = await call(
+      listMemberFieldsHandler,
+      { teamId: club.teamId },
+      { context: admin.context }
+    );
+    expect(result.fields[0]?.id).toBe(number);
+    expect(result.fields.map((field) => field.name)).toEqual([
+      "Tröjnummer",
+      "Avgift",
+      "Storlek",
+    ]);
+  });
+});

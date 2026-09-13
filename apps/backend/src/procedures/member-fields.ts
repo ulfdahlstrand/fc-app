@@ -1,6 +1,6 @@
 /** Custom field definitions and values (ADR-005, ADR-010). */
 import { ORPCError } from "@orpc/server";
-import type { Kysely, Selectable } from "kysely";
+import type { Kysely, SelectQueryBuilder, Selectable } from "kysely";
 import {
   validateMemberFieldValue,
   type MemberFieldDefinition,
@@ -26,8 +26,60 @@ function toDefinition(
     required: row.required,
     sortOrder: row.sort_order,
     showInList: row.show_in_list,
+    presentation: row.presentation,
     archived: row.archived,
   };
+}
+
+/**
+ * The one order every screen reads: the presentation field first, then the
+ * team's own order (ADR-010's habit — sort where the rows are). Sorting here
+ * rather than in each client is what keeps the settings list, the roster and
+ * the member page from disagreeing about where a field belongs.
+ */
+function inFieldOrder<O>(
+  query: SelectQueryBuilder<Database, "member_field_definitions", O>
+): SelectQueryBuilder<Database, "member_field_definitions", O> {
+  return query
+    .orderBy("presentation", "desc")
+    .orderBy("sort_order")
+    .orderBy("name");
+}
+
+/**
+ * What a field must be to lead the roster. The value stands in for the name —
+ * in a column before it, and in the circle on a phone — so it has to be short
+ * and readable on its own. A date or a tick is neither.
+ */
+const PRESENTATION_TYPES: readonly MemberFieldType[] = ["text", "number"];
+
+function assertPresentable(fieldType: MemberFieldType): void {
+  if (!PRESENTATION_TYPES.includes(fieldType)) {
+    throw new ORPCError("BAD_REQUEST", {
+      message: "Only a text or number field can be the presentation field",
+    });
+  }
+}
+
+/**
+ * One team, one presentation field. The handler clears the previous holder in
+ * the same transaction as it sets the new one; the partial unique index added
+ * with the column is what makes that a rule rather than a habit.
+ */
+async function clearPresentation(
+  trx: Kysely<Database>,
+  teamId: string,
+  exceptFieldId?: string
+): Promise<void> {
+  let query = trx
+    .updateTable("member_field_definitions")
+    .set({ presentation: false })
+    .where("team_id", "=", teamId)
+    .where("presentation", "=", true);
+  if (exceptFieldId !== undefined) {
+    query = query.where("id", "!=", exceptFieldId);
+  }
+  await query.execute();
 }
 
 async function loadDefinition(
@@ -62,7 +114,7 @@ export const listMemberFieldsHandler = os.listMemberFields.handler(
     if (input.includeArchived !== true) {
       query = query.where("archived", "=", false);
     }
-    const rows = await query.orderBy("sort_order").orderBy("name").execute();
+    const rows = await inFieldOrder(query).execute();
     return { fields: rows.map(toDefinition) };
   }
 );
@@ -79,6 +131,16 @@ export const createMemberFieldHandler = os.createMemberField.handler(
       });
     }
 
+    const presentation = input.presentation ?? false;
+    if (presentation) {
+      assertPresentable(input.fieldType);
+      if (input.showInList === false) {
+        throw new ORPCError("BAD_REQUEST", {
+          message: "The presentation field is always in the list",
+        });
+      }
+    }
+
     // Append to the end of the current ordering.
     const max = await db
       .selectFrom("member_field_definitions")
@@ -87,21 +149,27 @@ export const createMemberFieldHandler = os.createMemberField.handler(
       .executeTakeFirst();
     const sortOrder = (max?.max ?? -1) + 1;
 
-    const inserted = await db
-      .insertInto("member_field_definitions")
-      .values({
-        team_id: input.teamId,
-        name: input.name,
-        field_type: input.fieldType,
-        options: JSON.stringify(
-          input.fieldType === "select" ? (input.options ?? []) : []
-        ),
-        required: input.required ?? false,
-        sort_order: sortOrder,
-        show_in_list: input.showInList ?? true,
-      })
-      .returningAll()
-      .executeTakeFirstOrThrow();
+    const inserted = await db.transaction().execute(async (trx) => {
+      if (presentation) await clearPresentation(trx, input.teamId);
+      return trx
+        .insertInto("member_field_definitions")
+        .values({
+          team_id: input.teamId,
+          name: input.name,
+          field_type: input.fieldType,
+          options: JSON.stringify(
+            input.fieldType === "select" ? (input.options ?? []) : []
+          ),
+          required: input.required ?? false,
+          sort_order: sortOrder,
+          // Leading the roster is being in it, so this is not the caller's to
+          // withhold — the contradiction was refused above.
+          show_in_list: presentation || (input.showInList ?? true),
+          presentation,
+        })
+        .returningAll()
+        .executeTakeFirstOrThrow();
+    });
     return { field: toDefinition(inserted) };
   }
 );
@@ -114,12 +182,28 @@ export const updateMemberFieldHandler = os.updateMemberField.handler(
 
     const existing = await loadDefinition(db, input.teamId, input.fieldId);
 
+    // What the field will be once this lands, which is what the rules are
+    // about — turning the flag off is as much a change as turning it on.
+    const presentation = input.presentation ?? existing.presentation;
+    if (presentation) {
+      assertPresentable(existing.field_type as MemberFieldType);
+      if (input.showInList === false) {
+        throw new ORPCError("BAD_REQUEST", {
+          message: "The presentation field is always in the list",
+        });
+      }
+    }
+
     const updates: Record<string, unknown> = {};
     if (input.name !== undefined) updates["name"] = input.name;
     if (input.required !== undefined) updates["required"] = input.required;
     if (input.sortOrder !== undefined) updates["sort_order"] = input.sortOrder;
     if (input.showInList !== undefined) {
       updates["show_in_list"] = input.showInList;
+    }
+    if (input.presentation !== undefined) {
+      updates["presentation"] = input.presentation;
+      if (input.presentation) updates["show_in_list"] = true;
     }
     if (input.options !== undefined) {
       if (existing.field_type !== "select") {
@@ -139,13 +223,20 @@ export const updateMemberFieldHandler = os.updateMemberField.handler(
       return { field: toDefinition(existing) };
     }
 
-    const updated = await db
-      .updateTable("member_field_definitions")
-      .set(updates)
-      .where("id", "=", input.fieldId)
-      .where("team_id", "=", input.teamId)
-      .returningAll()
-      .executeTakeFirstOrThrow();
+    const updated = await db.transaction().execute(async (trx) => {
+      // The one that had it loses it, in the same transaction that grants it,
+      // so no moment exists where a team has two.
+      if (input.presentation === true) {
+        await clearPresentation(trx, input.teamId, input.fieldId);
+      }
+      return trx
+        .updateTable("member_field_definitions")
+        .set(updates)
+        .where("id", "=", input.fieldId)
+        .where("team_id", "=", input.teamId)
+        .returningAll()
+        .executeTakeFirstOrThrow();
+    });
     return { field: toDefinition(updated) };
   }
 );
@@ -156,13 +247,12 @@ export const reorderMemberFieldsHandler = os.reorderMemberFields.handler(
     const db = getDb();
     await requireTeamPermission(db, user.id, input.teamId, "settings.team");
 
-    const rows = await db
-      .selectFrom("member_field_definitions")
-      .selectAll()
-      .where("team_id", "=", input.teamId)
-      .orderBy("sort_order")
-      .orderBy("name")
-      .execute();
+    const rows = await inFieldOrder(
+      db
+        .selectFrom("member_field_definitions")
+        .selectAll()
+        .where("team_id", "=", input.teamId)
+    ).execute();
     const byId = new Map(rows.map((row) => [row.id, row]));
 
     const seen = new Set<string>();
@@ -196,13 +286,12 @@ export const reorderMemberFieldsHandler = os.reorderMemberFields.handler(
       }
     });
 
-    const updated = await db
-      .selectFrom("member_field_definitions")
-      .selectAll()
-      .where("team_id", "=", input.teamId)
-      .orderBy("sort_order")
-      .orderBy("name")
-      .execute();
+    const updated = await inFieldOrder(
+      db
+        .selectFrom("member_field_definitions")
+        .selectAll()
+        .where("team_id", "=", input.teamId)
+    ).execute();
     return { fields: updated.map(toDefinition) };
   }
 );

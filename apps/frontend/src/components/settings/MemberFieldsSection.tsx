@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useZodResolver } from "@/lib/form";
-import { moveField } from "@/lib/member-field-view";
+import { canMoveField, moveField } from "@/lib/member-field-view";
 import {
   memberFieldFormSchema,
   useArchiveMemberField,
@@ -63,8 +63,9 @@ export function MemberFields({ teamId }: { teamId: string }) {
   const ordered = fields.data?.fields ?? [];
   const move = (index: number, direction: -1 | 1): void => {
     const next = moveField(ordered, index, direction);
-    // The buttons at either end are disabled, so this is belt and braces —
-    // but an order that did not move is not worth a round trip.
+    // The buttons that cannot move — either end of the list, and either side
+    // of the presentation field — are disabled, so this is belt and braces.
+    // But an order that did not move is not worth a round trip.
     if (next.every((id, at) => id === ordered[at]?.id)) return;
     reorderFields.mutate(next);
   };
@@ -110,6 +111,9 @@ export function MemberFields({ teamId }: { teamId: string }) {
                     {field.required && (
                       <Badge>{t("settings.team.required")}</Badge>
                     )}
+                    {field.presentation && (
+                      <Badge>{t("settings.team.presentation")}</Badge>
+                    )}
                     {!field.showInList && (
                       <Badge variant="secondary">
                         {t("settings.team.detailOnly")}
@@ -133,7 +137,10 @@ export function MemberFields({ teamId }: { teamId: string }) {
                     variant="outline"
                     aria-label={t("settings.team.moveUp")}
                     title={t("settings.team.moveUp")}
-                    disabled={index === 0 || reorderFields.isPending}
+                    disabled={
+                      !canMoveField(ordered, index, -1) ||
+                      reorderFields.isPending
+                    }
                     onClick={() => move(index, -1)}
                   >
                     <ChevronUpIcon className="size-4" />
@@ -144,7 +151,8 @@ export function MemberFields({ teamId }: { teamId: string }) {
                     aria-label={t("settings.team.moveDown")}
                     title={t("settings.team.moveDown")}
                     disabled={
-                      index === ordered.length - 1 || reorderFields.isPending
+                      !canMoveField(ordered, index, 1) ||
+                      reorderFields.isPending
                     }
                     onClick={() => move(index, 1)}
                   >
@@ -195,6 +203,14 @@ export function MemberFields({ teamId }: { teamId: string }) {
 
 const FIELD_TYPES = memberFieldTypeSchema.options;
 
+/**
+ * The types that may lead the roster. The value stands in for the name — a
+ * column before it, and the circle on a phone — so it has to be short and
+ * mean something on its own. The server refuses the rest (`assertPresentable`);
+ * this is why the switch is not offered for them.
+ */
+const PRESENTATION_TYPES: readonly string[] = ["text", "number"];
+
 function FieldDialog({
   teamId,
   field,
@@ -216,6 +232,7 @@ function FieldDialog({
       fieldType: field?.fieldType ?? "text",
       required: field?.required ?? false,
       showInList: field?.showInList ?? true,
+      presentation: field?.presentation ?? false,
     },
   });
   const [optionsText, setOptionsText] = useState(
@@ -224,6 +241,10 @@ function FieldDialog({
 
   const fieldType = form.watch("fieldType");
   const needsOptions = fieldType === "select";
+  const canPresent = PRESENTATION_TYPES.includes(fieldType);
+  // Leading the roster is being in it, so the list switch follows rather than
+  // being a second, contradictable answer (the server refuses the pair).
+  const presents = canPresent && form.watch("presentation");
   const options = optionsText
     .split("\n")
     .map((line) => line.trim())
@@ -239,7 +260,8 @@ function FieldDialog({
         fieldId: field.id,
         name: data.name,
         required: data.required,
-        showInList: data.showInList,
+        showInList: presents || data.showInList,
+        presentation: presents,
         ...(field.fieldType === "select" ? { options } : {}),
       });
     } else {
@@ -247,7 +269,8 @@ function FieldDialog({
         name: data.name,
         fieldType: data.fieldType,
         required: data.required,
-        showInList: data.showInList,
+        showInList: presents || data.showInList,
+        presentation: presents,
         ...(needsOptions ? { options } : {}),
       });
     }
@@ -370,7 +393,8 @@ function FieldDialog({
                   <div className="flex items-center gap-2">
                     <FormControl>
                       <Switch
-                        checked={formField.value}
+                        checked={presents || formField.value}
+                        disabled={presents}
                         onCheckedChange={formField.onChange}
                       />
                     </FormControl>
@@ -379,11 +403,41 @@ function FieldDialog({
                     </FormLabel>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    {t("settings.team.showInListHint")}
+                    {presents
+                      ? t("settings.team.showInListPinned")
+                      : t("settings.team.showInListHint")}
                   </p>
                 </FormItem>
               )}
             />
+
+            {/* Only a short value can stand in front of the name and inside
+                the circle on a phone, so the switch is offered for text and
+                number and nowhere else. */}
+            {canPresent && (
+              <FormField
+                control={form.control}
+                name="presentation"
+                render={({ field: formField }) => (
+                  <FormItem>
+                    <div className="flex items-center gap-2">
+                      <FormControl>
+                        <Switch
+                          checked={formField.value}
+                          onCheckedChange={formField.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel className="!mt-0">
+                        {t("settings.team.presentationLabel")}
+                      </FormLabel>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {t("settings.team.presentationHint")}
+                    </p>
+                  </FormItem>
+                )}
+              />
+            )}
           </form>
         </Form>
 

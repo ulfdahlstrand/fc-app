@@ -25,6 +25,7 @@ export const memberFieldFormSchema = z.object({
   fieldType: memberFieldTypeSchema,
   required: z.boolean(),
   showInList: z.boolean(),
+  presentation: z.boolean(),
 });
 
 /** What the inputs hold while editing. */
@@ -69,6 +70,7 @@ export function useCreateMemberField(teamId: string) {
       options?: string[];
       required?: boolean;
       showInList?: boolean;
+      presentation?: boolean;
     }) => orpc.createMemberField({ teamId, ...input }),
     onSuccess: () => invalidateFields(teamId),
   });
@@ -83,6 +85,7 @@ export function useUpdateMemberField(teamId: string) {
       required?: boolean;
       sortOrder?: number;
       showInList?: boolean;
+      presentation?: boolean;
     }) => orpc.updateMemberField({ teamId, ...input }),
     onSuccess: () => invalidateFields(teamId),
   });

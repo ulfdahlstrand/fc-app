@@ -102,6 +102,10 @@ tracked items) is **configuration data, not code**.
   their **order**, which every screen reads, and whether each one may appear as
   a **roster column** or belongs on the player's own page only; within the
   roster columns each user still picks what to show.
+- One of them may be the team's **presentation field** — a text or number
+  field that helps say *who* a row is, so it is drawn before the name in the
+  roster and takes the place of the initials in the circle on a phone. One per
+  team, and it is always in the list.
 - Guardians: link user accounts to members.
 - Groups: manual member groups, usable everywhere a "who" is selected.
 

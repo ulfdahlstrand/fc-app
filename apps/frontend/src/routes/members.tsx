@@ -44,8 +44,9 @@ import {
 } from "../lib/member-fields";
 import {
   filledCount,
-  listFields,
+  presentationCircle,
   readPickedFieldIds,
+  rosterColumns,
   visibleFields,
   writePickedFieldIds,
 } from "../lib/member-field-view";
@@ -57,6 +58,15 @@ import {
 
 /** Sentinel select value for "all groups" — Radix disallows an empty-string item value. */
 const ALL_GROUPS = "__all__";
+
+/**
+ * The width of the fill-in table's leading column, in px, so the name column
+ * can be offset by exactly that much and the two stay pinned side by side
+ * (DDR-009). It matches the `min-w-[148px]` the other columns carry — an
+ * editable cell has a floor of its own (`MemberFieldCell`), and measuring at
+ * runtime to save a few pixels would buy a layout effect for nothing.
+ */
+const LEAD_COLUMN = 148;
 
 export const Route = createFileRoute("/members")({
   beforeLoad: async () => {
@@ -137,15 +147,20 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
   const pendingInvites = usePendingContactInvites(teamId, canInvite);
   const inviteContacts = useInviteMemberContacts(teamId);
   // Only the fields the team put in the list; the rest live on the member's
-  // own page, and the user's pick below chooses among these.
-  const customColumns = listFields(fields.data?.fields ?? []);
+  // own page, and the user's pick below chooses among these. The presentation
+  // field is held apart because it does not sit among the columns at all — it
+  // goes in front of the name (#8 follow-up).
+  const { presentation, rest: customColumns } = rosterColumns(
+    fields.data?.fields ?? []
+  );
   const teamGroups = groups.data?.groups ?? [];
 
   // Filling in is writing, so it needs `members.manage` — the same permission
   // `setMemberFieldValues` checks. There is no read-only fill-in mode; the
   // read-only view of these values is the roster itself. And a team with no
   // custom fields sees no switch, mirroring the grouping one.
-  const canFill = canManage && customColumns.length > 0;
+  const canFill =
+    canManage && (presentation !== null || customColumns.length > 0);
   const fillMode = canFill && fillFields;
   const pickedFields = visibleFields(pickedIds, customColumns);
 
@@ -322,6 +337,7 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
           <FillIn
             compact={isPhone}
             teamId={teamId}
+            presentation={presentation}
             fields={pickedFields}
             members={members.data.members}
             sections={isPhone ? null : sections}
@@ -337,7 +353,11 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
         <div className="flex flex-col gap-[11px]">
           {sections === null
             ? members.data.members.map((member) => (
-                <MemberRow key={member.id} member={member} />
+                <MemberRow
+                  key={member.id}
+                  member={member}
+                  presentation={presentation}
+                />
               ))
             : sections.map((section) => (
                 <div
@@ -350,7 +370,11 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
                     {section.name} ({section.members.length})
                   </p>
                   {section.members.map((member) => (
-                    <MemberRow key={member.id} member={member} />
+                    <MemberRow
+                      key={member.id}
+                      member={member}
+                      presentation={presentation}
+                    />
                   ))}
                 </div>
               ))}
@@ -360,6 +384,9 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
           <Table>
             <TableHeader>
               <TableRow>
+                {/* Before the name, not among the columns: the team said this
+                    field helps say who a row is. */}
+                {presentation && <TableHead>{presentation.name}</TableHead>}
                 <TableHead>{t("members.name")}</TableHead>
                 <TableHead>{t("members.birthYear")}</TableHead>
                 <TableHead>{t("members.contact")}</TableHead>
@@ -378,7 +405,9 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
                           The count is the rows drawn, never
                           `group.memberCount`. */}
                       <TableCell
-                        colSpan={3 + customColumns.length}
+                        colSpan={
+                          3 + customColumns.length + (presentation ? 1 : 0)
+                        }
                         className="kit-overline text-muted-foreground pt-6"
                       >
                         {section.name} ({section.members.length})
@@ -396,6 +425,15 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
                     })
                   }
                 >
+                  {presentation && (
+                    <TableCell className="font-semibold tabular-nums">
+                      {formatFieldValue(
+                        presentation,
+                        member.customFields[presentation.id],
+                        t
+                      )}
+                    </TableCell>
+                  )}
                   <TableCell>
                     {formatMemberName(member)}
                     {member.archived && (
@@ -491,6 +529,7 @@ function FieldPicker({
 function FillIn({
   compact,
   teamId,
+  presentation,
   fields,
   members,
   sections,
@@ -498,6 +537,12 @@ function FillIn({
   /** Phone shape: a card per field instead of a members × fields grid. */
   compact: boolean;
   teamId: string;
+  /**
+   * The team's leading field, if it has one. Not in `fields` and not in the
+   * picker: it is always here, because it is what says which row you are on —
+   * and it is filled in from here like any other.
+   */
+  presentation: MemberFieldDefinition | null;
   fields: MemberFieldDefinition[];
   members: Member[];
   /** Desktop only — rows stay member-major there, so #99's sections apply. */
@@ -536,7 +581,7 @@ function FillIn({
   if (compact) {
     return (
       <div className="flex flex-col gap-[14px]">
-        {fields.map((field) => {
+        {(presentation ? [presentation, ...fields] : fields).map((field) => {
           const progress = filledCount(field.id, members);
           return (
             <div
@@ -590,33 +635,37 @@ function FillIn({
       <table className="w-full border-separate border-spacing-0 text-sm">
         <thead>
           <tr>
-            {/* DDR-009: this table is now unbounded in width, so the column
-                that says who a row is stays put while the rest scrolls. */}
+            {/* DDR-009: this table is now unbounded in width, so what says who
+                a row is stays put while the rest scrolls. That is the name and,
+                when the team has one, the presentation field in front of it —
+                two sticky columns, so the second is offset by the first's
+                width. Fixed rather than measured: the cell holds one short
+                value and the input inside it has a floor of its own. */}
+            {presentation && (
+              <th
+                scope="col"
+                style={{ left: 0, width: LEAD_COLUMN }}
+                className="bg-card sticky z-10 px-3 py-3 text-left align-bottom"
+              >
+                <FillHeading field={presentation} members={members} />
+              </th>
+            )}
             <th
               scope="col"
-              className="bg-card sticky left-0 z-10 px-4 py-3 text-left align-bottom"
+              style={{ left: presentation ? LEAD_COLUMN : 0 }}
+              className="bg-card sticky z-10 px-4 py-3 text-left align-bottom"
             >
               <span className="kit-overline">{t("members.name")}</span>
             </th>
-            {fields.map((field) => {
-              const progress = filledCount(field.id, members);
-              return (
-                <th
-                  key={field.id}
-                  scope="col"
-                  className="min-w-[148px] px-3 py-3 text-left align-bottom"
-                >
-                  <span className="flex flex-col gap-0.5">
-                    <span className="font-semibold">
-                      {field.required ? `${field.name} *` : field.name}
-                    </span>
-                    <span className="text-muted-foreground text-xs font-semibold tabular-nums">
-                      {progress.done}/{progress.total}
-                    </span>
-                  </span>
-                </th>
-              );
-            })}
+            {fields.map((field) => (
+              <th
+                key={field.id}
+                scope="col"
+                className="min-w-[148px] px-3 py-3 text-left align-bottom"
+              >
+                <FillHeading field={field} members={members} />
+              </th>
+            ))}
           </tr>
         </thead>
         <tbody>
@@ -628,7 +677,7 @@ function FillIn({
                       field list, or the layout breaks the moment one is
                       unpicked. The count is the rows drawn. */}
                   <td
-                    colSpan={1 + fields.length}
+                    colSpan={1 + fields.length + (presentation ? 1 : 0)}
                     className="kit-overline text-muted-foreground px-4 pt-6 pb-1"
                   >
                     {section.name} ({section.members.length})
@@ -642,10 +691,22 @@ function FillIn({
                   // a faint tint so a long row stays readable across columns.
                   className={cn(index % 2 === 1 && "bg-[var(--neutral-050)]")}
                 >
+                  {presentation && (
+                    <td
+                      style={{ left: 0, width: LEAD_COLUMN }}
+                      className={cn(
+                        "sticky z-10 px-3 py-2 align-top",
+                        index % 2 === 1 ? "bg-[var(--neutral-050)]" : "bg-card",
+                      )}
+                    >
+                      {cellFor(member, presentation)}
+                    </td>
+                  )}
                   <th
                     scope="row"
+                    style={{ left: presentation ? LEAD_COLUMN : 0 }}
                     className={cn(
-                      "sticky left-0 z-10 px-4 py-2 text-left font-semibold whitespace-nowrap",
+                      "sticky z-10 px-4 py-2 text-left font-semibold whitespace-nowrap",
                       index % 2 === 1 ? "bg-[var(--neutral-050)]" : "bg-card",
                     )}
                   >
@@ -677,6 +738,30 @@ function FillIn({
   );
 }
 
+/** A fill-in column's heading: what the field is, and how much of it is done. */
+function FillHeading({
+  field,
+  members,
+}: {
+  field: MemberFieldDefinition;
+  members: Member[];
+}) {
+  // Seeing what is still missing is the point of opening this. The denominator
+  // is the rows on screen, after the search and the group filter — never the
+  // team's total.
+  const progress = filledCount(field.id, members);
+  return (
+    <span className="flex flex-col gap-0.5">
+      <span className="font-semibold">
+        {field.required ? `${field.name} *` : field.name}
+      </span>
+      <span className="text-muted-foreground text-xs font-semibold tabular-nums">
+        {progress.done}/{progress.total}
+      </span>
+    </span>
+  );
+}
+
 /**
  * A member on a phone (Kit's `PlayerRow`, adjusted): initials, name, and one
  * short meta line. Kit's rule for this row on mobile is that the right-hand
@@ -684,11 +769,24 @@ function FillIn({
  * detail share a line, joined by the house separator, and the archived state
  * is carried by a badge rather than a column of its own.
  */
-function MemberRow({ member }: { member: Member }) {
+function MemberRow({
+  member,
+  presentation,
+}: {
+  member: Member;
+  presentation: MemberFieldDefinition | null;
+}) {
   const { t } = useTranslation();
   const initials =
     `${member.firstName.charAt(0)}${member.lastName.charAt(0)}`.toUpperCase();
-  const meta = [member.birthYear, member.email ?? member.phone]
+  // The circle is the one place a phone row has for the presentation field:
+  // there are no columns here, and initials next to the name they are taken
+  // from say nothing a number would not say better.
+  const { circle, fromField, meta: spilled } = presentationCircle(
+    presentation ? member.customFields[presentation.id] : undefined,
+    initials
+  );
+  const meta = [spilled, member.birthYear, member.email ?? member.phone]
     .filter((part) => part !== null && part !== "")
     .join(SEPARATOR);
 
@@ -698,12 +796,18 @@ function MemberRow({ member }: { member: Member }) {
       params={{ memberId: member.id }}
       className="bg-card hover:bg-secondary flex min-h-tap-row items-center gap-3 rounded-lg px-4 py-3 transition-colors duration-[120ms] ease-standard"
     >
+      {/* Initials repeat the name beside them, so they stay hidden from a
+          screen reader. A field's value does not — it is said out loud, with
+          the field's own name in front of it. */}
       <span
         aria-hidden
-        className="bg-secondary text-muted-foreground flex size-10 flex-none items-center justify-center rounded-full text-sm font-bold"
+        className="bg-secondary text-muted-foreground flex size-10 flex-none items-center justify-center rounded-full text-sm font-bold tabular-nums"
       >
-        {initials}
+        {circle}
       </span>
+      {fromField && presentation && (
+        <span className="sr-only">{`${presentation.name}: ${circle}`}</span>
+      )}
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="truncate font-semibold">
           {formatMemberName(member)}
