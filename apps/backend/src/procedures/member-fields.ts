@@ -25,6 +25,7 @@ function toDefinition(
     options: row.options,
     required: row.required,
     sortOrder: row.sort_order,
+    showInList: row.show_in_list,
     archived: row.archived,
   };
 }
@@ -97,6 +98,7 @@ export const createMemberFieldHandler = os.createMemberField.handler(
         ),
         required: input.required ?? false,
         sort_order: sortOrder,
+        show_in_list: input.showInList ?? true,
       })
       .returningAll()
       .executeTakeFirstOrThrow();
@@ -116,6 +118,9 @@ export const updateMemberFieldHandler = os.updateMemberField.handler(
     if (input.name !== undefined) updates["name"] = input.name;
     if (input.required !== undefined) updates["required"] = input.required;
     if (input.sortOrder !== undefined) updates["sort_order"] = input.sortOrder;
+    if (input.showInList !== undefined) {
+      updates["show_in_list"] = input.showInList;
+    }
     if (input.options !== undefined) {
       if (existing.field_type !== "select") {
         throw new ORPCError("BAD_REQUEST", {
@@ -142,6 +147,63 @@ export const updateMemberFieldHandler = os.updateMemberField.handler(
       .returningAll()
       .executeTakeFirstOrThrow();
     return { field: toDefinition(updated) };
+  }
+);
+
+export const reorderMemberFieldsHandler = os.reorderMemberFields.handler(
+  async ({ input, context }) => {
+    const user = requireUser(context);
+    const db = getDb();
+    await requireTeamPermission(db, user.id, input.teamId, "settings.team");
+
+    const rows = await db
+      .selectFrom("member_field_definitions")
+      .selectAll()
+      .where("team_id", "=", input.teamId)
+      .orderBy("sort_order")
+      .orderBy("name")
+      .execute();
+    const byId = new Map(rows.map((row) => [row.id, row]));
+
+    const seen = new Set<string>();
+    for (const fieldId of input.fieldIds) {
+      if (!byId.has(fieldId)) {
+        throw new ORPCError("NOT_FOUND", { message: "Field not found" });
+      }
+      if (seen.has(fieldId)) {
+        throw new ORPCError("BAD_REQUEST", {
+          message: "A field cannot appear twice in the order",
+        });
+      }
+      seen.add(fieldId);
+    }
+
+    // Anything the client did not name keeps its relative order behind the
+    // named ones, so an order sent from a stale list cannot lose a field.
+    const ordered = [
+      ...input.fieldIds,
+      ...rows.filter((row) => !seen.has(row.id)).map((row) => row.id),
+    ];
+
+    await db.transaction().execute(async (trx) => {
+      for (const [index, fieldId] of ordered.entries()) {
+        await trx
+          .updateTable("member_field_definitions")
+          .set({ sort_order: index })
+          .where("id", "=", fieldId)
+          .where("team_id", "=", input.teamId)
+          .execute();
+      }
+    });
+
+    const updated = await db
+      .selectFrom("member_field_definitions")
+      .selectAll()
+      .where("team_id", "=", input.teamId)
+      .orderBy("sort_order")
+      .orderBy("name")
+      .execute();
+    return { fields: updated.map(toDefinition) };
   }
 );
 

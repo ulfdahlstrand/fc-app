@@ -78,6 +78,48 @@ export function visibleFields(
   return fields.filter((field) => picked.has(field.id));
 }
 
+/**
+ * The fields the roster is allowed to show at all.
+ *
+ * Two decisions stack here and they are not the same one. The **team** says
+ * which fields belong in a list (`showInList`); the **user** then picks which
+ * of those to actually show, and that pick is what `visibleFields` resolves.
+ * So this runs first, and a field turned off for the list cannot be brought
+ * back by a stored id — the same way an archived one cannot.
+ */
+export function listFields(
+  fields: readonly MemberFieldDefinition[]
+): MemberFieldDefinition[] {
+  return fields.filter((field) => field.showInList);
+}
+
+/**
+ * The ids in `fields` with the one at `index` moved a step in `direction`.
+ *
+ * Returns the ids unchanged when the move would fall off either end, so the
+ * caller can compare and skip a request that would change nothing.
+ */
+export function moveField(
+  fields: readonly MemberFieldDefinition[],
+  index: number,
+  direction: -1 | 1
+): string[] {
+  const ids = fields.map((field) => field.id);
+  const target = index + direction;
+  if (index < 0 || index >= ids.length || target < 0 || target >= ids.length) {
+    return ids;
+  }
+  const held = ids[index];
+  const neighbour = ids[target];
+  // The bounds above already rule this out; the guard is what convinces the
+  // compiler, which indexes as `string | undefined`.
+  if (held === undefined || neighbour === undefined) return ids;
+  const moved = [...ids];
+  moved[index] = neighbour;
+  moved[target] = held;
+  return moved;
+}
+
 /** How many of these members have a value for the field, and out of how many. */
 export function filledCount(
   fieldId: string,

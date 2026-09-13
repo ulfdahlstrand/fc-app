@@ -44,6 +44,7 @@ import {
 } from "../lib/member-fields";
 import {
   filledCount,
+  listFields,
   readPickedFieldIds,
   visibleFields,
   writePickedFieldIds,
@@ -135,7 +136,9 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
   const createMember = useCreateMember(teamId);
   const pendingInvites = usePendingContactInvites(teamId, canInvite);
   const inviteContacts = useInviteMemberContacts(teamId);
-  const customColumns = fields.data?.fields ?? [];
+  // Only the fields the team put in the list; the rest live on the member's
+  // own page, and the user's pick below chooses among these.
+  const customColumns = listFields(fields.data?.fields ?? []);
   const teamGroups = groups.data?.groups ?? [];
 
   // Filling in is writing, so it needs `members.manage` — the same permission

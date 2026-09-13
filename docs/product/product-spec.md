@@ -98,7 +98,10 @@ tracked items) is **configuration data, not code**.
   across imports and the licence register. It is stored apart from the roster,
   masked for anyone without `members.manage`, and never logged — see ADR-022.
 - **Custom field definitions** per team: text, number, date, boolean, select
-  (e.g. jersey number, position, allergies, photo consent).
+  (e.g. jersey number, position, allergies, photo consent). Team settings sets
+  their **order**, which every screen reads, and whether each one may appear as
+  a **roster column** or belongs on the player's own page only; within the
+  roster columns each user still picks what to show.
 - Guardians: link user accounts to members.
 - Groups: manual member groups, usable everywhere a "who" is selected.
 

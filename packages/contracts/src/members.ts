@@ -80,6 +80,12 @@ export const memberFieldDefinitionSchema = z.object({
   options: z.array(z.string()),
   required: z.boolean(),
   sortOrder: z.number().int(),
+  /**
+   * Whether the roster may show the field as a column. False means the field
+   * lives on the member's own page only — the team's decision about what
+   * belongs in a list, above each user's own pick of which of those to show.
+   */
+  showInList: z.boolean(),
   archived: z.boolean(),
 });
 
@@ -233,6 +239,7 @@ export const createMemberFieldInputSchema = z.object({
   fieldType: memberFieldTypeSchema,
   options: z.array(z.string().min(1).max(100)).max(50).optional(),
   required: z.boolean().optional(),
+  showInList: z.boolean().optional(),
 });
 
 export const createMemberFieldOutputSchema = z.object({
@@ -246,10 +253,30 @@ export const updateMemberFieldInputSchema = z.object({
   options: z.array(z.string().min(1).max(100)).max(50).optional(),
   required: z.boolean().optional(),
   sortOrder: z.number().int().optional(),
+  showInList: z.boolean().optional(),
 });
 
 export const updateMemberFieldOutputSchema = z.object({
   field: memberFieldDefinitionSchema,
+});
+
+/**
+ * Reordering is one gesture — a field moved a step, or a list dragged into
+ * shape — so it is one request carrying the whole order, not a `sortOrder`
+ * write per field that could interleave with someone else's (ADR-019).
+ *
+ * The ids are the team's fields in the order they should end up in. A partial
+ * list is allowed and the fields it leaves out keep their relative order
+ * *after* the listed ones, so a stale client cannot silently drop a field that
+ * someone else added while it was looking.
+ */
+export const reorderMemberFieldsInputSchema = z.object({
+  teamId: z.string(),
+  fieldIds: z.array(z.string()).min(1).max(200),
+});
+
+export const reorderMemberFieldsOutputSchema = z.object({
+  fields: z.array(memberFieldDefinitionSchema),
 });
 
 export const archiveMemberFieldInputSchema = z.object({
