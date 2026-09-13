@@ -5,6 +5,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ActivityTypes } from "@/components/settings/ActivityTypesSection";
 import { AttendanceStatuses } from "@/components/settings/AttendanceStatusesSection";
 import { DevelopmentMetrics } from "@/components/settings/DevelopmentMetricsSection";
+import { MemberAdmin } from "@/components/settings/MemberAdminSection";
 import { MemberFields } from "@/components/settings/MemberFieldsSection";
 import { Seasons } from "@/components/settings/SeasonsSection";
 import { TeamCoaches } from "@/components/settings/TeamCoachesSection";
@@ -58,6 +59,7 @@ function TeamSettingsPage() {
       <ActivityTypes teamId={selected.team.id} />
       <AttendanceStatuses teamId={selected.team.id} />
       <Seasons teamId={selected.team.id} />
+      <MemberAdmin teamId={selected.team.id} />
       <MemberFields teamId={selected.team.id} />
       <TrackingLists teamId={selected.team.id} />
       <DevelopmentMetrics teamId={selected.team.id} />
