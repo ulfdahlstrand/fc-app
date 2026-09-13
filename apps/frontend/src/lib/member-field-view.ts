@@ -94,10 +94,81 @@ export function listFields(
 }
 
 /**
+ * The roster's columns, split at the one place the split matters.
+ *
+ * `presentation` is the team's leading field — drawn *before* the name, and in
+ * the circle on a phone — and `rest` is everything the team put in the list
+ * behind it. One helper rather than two filters at each call site, because a
+ * header row and a body row that disagree about which columns exist is the
+ * bug this shape exists to prevent (two tables, four loops).
+ *
+ * The server sorts the presentation field first, so `fields[0]` would usually
+ * do; this does not rely on that.
+ */
+export function rosterColumns(fields: readonly MemberFieldDefinition[]): {
+  presentation: MemberFieldDefinition | null;
+  rest: MemberFieldDefinition[];
+} {
+  const presentation =
+    fields.find((field) => field.presentation && field.showInList) ?? null;
+  return {
+    presentation,
+    rest: listFields(fields).filter((field) => field.id !== presentation?.id),
+  };
+}
+
+/** How much of a value the phone's circle can hold before it stops reading. */
+const CIRCLE_MAX = 3;
+
+/**
+ * What the circle on a phone shows.
+ *
+ * Initials are the default and they say almost nothing — they repeat the name
+ * sitting next to them. A jersey number is what a coach actually scans for, so
+ * the presentation field's value takes the circle when it fits.
+ *
+ * When it does not fit — a text field holding "Målvakt" — the initials stay
+ * and the value moves to the meta line rather than being cut to three
+ * characters, which would be worse than not showing it.
+ */
+export function presentationCircle(
+  value: string | undefined,
+  initials: string
+): { circle: string; fromField: boolean; meta: string | null } {
+  const trimmed = (value ?? "").trim();
+  const fallback = { circle: initials, fromField: false, meta: null };
+  if (trimmed === "") return fallback;
+  if (trimmed.length > CIRCLE_MAX) return { ...fallback, meta: trimmed };
+  return { circle: trimmed, fromField: true, meta: null };
+}
+
+/**
+ * Whether the arrows may move the field at `index` a step in `direction`.
+ *
+ * The presentation field leads the list because it is the presentation field,
+ * not because it was moved there — so it does not move, and nothing moves past
+ * it. The toggle in its dialog is the only thing that changes that.
+ */
+export function canMoveField(
+  fields: readonly MemberFieldDefinition[],
+  index: number,
+  direction: -1 | 1
+): boolean {
+  const target = index + direction;
+  if (index < 0 || index >= fields.length) return false;
+  if (target < 0 || target >= fields.length) return false;
+  return (
+    fields[index]?.presentation !== true &&
+    fields[target]?.presentation !== true
+  );
+}
+
+/**
  * The ids in `fields` with the one at `index` moved a step in `direction`.
  *
- * Returns the ids unchanged when the move would fall off either end, so the
- * caller can compare and skip a request that would change nothing.
+ * Returns the ids unchanged when the move is not allowed — off either end, or
+ * across the presentation field — so the caller can compare and skip a request
+ * that would change nothing.
  */
 export function moveField(
   fields: readonly MemberFieldDefinition[],
@@ -106,9 +177,7 @@ export function moveField(
 ): string[] {
   const ids = fields.map((field) => field.id);
   const target = index + direction;
-  if (index < 0 || index >= ids.length || target < 0 || target >= ids.length) {
-    return ids;
-  }
+  if (!canMoveField(fields, index, direction)) return ids;
   const held = ids[index];
   const neighbour = ids[target];
   // The bounds above already rule this out; the guard is what convinces the

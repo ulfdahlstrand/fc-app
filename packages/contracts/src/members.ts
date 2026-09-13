@@ -86,6 +86,19 @@ export const memberFieldDefinitionSchema = z.object({
    * belongs in a list, above each user's own pick of which of those to show.
    */
   showInList: z.boolean(),
+  /**
+   * The team's presentation field: the one custom field that helps say *who*
+   * a row is, so it is drawn before the name rather than among the columns —
+   * a jersey number, a membership number.
+   *
+   * At most one per team, and only a `text` or `number` field can be it: the
+   * value has to fit where a name's initials would (`presentationCircle` in
+   * the frontend), and a date or a boolean says nothing there.
+   *
+   * Implies `showInList`; a field cannot both lead the roster and be kept off
+   * it.
+   */
+  presentation: z.boolean(),
   archived: z.boolean(),
 });
 
@@ -240,6 +253,7 @@ export const createMemberFieldInputSchema = z.object({
   options: z.array(z.string().min(1).max(100)).max(50).optional(),
   required: z.boolean().optional(),
   showInList: z.boolean().optional(),
+  presentation: z.boolean().optional(),
 });
 
 export const createMemberFieldOutputSchema = z.object({
@@ -254,6 +268,11 @@ export const updateMemberFieldInputSchema = z.object({
   required: z.boolean().optional(),
   sortOrder: z.number().int().optional(),
   showInList: z.boolean().optional(),
+  /**
+   * True moves this field in front of the name and takes the flag off
+   * whichever field held it — one team, one presentation field.
+   */
+  presentation: z.boolean().optional(),
 });
 
 export const updateMemberFieldOutputSchema = z.object({
