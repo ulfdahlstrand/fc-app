@@ -85,6 +85,7 @@ import {
   archiveMemberFieldHandler,
   createMemberFieldHandler,
   listMemberFieldsHandler,
+  reorderMemberFieldsHandler,
   setMemberFieldValuesHandler,
   updateMemberFieldHandler,
 } from "./procedures/member-fields.js";
@@ -159,6 +160,7 @@ export const router = os.router({
   listMemberFields: listMemberFieldsHandler,
   createMemberField: createMemberFieldHandler,
   updateMemberField: updateMemberFieldHandler,
+  reorderMemberFields: reorderMemberFieldsHandler,
   archiveMemberField: archiveMemberFieldHandler,
   setMemberFieldValues: setMemberFieldValuesHandler,
   previewMemberImport: previewMemberImportHandler,

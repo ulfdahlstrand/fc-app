@@ -24,6 +24,7 @@ export const memberFieldFormSchema = z.object({
   name: requiredText(createMemberFieldInputSchema.shape.name),
   fieldType: memberFieldTypeSchema,
   required: z.boolean(),
+  showInList: z.boolean(),
 });
 
 /** What the inputs hold while editing. */
@@ -67,6 +68,7 @@ export function useCreateMemberField(teamId: string) {
       fieldType: MemberFieldType;
       options?: string[];
       required?: boolean;
+      showInList?: boolean;
     }) => orpc.createMemberField({ teamId, ...input }),
     onSuccess: () => invalidateFields(teamId),
   });
@@ -80,7 +82,20 @@ export function useUpdateMemberField(teamId: string) {
       options?: string[];
       required?: boolean;
       sortOrder?: number;
+      showInList?: boolean;
     }) => orpc.updateMemberField({ teamId, ...input }),
+    onSuccess: () => invalidateFields(teamId),
+  });
+}
+
+/**
+ * The whole order in one request — see `reorderMemberFieldsInputSchema` for
+ * why a move is not a `sortOrder` write per field.
+ */
+export function useReorderMemberFields(teamId: string) {
+  return useMutation({
+    mutationFn: (fieldIds: string[]) =>
+      orpc.reorderMemberFields({ teamId, fieldIds }),
     onSuccess: () => invalidateFields(teamId),
   });
 }

@@ -171,6 +171,7 @@ export interface MemberFieldDefinitionsTable {
   options: ColumnType<string[], string, string>;
   required: Generated<boolean>;
   sort_order: Generated<number>;
+  show_in_list: Generated<boolean>;
   archived: Generated<boolean>;
   created_at: Timestamp;
 }

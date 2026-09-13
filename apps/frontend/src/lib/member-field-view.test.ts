@@ -4,6 +4,8 @@ import type { Member, MemberFieldDefinition } from "@fc-app/contracts";
 import {
   commitFieldValue,
   filledCount,
+  listFields,
+  moveField,
   pickedFieldsKey,
   readPickedFieldIds,
   visibleFields,
@@ -22,6 +24,7 @@ function field(
     options: [],
     required: false,
     sortOrder: 0,
+    showInList: true,
     archived: false,
     ...overrides,
   };
@@ -30,6 +33,41 @@ function field(
 function member(customFields: Record<string, string>): Pick<Member, "customFields"> {
   return { customFields };
 }
+
+describe("listFields", () => {
+  it("drops the fields the team keeps off the list", () => {
+    const fields = [
+      field("a"),
+      field("b", { showInList: false }),
+      field("c"),
+    ];
+    expect(listFields(fields).map((one) => one.id)).toEqual(["a", "c"]);
+  });
+
+  it("leaves the order alone", () => {
+    const fields = [field("c"), field("a"), field("b")];
+    expect(listFields(fields).map((one) => one.id)).toEqual(["c", "a", "b"]);
+  });
+});
+
+describe("moveField", () => {
+  const fields = [field("a"), field("b"), field("c")];
+
+  it("swaps a field with the one above it", () => {
+    expect(moveField(fields, 2, -1)).toEqual(["a", "c", "b"]);
+  });
+
+  it("swaps a field with the one below it", () => {
+    expect(moveField(fields, 0, 1)).toEqual(["b", "a", "c"]);
+  });
+
+  // The caller compares against the current ids and skips the request, so
+  // "unchanged" is the contract, not a thrown error.
+  it("leaves the order alone at either end", () => {
+    expect(moveField(fields, 0, -1)).toEqual(["a", "b", "c"]);
+    expect(moveField(fields, 2, 1)).toEqual(["a", "b", "c"]);
+  });
+});
 
 describe("visibleFields", () => {
   const fields = [field("a"), field("b"), field("c")];

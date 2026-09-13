@@ -1,4 +1,5 @@
 /** Custom member field definitions, archived rather than deleted (ADR-005, ADR-014). */
+import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -31,11 +32,13 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useZodResolver } from "@/lib/form";
+import { moveField } from "@/lib/member-field-view";
 import {
   memberFieldFormSchema,
   useArchiveMemberField,
   useCreateMemberField,
   useMemberFields,
+  useReorderMemberFields,
   useUpdateMemberField,
   type MemberFieldFormOutput,
   type MemberFieldFormValues,
@@ -50,8 +53,21 @@ export function MemberFields({ teamId }: { teamId: string }) {
   const { t } = useTranslation();
   const fields = useMemberFields(teamId, true);
   const archiveField = useArchiveMemberField(teamId);
+  const reorderFields = useReorderMemberFields(teamId);
   const [editing, setEditing] = useState<MemberFieldDefinition | null>(null);
   const [creating, setCreating] = useState(false);
+
+  // The order on screen *is* the order that is saved — the server sorts by it
+  // and every screen reads that sort, so a move here moves the roster column
+  // and the member page's fields together.
+  const ordered = fields.data?.fields ?? [];
+  const move = (index: number, direction: -1 | 1): void => {
+    const next = moveField(ordered, index, direction);
+    // The buttons at either end are disabled, so this is belt and braces —
+    // but an order that did not move is not worth a round trip.
+    if (next.every((id, at) => id === ordered[at]?.id)) return;
+    reorderFields.mutate(next);
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -73,7 +89,14 @@ export function MemberFields({ teamId }: { teamId: string }) {
           <p className="text-muted-foreground">{t("settings.team.empty")}</p>
         ) : (
           <div className="flex flex-col gap-2">
-            {fields.data.fields.map((field) => (
+            {reorderFields.isError && (
+              <Alert variant="destructive">
+                <AlertDescription>
+                  {t("settings.team.reorderError")}
+                </AlertDescription>
+              </Alert>
+            )}
+            {ordered.map((field, index) => (
               <div
                 key={field.id}
                 className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-card p-3"
@@ -86,6 +109,11 @@ export function MemberFields({ teamId }: { teamId: string }) {
                     </Badge>
                     {field.required && (
                       <Badge>{t("settings.team.required")}</Badge>
+                    )}
+                    {!field.showInList && (
+                      <Badge variant="secondary">
+                        {t("settings.team.detailOnly")}
+                      </Badge>
                     )}
                     {field.archived && (
                       <Badge variant="secondary">
@@ -100,6 +128,28 @@ export function MemberFields({ teamId }: { teamId: string }) {
                   )}
                 </div>
                 <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    aria-label={t("settings.team.moveUp")}
+                    title={t("settings.team.moveUp")}
+                    disabled={index === 0 || reorderFields.isPending}
+                    onClick={() => move(index, -1)}
+                  >
+                    <ChevronUpIcon className="size-4" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    aria-label={t("settings.team.moveDown")}
+                    title={t("settings.team.moveDown")}
+                    disabled={
+                      index === ordered.length - 1 || reorderFields.isPending
+                    }
+                    onClick={() => move(index, 1)}
+                  >
+                    <ChevronDownIcon className="size-4" />
+                  </Button>
                   <Button
                     size="sm"
                     variant="outline"
@@ -165,6 +215,7 @@ function FieldDialog({
       name: field?.name ?? "",
       fieldType: field?.fieldType ?? "text",
       required: field?.required ?? false,
+      showInList: field?.showInList ?? true,
     },
   });
   const [optionsText, setOptionsText] = useState(
@@ -188,6 +239,7 @@ function FieldDialog({
         fieldId: field.id,
         name: data.name,
         required: data.required,
+        showInList: data.showInList,
         ...(field.fieldType === "select" ? { options } : {}),
       });
     } else {
@@ -195,6 +247,7 @@ function FieldDialog({
         name: data.name,
         fieldType: data.fieldType,
         required: data.required,
+        showInList: data.showInList,
         ...(needsOptions ? { options } : {}),
       });
     }
@@ -303,6 +356,31 @@ function FieldDialog({
                       {t("settings.team.requiredLabel")}
                     </FormLabel>
                   </div>
+                </FormItem>
+              )}
+            />
+
+            {/* Every field is on the member's own page; this is only about
+                whether the roster may carry it as a column. */}
+            <FormField
+              control={form.control}
+              name="showInList"
+              render={({ field: formField }) => (
+                <FormItem>
+                  <div className="flex items-center gap-2">
+                    <FormControl>
+                      <Switch
+                        checked={formField.value}
+                        onCheckedChange={formField.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel className="!mt-0">
+                      {t("settings.team.showInListLabel")}
+                    </FormLabel>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {t("settings.team.showInListHint")}
+                  </p>
                 </FormItem>
               )}
             />
