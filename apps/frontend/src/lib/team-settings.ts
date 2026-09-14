@@ -49,6 +49,10 @@ export const TEAM_SETTINGS_SECTIONS: readonly TeamSettingsSection[] = [
     requires: null,
   },
   { id: "seasons", labelKey: "seasons.heading", requires: null },
+  // Adding a member and inviting imported guardians. The section gates its
+  // own two buttons (`members.manage`, `settings.club`), so a coach who holds
+  // neither still sees where the roster's configuration lives.
+  { id: "members", labelKey: "settings.team.members", requires: null },
   { id: "member-fields", labelKey: "settings.team.fields", requires: null },
   { id: "tracking", labelKey: "settings.team.tracking", requires: null },
   { id: "development", labelKey: "settings.team.development", requires: null },

@@ -27,6 +27,7 @@ describe("visibleTeamSettingsSections", () => {
       "activity-types",
       "attendance-statuses",
       "seasons",
+      "members",
       "member-fields",
       "tracking",
       "development",

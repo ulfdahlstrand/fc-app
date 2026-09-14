@@ -63,7 +63,7 @@ tracked items) is **configuration data, not code**.
 | Statistics | `/statistics` | Attendance statistics per member, period, and activity type |
 | Posts | `/posts` | Announcements to the whole team or targeted groups |
 | Tracking lists | `/tracking` | Matrix (members × items) of configurable checklists — e.g. "Grönt kort", "picked up discount booklets" |
-| Team settings | `/settings/team` | A section menu over coaches of the team (admin only), activity types, attendance statuses, seasons, member field definitions, tracking list definitions, development metrics. One section at a time, addressed by `?section=` |
+| Team settings | `/settings/team` | A section menu over coaches of the team (admin only), activity types, attendance statuses, seasons, adding a member and inviting imported guardians, member field definitions, tracking list definitions, development metrics. One section at a time, addressed by `?section=` |
 | Club settings | `/settings/club` | Club profile, teams, roles & permissions, users & invitations |
 | My profile | `/profile` | Own account, linked members, language |
 
@@ -106,6 +106,9 @@ tracked items) is **configuration data, not code**.
   field that helps say *who* a row is, so it is drawn before the name in the
   roster and takes the place of the initials in the circle on a phone. One per
   team, and it is always in the list.
+- Adding a member by hand and inviting the guardians an import brought in are
+  **team settings**, not roster controls: both are done a handful of times a
+  year, and the roster is a page opened to read.
 - Guardians: link user accounts to members.
 - Groups: manual member groups, usable everywhere a "who" is selected.
 

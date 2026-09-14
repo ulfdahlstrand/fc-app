@@ -18,6 +18,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ActivityTypes } from "@/components/settings/ActivityTypesSection";
 import { AttendanceStatuses } from "@/components/settings/AttendanceStatusesSection";
 import { DevelopmentMetrics } from "@/components/settings/DevelopmentMetricsSection";
+import { MemberAdmin } from "@/components/settings/MemberAdminSection";
 import { MemberFields } from "@/components/settings/MemberFieldsSection";
 import { Seasons } from "@/components/settings/SeasonsSection";
 import { SettingsNav } from "@/components/settings/SettingsNav";
@@ -158,6 +159,8 @@ function SectionBody({
       return <AttendanceStatuses teamId={teamId} />;
     case "seasons":
       return <Seasons teamId={teamId} />;
+    case "members":
+      return <MemberAdmin teamId={teamId} />;
     case "member-fields":
       return <MemberFields teamId={teamId} />;
     case "tracking":

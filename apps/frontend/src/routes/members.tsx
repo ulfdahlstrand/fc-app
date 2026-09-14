@@ -27,15 +27,10 @@ import {
 import { cn } from "@/lib/utils";
 import { formatFieldValue } from "../components/memberFieldDisplay";
 import { MemberFieldCell } from "../components/MemberFieldCell";
-import { MemberFormDialog } from "../components/MemberFormDialog";
 import { ensureMe } from "../lib/auth";
 import { SEPARATOR } from "../lib/dates";
 import { useIsPhone } from "../lib/breakpoint";
 import { ensureMyClubs, useHasPermission, useSelectedTeam } from "../lib/clubs";
-import {
-  useInviteMemberContacts,
-  usePendingContactInvites,
-} from "../lib/guardians";
 import { useGroups } from "../lib/groups";
 import { groupMembers, type MemberSection } from "../lib/member-grouping";
 import {
@@ -50,11 +45,7 @@ import {
   visibleFields,
   writePickedFieldIds,
 } from "../lib/member-field-view";
-import {
-  formatMemberName,
-  useCreateMember,
-  useMembers,
-} from "../lib/members";
+import { formatMemberName, useMembers } from "../lib/members";
 
 /** Sentinel select value for "all groups" — Radix disallows an empty-string item value. */
 const ALL_GROUPS = "__all__";
@@ -107,9 +98,6 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
   const isPhone = useIsPhone();
   const canManage = useHasPermission("members.manage");
   const canImport = useHasPermission("members.import");
-  // Inviting anyone into the club is an admin's call, however narrow the
-  // invitation is.
-  const canInvite = useHasPermission("settings.club");
   const [search, setSearch] = useState("");
   const [includeArchived, setIncludeArchived] = useState(false);
   const [groupId, setGroupId] = useState("");
@@ -120,7 +108,6 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
   // Fill-in mode is per-visit too: it is turned on when there is something to
   // fill in. Which *fields* it shows is remembered — see below.
   const [fillFields, setFillFields] = useState(false);
-  const [creating, setCreating] = useState(false);
 
   // The picked field ids, per team. Null means nothing has ever been chosen,
   // which `visibleFields` answers with every field.
@@ -143,9 +130,6 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
   });
   const fields = useMemberFields(teamId);
   const groups = useGroups(teamId);
-  const createMember = useCreateMember(teamId);
-  const pendingInvites = usePendingContactInvites(teamId, canInvite);
-  const inviteContacts = useInviteMemberContacts(teamId);
   // Only the fields the team put in the list; the rest live on the member's
   // own page, and the user's pick below chooses among these. The presentation
   // field is held apart because it does not sit among the columns at all — it
@@ -198,46 +182,13 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h1 className="font-display text-4xl">
-            {t("members.heading")}
-          </h1>
-          <p className="text-muted-foreground">{teamName}</p>
-        </div>
-        {canManage && (
-          <Button onClick={() => setCreating(true)}>{t("members.add")}</Button>
-        )}
+      {/* The page is a list. Adding a member by hand and inviting the
+          guardians an import brought in are both administration, and both now
+          live in team settings — off a page that is opened to read. */}
+      <div>
+        <h1 className="font-display text-4xl">{t("members.heading")}</h1>
+        <p className="text-muted-foreground">{teamName}</p>
       </div>
-
-      {/* Only worth a line when there is actually someone out of reach. */}
-      {canInvite && (pendingInvites.data?.invitable ?? 0) > 0 && (
-        <Alert>
-          <AlertDescription className="flex flex-wrap items-center justify-between gap-3">
-            <span>
-              {t("guardians.pendingInvites", {
-                count: pendingInvites.data?.invitable ?? 0,
-              })}
-            </span>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={inviteContacts.isPending}
-              onClick={() => inviteContacts.mutate()}
-            >
-              {t("guardians.inviteAll")}
-            </Button>
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {inviteContacts.data && (
-        <Alert>
-          <AlertDescription>
-            {t("guardians.invitesSent", { count: inviteContacts.data.invited })}
-          </AlertDescription>
-        </Alert>
-      )}
 
       <div className="flex flex-wrap items-end gap-4">
         <div className="flex w-full flex-col gap-1.5 kit:w-auto">
@@ -321,10 +272,19 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
       ) : members.data.members.length === 0 ? (
         <div className="flex flex-col items-start gap-3">
           <p className="text-muted-foreground">{t("members.empty")}</p>
-          {/* The case the import exists for: a team on its first day. */}
+          {/* The case the import exists for: a team on its first day. The
+              other way in is one member at a time, and this is where someone
+              looks for it — so the empty roster says where it moved to. */}
           {canImport && (
             <Button variant="outline" asChild>
               <Link to="/import">{t("import.fromEmptyRoster")}</Link>
+            </Button>
+          )}
+          {canManage && (
+            <Button variant="outline" asChild>
+              <Link to="/settings/team" search={{ section: "members" }}>
+                {t("members.addInSettings")}
+              </Link>
             </Button>
           )}
         </div>
@@ -456,18 +416,6 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
             </TableBody>
           </Table>
         </div>
-      )}
-
-      {creating && (
-        <MemberFormDialog
-          saving={createMember.isPending}
-          error={createMember.error}
-          onSave={async (input) => {
-            await createMember.mutateAsync(input);
-            setCreating(false);
-          }}
-          onClose={() => setCreating(false)}
-        />
       )}
     </div>
   );
