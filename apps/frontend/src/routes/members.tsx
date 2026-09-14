@@ -282,7 +282,9 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
           )}
           {canManage && (
             <Button variant="outline" asChild>
-              <Link to="/settings/team">{t("members.addInSettings")}</Link>
+              <Link to="/settings/team" search={{ section: "members" }}>
+                {t("members.addInSettings")}
+              </Link>
             </Button>
           )}
         </div>
