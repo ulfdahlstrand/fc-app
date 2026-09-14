@@ -80,6 +80,7 @@
   "members": {
     "heading": "Medlemmar",
     "add": "Lägg till medlem",
+    "addInSettings": "Lägg till medlem i laginställningar",
     "search": "Sök namn",
     "showArchived": "Visa arkiverade",
     "groupByGroup": "Gruppera på grupper",
@@ -204,6 +205,8 @@
     "team": {
       "heading": "Laginställningar",
       "forbidden": "Du har inte behörighet att ändra laginställningar.",
+      "members": "Medlemmar",
+      "membersHint": "Lägg till en medlem för hand, och bjud in vårdnadshavarna som en import tagit med. Själva listan finns under Medlemmar.",
       "fields": "Egna medlemsfält",
       "newField": "Nytt fält",
       "editField": "Redigera fält",
@@ -670,6 +673,8 @@
     "noAccount": "Inget konto",
     "pendingInvites_one": "{{count}} importerad vårdnadshavare saknar konto.",
     "pendingInvites_other": "{{count}} importerade vårdnadshavare saknar konto.",
+    "allInvited": "Alla importerade vårdnadshavare har konto.",
+    "inviteError": "Kunde inte skapa inbjudningarna.",
     "inviteAll": "Bjud in alla",
     "invitesSent_one": "{{count}} inbjudan skapad.",
     "invitesSent_other": "{{count}} inbjudningar skapade.",

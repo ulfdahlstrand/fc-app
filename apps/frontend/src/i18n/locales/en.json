@@ -80,6 +80,7 @@
   "members": {
     "heading": "Members",
     "add": "Add member",
+    "addInSettings": "Add a member in team settings",
     "search": "Search name",
     "showArchived": "Show archived",
     "groupByGroup": "Group by group",
@@ -204,6 +205,8 @@
     "team": {
       "heading": "Team settings",
       "forbidden": "You do not have permission to change team settings.",
+      "members": "Members",
+      "membersHint": "Add a member by hand, and invite the guardians an import brought in. The roster itself is under Members.",
       "fields": "Custom member fields",
       "newField": "New field",
       "editField": "Edit field",
@@ -670,6 +673,8 @@
     "noAccount": "No account",
     "pendingInvites_one": "{{count}} imported guardian has no account.",
     "pendingInvites_other": "{{count}} imported guardians have no account.",
+    "allInvited": "Every imported guardian has an account.",
+    "inviteError": "Could not create the invitations.",
     "inviteAll": "Invite them all",
     "invitesSent_one": "{{count}} invitation created.",
     "invitesSent_other": "{{count}} invitations created.",
