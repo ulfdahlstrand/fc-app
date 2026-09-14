@@ -204,6 +204,7 @@
     "team": {
       "heading": "Team settings",
       "forbidden": "You do not have permission to change team settings.",
+      "sectionsLabel": "Team settings sections",
       "fields": "Custom member fields",
       "newField": "New field",
       "editField": "Edit field",

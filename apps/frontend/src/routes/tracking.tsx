@@ -150,6 +150,9 @@ function NoDefinitions() {
       {canConfigure && (
         <Link
           to="/settings/team"
+          // Settings sections are addressable now, so this lands on the
+          // tracking lists rather than on the settings menu.
+          search={{ section: "tracking" }}
           className="mt-1 text-sm font-semibold underline"
         >
           {t("tracking.toSettings")}

@@ -204,6 +204,7 @@
     "team": {
       "heading": "Laginställningar",
       "forbidden": "Du har inte behörighet att ändra laginställningar.",
+      "sectionsLabel": "Avsnitt i laginställningar",
       "fields": "Egna medlemsfält",
       "newField": "Nytt fält",
       "editField": "Redigera fält",
