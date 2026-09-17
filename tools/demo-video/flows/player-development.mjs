@@ -55,6 +55,9 @@ export default async function run(d) {
   await say("Först: bestäm vad laget mäter", 2600);
   await click(nav("Laginställningar"), 1600);
   await clearCaption();
+  // Settings is a menu and one section now, not a stack of all of them, so
+  // the metrics are a click away rather than a scroll away.
+  await click(nav("Utvecklingsmått"), 1200);
   await scrollTo(page.getByRole("heading", { name: "UTVECKLINGSMÅTT" }));
 
   await click(page.getByRole("button", { name: "Nytt mått" }), 900);
@@ -167,6 +170,7 @@ export default async function run(d) {
   await say("Namnen går att ändra i efterhand", 2600);
   await click(nav("Laginställningar"), 1600);
   await clearCaption();
+  await click(nav("Utvecklingsmått"), 1200);
   await scrollTo(page.getByRole("heading", { name: "UTVECKLINGSMÅTT" }));
 
   // Each metric is one `bg-card` row; filtering by name lands on that row

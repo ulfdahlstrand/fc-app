@@ -63,7 +63,7 @@ tracked items) is **configuration data, not code**.
 | Statistics | `/statistics` | Attendance statistics per member, period, and activity type |
 | Posts | `/posts` | Announcements to the whole team or targeted groups |
 | Tracking lists | `/tracking` | Matrix (members × items) of configurable checklists — e.g. "Grönt kort", "picked up discount booklets" |
-| Team settings | `/settings/team` | Coaches of the team (admin only), activity types, attendance statuses, adding a member and inviting imported guardians, member field definitions, tracking list definitions, seasons |
+| Team settings | `/settings/team` | A section menu over coaches of the team (admin only), activity types, attendance statuses, seasons, adding a member and inviting imported guardians, member field definitions, tracking list definitions, development metrics. One section at a time, addressed by `?section=` |
 | Club settings | `/settings/club` | Club profile, teams, roles & permissions, users & invitations |
 | My profile | `/profile` | Own account, linked members, language |
 

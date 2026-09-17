@@ -205,6 +205,7 @@
     "team": {
       "heading": "Laginställningar",
       "forbidden": "Du har inte behörighet att ändra laginställningar.",
+      "sectionsLabel": "Avsnitt i laginställningar",
       "members": "Medlemmar",
       "membersHint": "Lägg till en medlem för hand, och bjud in vårdnadshavarna som en import tagit med. Själva listan finns under Medlemmar.",
       "fields": "Egna medlemsfält",

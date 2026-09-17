@@ -205,6 +205,7 @@
     "team": {
       "heading": "Team settings",
       "forbidden": "You do not have permission to change team settings.",
+      "sectionsLabel": "Team settings sections",
       "members": "Members",
       "membersHint": "Add a member by hand, and invite the guardians an import brought in. The roster itself is under Members.",
       "fields": "Custom member fields",
