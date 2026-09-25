@@ -1,4 +1,14 @@
-/** Members roster (issue #7) — the team's list of members. */
+/**
+ * Members roster (issue #7) — the team's list of members.
+ *
+ * Three views under one filter bar, held in `?view=`: the list, the squad's
+ * latest assessments, and filling in the custom fields. The search, archived
+ * and group filters apply to all three.
+ *
+ * The menu between them is team settings' `SectionNav`, working the same way:
+ * a column beside the view on the desktop, and on the phone the menu as a
+ * screen of its own with the view as the page after it.
+ */
 import { Fragment, useState } from "react";
 import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
@@ -16,6 +26,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { MemberDevelopmentOverview } from "@/components/MemberDevelopmentOverview";
+import {
+  SectionBackLink,
+  SectionColumns,
+  SectionNav,
+} from "@/components/SectionNav";
 import {
   Table,
   TableBody,
@@ -27,6 +43,7 @@ import {
 import { cn } from "@/lib/utils";
 import { formatFieldValue } from "../components/memberFieldDisplay";
 import { MemberFieldCell } from "../components/MemberFieldCell";
+import { MemberFieldValue } from "../components/MemberFieldValue";
 import { ensureMe } from "../lib/auth";
 import { SEPARATOR } from "../lib/dates";
 import { useIsPhone } from "../lib/breakpoint";
@@ -59,7 +76,19 @@ const ALL_GROUPS = "__all__";
  */
 const LEAD_COLUMN = 148;
 
+type MembersView = "list" | "development" | "fill";
+
+const MEMBERS_VIEWS: readonly MembersView[] = ["list", "development", "fill"];
+
+export interface MembersSearch {
+  view?: MembersView;
+}
+
 export const Route = createFileRoute("/members")({
+  validateSearch: (search: Record<string, unknown>): MembersSearch => {
+    const view = MEMBERS_VIEWS.find((candidate) => candidate === search["view"]);
+    return view ? { view } : {};
+  },
   beforeLoad: async () => {
     const user = await ensureMe();
     if (!user) throw redirect({ to: "/login" });
@@ -98,16 +127,11 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
   const isPhone = useIsPhone();
   const canManage = useHasPermission("members.manage");
   const canImport = useHasPermission("members.import");
+  const canSeeDevelopment = useHasPermission("development.manage");
+  const { view: requestedView } = Route.useSearch();
   const [search, setSearch] = useState("");
   const [includeArchived, setIncludeArchived] = useState(false);
   const [groupId, setGroupId] = useState("");
-  // A per-visit view toggle, and grouped is the point — so `useState`, not
-  // storage. `lib/clubs.ts` has the localStorage pattern if that turns out
-  // to be wrong.
-  const [groupByGroup, setGroupByGroup] = useState(true);
-  // Fill-in mode is per-visit too: it is turned on when there is something to
-  // fill in. Which *fields* it shows is remembered — see below.
-  const [fillFields, setFillFields] = useState(false);
 
   // The picked field ids, per team. Null means nothing has ever been chosen,
   // which `visibleFields` answers with every field.
@@ -142,10 +166,27 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
   // Filling in is writing, so it needs `members.manage` — the same permission
   // `setMemberFieldValues` checks. There is no read-only fill-in mode; the
   // read-only view of these values is the roster itself. And a team with no
-  // custom fields sees no switch, mirroring the grouping one.
+  // custom fields has nothing to fill in, so it gets no such view.
   const canFill =
     canManage && (presentation !== null || customColumns.length > 0);
-  const fillMode = canFill && fillFields;
+  const views: MembersView[] = [
+    "list",
+    ...(canSeeDevelopment ? (["development"] as const) : []),
+    ...(canFill ? (["fill"] as const) : []),
+  ];
+  // One view has nothing to choose between, so there is no menu at all.
+  const hasMenu = views.length > 1;
+  // A view this user may not open — a shared link, a permission since taken
+  // away — counts as none named. With none named the desktop opens the list
+  // rather than an empty column; the phone stays on the menu, which is a
+  // screen of its own. Same rule as team settings.
+  const requested =
+    requestedView !== undefined && views.includes(requestedView)
+      ? requestedView
+      : null;
+  const view: MembersView | null =
+    requested ?? (isPhone && hasMenu ? null : "list");
+  const fillMode = view === "fill";
   const pickedFields = visibleFields(pickedIds, customColumns);
 
   const togglePicked = (fieldId: string): void => {
@@ -157,17 +198,18 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
     writePickedFieldIds(teamId, next);
   };
 
-  // A team with no groups sees no grouping at all, mirroring the filter. And
-  // when the filter already names one group, a single heading repeating that
-  // label above the list says nothing — so that renders flat.
+  // Grouped is the point, so it is always on — there is no switch. A team
+  // with no groups has nothing to group by, and when the filter already names
+  // one group, a single heading repeating that label says nothing — so those
+  // render flat.
   //
   // On a phone in fill-in mode the cards are already keyed by field, so a
-  // second level of headings inside them would be noise: the switch goes away
-  // and the group filter is how you narrow to A-truppen.
+  // second level of headings inside them would be noise: the group filter is
+  // how you narrow to A-truppen there.
   const canGroup = teamGroups.length > 0 && groupId === "";
-  const groupingOffered = canGroup && !(isPhone && fillMode);
+  const grouped = canGroup && !(isPhone && fillMode);
   const sections: MemberSection[] | null =
-    groupingOffered && groupByGroup && members.data
+    grouped && members.data
       ? groupMembers(
           members.data.members,
           members.data.groupIds,
@@ -180,243 +222,286 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
     { groupId: null, name: "", members: members.data?.members ?? [] },
   ];
 
-  return (
-    <div className="flex flex-col gap-6">
-      {/* The page is a list. Adding a member by hand and inviting the
-          guardians an import brought in are both administration, and both now
-          live in team settings — off a page that is opened to read. */}
-      <div>
-        <h1 className="font-display text-4xl">{t("members.heading")}</h1>
-        <p className="text-muted-foreground">{teamName}</p>
-      </div>
+  const navItems = views.map((item) => ({
+    id: item,
+    label: t(`members.views.${item}`),
+    link: { to: "/members", search: { view: item } } as const,
+  }));
+  const navLabel = t("members.views.label");
 
-      <div className="flex flex-wrap items-end gap-4">
-        <div className="flex w-full flex-col gap-1.5 kit:w-auto">
-          <Label htmlFor="member-search">{t("members.search")}</Label>
-          <Input
-            id="member-search"
-            className="w-full kit:w-56"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-          />
-        </div>
-        <div className="flex items-center gap-2 pb-2">
-          <Switch
-            id="show-archived"
-            checked={includeArchived}
-            onCheckedChange={setIncludeArchived}
-          />
-          <Label htmlFor="show-archived">{t("members.showArchived")}</Label>
-        </div>
-        {canFill && (
-          <div className="flex items-center gap-2 pb-2">
-            <Switch
-              id="fill-fields"
-              checked={fillFields}
-              onCheckedChange={setFillFields}
-            />
-            <Label htmlFor="fill-fields">{t("members.fillFields")}</Label>
-          </div>
-        )}
-        {groupingOffered && (
-          <div className="flex items-center gap-2 pb-2">
-            <Switch
-              id="group-by-group"
-              checked={groupByGroup}
-              onCheckedChange={setGroupByGroup}
-            />
-            <Label htmlFor="group-by-group">{t("members.groupByGroup")}</Label>
-          </div>
-        )}
-        {(groups.data?.groups.length ?? 0) > 0 && (
-          <div className="flex flex-1 flex-col gap-1.5 kit:flex-none">
-            <Label htmlFor="group-filter">{t("groups.filterLabel")}</Label>
-            <Select
-              value={groupId === "" ? ALL_GROUPS : groupId}
-              onValueChange={(value) =>
-                setGroupId(value === ALL_GROUPS ? "" : value)
-              }
-            >
-              <SelectTrigger id="group-filter" size="sm" className="w-full kit:w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL_GROUPS}>
-                  {t("groups.allMembers")}
-                </SelectItem>
-                {groups.data?.groups.map((group) => (
-                  <SelectItem key={group.id} value={group.id}>
-                    {group.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-      </div>
+  // The page is a list. Adding a member by hand and inviting the guardians an
+  // import brought in are both administration, and both now live in team
+  // settings — off a page that is opened to read.
+  const heading = (
+    <div>
+      <h1 className="font-display text-4xl">{t("members.heading")}</h1>
+      <p className="text-muted-foreground">{teamName}</p>
+    </div>
+  );
 
-      {fillMode && (
-        <FieldPicker
-          fields={customColumns}
-          picked={pickedFields}
-          onToggle={togglePicked}
+  // The phone's menu is a screen of its own, as in team settings.
+  if (view === null) {
+    return (
+      <div className="flex flex-col gap-6">
+        {heading}
+        <SectionNav
+          label={navLabel}
+          items={navItems}
+          activeId={null}
+          variant="list"
         />
-      )}
+      </div>
+    );
+  }
 
-      {members.isPending ? (
-        <p className="text-muted-foreground">{t("common.loading")}</p>
-      ) : members.isError ? (
-        <Alert variant="destructive">
-          <AlertDescription>{t("members.loadError")}</AlertDescription>
-        </Alert>
-      ) : members.data.members.length === 0 ? (
-        <div className="flex flex-col items-start gap-3">
-          <p className="text-muted-foreground">{t("members.empty")}</p>
-          {/* The case the import exists for: a team on its first day. The
-              other way in is one member at a time, and this is where someone
-              looks for it — so the empty roster says where it moved to. */}
-          {canImport && (
-            <Button variant="outline" asChild>
-              <Link to="/import">{t("import.fromEmptyRoster")}</Link>
-            </Button>
-          )}
-          {canManage && (
-            <Button variant="outline" asChild>
-              <Link to="/settings/team" search={{ section: "members" }}>
-                {t("members.addInSettings")}
-              </Link>
-            </Button>
-          )}
+  const sideMenu = hasMenu && !isPhone;
+
+  return (
+    <div className="flex flex-col gap-6 kit:gap-8">
+      {hasMenu && isPhone ? (
+        // The back link replaces the heading, and the view's own name says
+        // where you are — two titles in a row would say it twice.
+        <div className="flex flex-col gap-2">
+          <SectionBackLink link={{ to: "/members" }} label={t("members.heading")} />
+          <h1 className="font-display text-4xl">
+            {t(`members.views.${view}`)}
+          </h1>
         </div>
-      ) : fillMode ? (
-        pickedFields.length === 0 ? (
-          // Unpicking everything is allowed; it says so rather than showing an
-          // empty screen, and nothing is silently re-picked.
-          <p className="text-muted-foreground">{t("members.noFieldsPicked")}</p>
-        ) : (
-          <FillIn
-            compact={isPhone}
-            teamId={teamId}
-            presentation={presentation}
-            fields={pickedFields}
-            members={members.data.members}
-            sections={isPhone ? null : sections}
-          />
-        )
-      ) : isPhone ? (
-        /* Kit's adapt matrix calls a table a swap, not an adjust: the pill nav
-           and the column set do not survive 390px. A member becomes a row —
-           initials, name, and one short meta line. The custom-field columns do
-           not come along; they are one tap away on the member, and inventing a
-           horizontal scroll for an unbounded number of them would be the
-           clipping Kit forbids. */
-        <div className="flex flex-col gap-[11px]">
-          {sections === null
-            ? members.data.members.map((member) => (
-                <MemberRow
-                  key={member.id}
-                  member={member}
-                  presentation={presentation}
-                />
-              ))
-            : sections.map((section) => (
-                <div
-                  key={section.groupId ?? "ungrouped"}
-                  className="flex flex-col gap-[11px]"
+      ) : (
+        heading
+      )}
+      <SectionColumns
+        nav={
+          sideMenu ? (
+            <SectionNav
+              label={navLabel}
+              items={navItems}
+              activeId={view}
+              variant="column"
+            />
+          ) : null
+        }
+      >
+        <div className="flex min-w-0 flex-col gap-6">
+          <div className="flex flex-wrap items-end gap-4">
+            <div className="flex w-full flex-col gap-1.5 kit:w-auto">
+              <Label htmlFor="member-search">{t("members.search")}</Label>
+              <Input
+                id="member-search"
+                className="w-full kit:w-56"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+              />
+            </div>
+            <div className="flex items-center gap-2 pb-2">
+              <Switch
+                id="show-archived"
+                checked={includeArchived}
+                onCheckedChange={setIncludeArchived}
+              />
+              <Label htmlFor="show-archived">{t("members.showArchived")}</Label>
+            </div>
+            {(groups.data?.groups.length ?? 0) > 0 && (
+              <div className="flex flex-1 flex-col gap-1.5 kit:flex-none">
+                <Label htmlFor="group-filter">{t("groups.filterLabel")}</Label>
+                <Select
+                  value={groupId === "" ? ALL_GROUPS : groupId}
+                  onValueChange={(value) =>
+                    setGroupId(value === ALL_GROUPS ? "" : value)
+                  }
                 >
-                  {/* The count is the rows drawn, never `group.memberCount`
-                      — a member in two groups is drawn once. */}
-                  <p className="kit-overline text-muted-foreground mt-2">
-                    {section.name} ({section.members.length})
-                  </p>
-                  {section.members.map((member) => (
+                  <SelectTrigger id="group-filter" size="sm" className="w-full kit:w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={ALL_GROUPS}>
+                      {t("groups.allMembers")}
+                    </SelectItem>
+                    {groups.data?.groups.map((group) => (
+                      <SelectItem key={group.id} value={group.id}>
+                        {group.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+
+          {fillMode && (
+            <FieldPicker
+              fields={customColumns}
+              picked={pickedFields}
+              onToggle={togglePicked}
+            />
+          )}
+
+          {members.isPending ? (
+            <p className="text-muted-foreground">{t("common.loading")}</p>
+          ) : members.isError ? (
+            <Alert variant="destructive">
+              <AlertDescription>{t("members.loadError")}</AlertDescription>
+            </Alert>
+          ) : members.data.members.length === 0 ? (
+            <div className="flex flex-col items-start gap-3">
+              <p className="text-muted-foreground">{t("members.empty")}</p>
+              {/* The case the import exists for: a team on its first day. The
+                  other way in is one member at a time, and this is where someone
+                  looks for it — so the empty roster says where it moved to. */}
+              {canImport && (
+                <Button variant="outline" asChild>
+                  <Link to="/import">{t("import.fromEmptyRoster")}</Link>
+                </Button>
+              )}
+              {canManage && (
+                <Button variant="outline" asChild>
+                  <Link to="/settings/team" search={{ section: "members" }}>
+                    {t("members.addInSettings")}
+                  </Link>
+                </Button>
+              )}
+            </div>
+          ) : view === "development" ? (
+            <MemberDevelopmentOverview
+              compact={isPhone}
+              teamId={teamId}
+              members={members.data.members}
+              sections={sections}
+            />
+          ) : fillMode ? (
+            pickedFields.length === 0 ? (
+              // Unpicking everything is allowed; it says so rather than showing an
+              // empty screen, and nothing is silently re-picked.
+              <p className="text-muted-foreground">{t("members.noFieldsPicked")}</p>
+            ) : (
+              <FillIn
+                compact={isPhone}
+                teamId={teamId}
+                presentation={presentation}
+                fields={pickedFields}
+                members={members.data.members}
+                sections={isPhone ? null : sections}
+              />
+            )
+          ) : isPhone ? (
+            /* Kit's adapt matrix calls a table a swap, not an adjust: the pill nav
+               and the column set do not survive 390px. A member becomes a row —
+               initials, name, and one short meta line. The custom-field columns do
+               not come along; they are one tap away on the member, and inventing a
+               horizontal scroll for an unbounded number of them would be the
+               clipping Kit forbids. */
+            <div className="flex flex-col gap-[11px]">
+              {sections === null
+                ? members.data.members.map((member) => (
                     <MemberRow
                       key={member.id}
                       member={member}
                       presentation={presentation}
                     />
-                  ))}
-                </div>
-              ))}
-        </div>
-      ) : (
-        <div className="rounded-xl bg-card px-2">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                {/* Before the name, not among the columns: the team said this
-                    field helps say who a row is. */}
-                {presentation && <TableHead>{presentation.name}</TableHead>}
-                <TableHead>{t("members.name")}</TableHead>
-                <TableHead>{t("members.birthYear")}</TableHead>
-                <TableHead>{t("members.contact")}</TableHead>
-                {customColumns.map((field) => (
-                  <TableHead key={field.id}>{field.name}</TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tableSections.map((section) => (
-                <Fragment key={section.groupId ?? "ungrouped"}>
-                  {sections !== null && (
-                    <TableRow className="hover:bg-transparent">
-                      {/* The span has to track the custom columns, or the
-                          layout breaks the moment a team defines a field.
-                          The count is the rows drawn, never
-                          `group.memberCount`. */}
-                      <TableCell
-                        colSpan={
-                          3 + customColumns.length + (presentation ? 1 : 0)
-                        }
-                        className="kit-overline text-muted-foreground pt-6"
-                      >
+                  ))
+                : sections.map((section) => (
+                    <div
+                      key={section.groupId ?? "ungrouped"}
+                      className="flex flex-col gap-[11px]"
+                    >
+                      {/* The count is the rows drawn, never `group.memberCount`
+                          — a member in two groups is drawn once. */}
+                      <p className="kit-overline text-muted-foreground mt-2">
                         {section.name} ({section.members.length})
-                      </TableCell>
-                    </TableRow>
-                  )}
-                  {section.members.map((member) => (
-                <TableRow
-                  key={member.id}
-                  className="cursor-pointer"
-                  onClick={() =>
-                    navigate({
-                      to: "/members/$memberId",
-                      params: { memberId: member.id },
-                    })
-                  }
-                >
-                  {presentation && (
-                    <TableCell className="font-semibold tabular-nums">
-                      {formatFieldValue(
-                        presentation,
-                        member.customFields[presentation.id],
-                        t
+                      </p>
+                      {section.members.map((member) => (
+                        <MemberRow
+                          key={member.id}
+                          member={member}
+                          presentation={presentation}
+                        />
+                      ))}
+                    </div>
+                  ))}
+            </div>
+          ) : (
+            <div className="rounded-xl bg-card px-2">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    {/* Before the name, not among the columns: the team said this
+                        field helps say who a row is. */}
+                    {presentation && <TableHead>{presentation.name}</TableHead>}
+                    <TableHead>{t("members.name")}</TableHead>
+                    <TableHead>{t("members.birthYear")}</TableHead>
+                    <TableHead>{t("members.contact")}</TableHead>
+                    {customColumns.map((field) => (
+                      <TableHead key={field.id}>{field.name}</TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {tableSections.map((section) => (
+                    <Fragment key={section.groupId ?? "ungrouped"}>
+                      {sections !== null && (
+                        <TableRow className="hover:bg-transparent">
+                          {/* The span has to track the custom columns, or the
+                              layout breaks the moment a team defines a field.
+                              The count is the rows drawn, never
+                              `group.memberCount`. */}
+                          <TableCell
+                            colSpan={
+                              3 + customColumns.length + (presentation ? 1 : 0)
+                            }
+                            className="kit-overline text-muted-foreground pt-6"
+                          >
+                            {section.name} ({section.members.length})
+                          </TableCell>
+                        </TableRow>
                       )}
-                    </TableCell>
-                  )}
-                  <TableCell>
-                    {formatMemberName(member)}
-                    {member.archived && (
-                      <Badge variant="secondary" className="ml-2">
-                        {t("members.archived")}
-                      </Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>{member.birthYear ?? "—"}</TableCell>
-                  <TableCell>{member.email ?? member.phone ?? "—"}</TableCell>
-                  {customColumns.map((field) => (
-                    <TableCell key={field.id}>
-                      {formatFieldValue(field, member.customFields[field.id], t)}
-                    </TableCell>
+                      {section.members.map((member) => (
+                    <TableRow
+                      key={member.id}
+                      className="cursor-pointer"
+                      onClick={() =>
+                        navigate({
+                          to: "/members/$memberId",
+                          params: { memberId: member.id },
+                        })
+                      }
+                    >
+                      {presentation && (
+                        <TableCell className="font-semibold tabular-nums">
+                          {formatFieldValue(
+                            presentation,
+                            member.customFields[presentation.id],
+                            t
+                          )}
+                        </TableCell>
+                      )}
+                      <TableCell>
+                        {formatMemberName(member)}
+                        {member.archived && (
+                          <Badge variant="secondary" className="ml-2">
+                            {t("members.archived")}
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>{member.birthYear ?? "—"}</TableCell>
+                      <TableCell>{member.email ?? member.phone ?? "—"}</TableCell>
+                      {customColumns.map((field) => (
+                        <TableCell key={field.id}>
+                          <MemberFieldValue
+                            field={field}
+                            raw={member.customFields[field.id]}
+                          />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                      ))}
+                    </Fragment>
                   ))}
-                </TableRow>
-                  ))}
-                </Fragment>
-              ))}
-            </TableBody>
-          </Table>
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </div>
-      )}
+      </SectionColumns>
     </div>
   );
 }

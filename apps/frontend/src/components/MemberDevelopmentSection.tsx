@@ -13,6 +13,7 @@ import {
   formatMetricNumber,
   isChartable,
   latestAndDelta,
+  readingLabel,
   polylinePoints,
   scaleLabelFor,
   seriesForMetric,
@@ -181,29 +182,6 @@ export function MemberDevelopmentSection({
       )}
     </div>
   );
-}
-
-type Translate = (key: string) => string;
-
-/**
- * How one stored reading reads on screen. A named step leads with its name and
- * keeps the number beside it — the number is what the chart plots and what the
- * delta counts, so dropping it would make "+1" unexplainable.
- */
-function readingLabel(
-  metric: DevelopmentMetric,
-  number: number | null,
-  text: string | null,
-  t: Translate,
-): string {
-  if (number !== null) {
-    const named = scaleLabelFor(metric, number);
-    return named ? `${named} (${number})` : formatMetricNumber(metric, number);
-  }
-  if (metric.valueType === "boolean") {
-    return text === "true" ? t("common.yes") : t("common.no");
-  }
-  return text ?? "";
 }
 
 /**
