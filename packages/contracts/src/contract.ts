@@ -20,7 +20,7 @@ import { createPostInputSchema, createPostOutputSchema, deletePostInputSchema, d
 import { createRoleInputSchema, createRoleOutputSchema, deleteRoleInputSchema, deleteRoleOutputSchema, listRolesInputSchema, listRolesOutputSchema, updateRoleInputSchema, updateRoleOutputSchema } from "./roles.js";
 import { createSeasonInputSchema, createSeasonOutputSchema, deleteSeasonInputSchema, deleteSeasonOutputSchema, listSeasonsInputSchema, listSeasonsOutputSchema, updateSeasonInputSchema, updateSeasonOutputSchema } from "./seasons.js";
 import { archiveTrackingDefinitionInputSchema, archiveTrackingDefinitionOutputSchema, createTrackingDefinitionInputSchema, createTrackingDefinitionOutputSchema, listTrackingDefinitionsInputSchema, listTrackingDefinitionsOutputSchema, memberTrackingInputSchema, memberTrackingOutputSchema, setTrackingEntryInputSchema, setTrackingEntryOutputSchema, trackingMatrixInputSchema, trackingMatrixOutputSchema, updateTrackingDefinitionInputSchema, updateTrackingDefinitionOutputSchema } from "./tracking.js";
-import { archiveDevelopmentMetricInputSchema, archiveDevelopmentMetricOutputSchema, createDevelopmentMetricInputSchema, createDevelopmentMetricOutputSchema, deleteDevelopmentAssessmentInputSchema, deleteDevelopmentAssessmentOutputSchema, listDevelopmentMetricsInputSchema, listDevelopmentMetricsOutputSchema, memberDevelopmentInputSchema, memberDevelopmentOutputSchema, saveDevelopmentAssessmentInputSchema, saveDevelopmentAssessmentOutputSchema, updateDevelopmentMetricInputSchema, updateDevelopmentMetricOutputSchema } from "./development.js";
+import { archiveDevelopmentMetricInputSchema, archiveDevelopmentMetricOutputSchema, createDevelopmentMetricInputSchema, createDevelopmentMetricOutputSchema, deleteDevelopmentAssessmentInputSchema, deleteDevelopmentAssessmentOutputSchema, listDevelopmentMetricsInputSchema, listDevelopmentMetricsOutputSchema, memberDevelopmentInputSchema, memberDevelopmentOutputSchema, saveDevelopmentAssessmentInputSchema, saveDevelopmentAssessmentOutputSchema, teamDevelopmentInputSchema, teamDevelopmentOutputSchema, updateDevelopmentMetricInputSchema, updateDevelopmentMetricOutputSchema } from "./development.js";
 
 export const contract = oc.router({
   // Explicit GET route so plain `curl /health` (e.g. the Docker Compose
@@ -405,6 +405,10 @@ export const contract = oc.router({
     .route({ method: "GET", path: "/development/member" })
     .input(memberDevelopmentInputSchema)
     .output(memberDevelopmentOutputSchema),
+  teamDevelopment: oc
+    .route({ method: "GET", path: "/development/team" })
+    .input(teamDevelopmentInputSchema)
+    .output(teamDevelopmentOutputSchema),
   saveDevelopmentAssessment: oc
     .route({ method: "POST", path: "/development/assessments" })
     .input(saveDevelopmentAssessmentInputSchema)

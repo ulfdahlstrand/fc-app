@@ -11,8 +11,7 @@
  * the page and the section as the page after it, with a way back. That is a
  * swap, not a hidden tree — hence the `useIsPhone` branch rather than CSS.
  */
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { ChevronLeftIcon } from "lucide-react";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ActivityTypes } from "@/components/settings/ActivityTypesSection";
@@ -21,9 +20,13 @@ import { DevelopmentMetrics } from "@/components/settings/DevelopmentMetricsSect
 import { MemberAdmin } from "@/components/settings/MemberAdminSection";
 import { MemberFields } from "@/components/settings/MemberFieldsSection";
 import { Seasons } from "@/components/settings/SeasonsSection";
-import { SettingsNav } from "@/components/settings/SettingsNav";
 import { TeamCoaches } from "@/components/settings/TeamCoachesSection";
 import { TrackingLists } from "@/components/settings/TrackingListsSection";
+import {
+  SectionBackLink,
+  SectionColumns,
+  SectionNav,
+} from "@/components/SectionNav";
 import { ensureMe } from "../lib/auth";
 import { useIsPhone } from "../lib/breakpoint";
 import { ensureMyClubs, useHasPermission, useSelectedTeam } from "../lib/clubs";
@@ -80,6 +83,13 @@ function TeamSettingsPage() {
     );
   }
 
+  const navItems = sections.map((section) => ({
+    id: section.id,
+    label: t(section.labelKey),
+    link: { to: "/settings/team", search: { section: section.id } } as const,
+  }));
+  const navLabel = t("settings.team.sectionsLabel");
+
   const heading = (
     <div>
       <h1 className="font-display text-4xl">{t("settings.team.heading")}</h1>
@@ -101,19 +111,21 @@ function TeamSettingsPage() {
         {active === null ? (
           <>
             {heading}
-            <SettingsNav sections={sections} activeId={null} variant="list" />
+            <SectionNav
+              label={navLabel}
+              items={navItems}
+              activeId={null}
+              variant="list"
+            />
           </>
         ) : (
           <>
             {/* The back link replaces the heading: the section's own h2 says
                 where you are, and two titles in a row would say it twice. */}
-            <Link
-              to="/settings/team"
-              className="min-h-tap -ml-1 flex items-center gap-1 self-start pr-3 pl-1 text-sm font-semibold"
-            >
-              <ChevronLeftIcon aria-hidden className="size-4" />
-              {t("settings.team.heading")}
-            </Link>
+            <SectionBackLink
+              link={{ to: "/settings/team" }}
+              label={t("settings.team.heading")}
+            />
             {body}
           </>
         )}
@@ -124,18 +136,18 @@ function TeamSettingsPage() {
   return (
     <div className="flex flex-col gap-8">
       {heading}
-      <div className="grid grid-cols-[220px_1fr] gap-8">
-        {/* The cell stretches to the section beside it; the menu inside
-            it is what sticks, which needs that height to travel over. */}
-        <div>
-          <SettingsNav
-            sections={sections}
+      <SectionColumns
+        nav={
+          <SectionNav
+            label={navLabel}
+            items={navItems}
             activeId={active?.id ?? null}
             variant="column"
           />
-        </div>
-        <div className="min-w-0">{body}</div>
-      </div>
+        }
+      >
+        {body}
+      </SectionColumns>
     </div>
   );
 }

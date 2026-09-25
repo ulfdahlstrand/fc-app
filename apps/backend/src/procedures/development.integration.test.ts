@@ -31,6 +31,7 @@ import {
   listDevelopmentMetricsHandler,
   memberDevelopmentHandler,
   saveDevelopmentAssessmentHandler,
+  teamDevelopmentHandler,
   updateDevelopmentMetricHandler,
 } from "./development.js";
 
@@ -626,6 +627,81 @@ describe("assessments", () => {
   });
 });
 
+describe("the team's latest assessments", () => {
+  it("returns each member's newest assessment and nothing for one never assessed", async () => {
+    const niva = await createMetric({
+      name: "Nivå",
+      valueType: "scale",
+      scaleMin: 1,
+      scaleMax: 5,
+    });
+    const other = await createTestMember(db, teamId, {
+      firstName: "Olle",
+      lastName: "Obedömd",
+    });
+
+    for (const [assessedOn, value] of [
+      ["2026-03-01", "2"],
+      ["2026-05-01", "4"],
+      ["2026-04-01", "3"],
+    ] as const) {
+      await call(
+        saveDevelopmentAssessmentHandler,
+        {
+          teamId,
+          memberId,
+          assessedOn,
+          note: null,
+          values: [{ metricId: niva, value }],
+        },
+        { context: coach.context }
+      );
+    }
+
+    const { metrics, latest } = await call(
+      teamDevelopmentHandler,
+      { teamId },
+      { context: coach.context }
+    );
+    expect(metrics.map((m) => m.id)).toEqual([niva]);
+    expect(latest).toHaveLength(1);
+    expect(latest[0]!.memberId).toBe(memberId);
+    expect(latest[0]!.assessedOn).toBe("2026-05-01");
+    expect(latest[0]!.values).toEqual([
+      { metricId: niva, number: 4, text: null },
+    ]);
+    expect(latest.map((a) => a.memberId)).not.toContain(other);
+  });
+
+  it("leaves another team's members out", async () => {
+    const niva = await createMetric({
+      name: "Nivå",
+      valueType: "scale",
+      scaleMin: 1,
+      scaleMax: 5,
+    });
+    await call(
+      saveDevelopmentAssessmentHandler,
+      {
+        teamId,
+        memberId,
+        assessedOn: "2026-05-01",
+        note: null,
+        values: [{ metricId: niva, value: "3" }],
+      },
+      { context: coach.context }
+    );
+    const otherTeam = await createTestTeam(db, club.clubId, "P17");
+
+    const { latest } = await call(
+      teamDevelopmentHandler,
+      { teamId: otherTeam },
+      { context: admin.context }
+    );
+    expect(latest).toEqual([]);
+  });
+});
+
 describe("the development.manage gate", () => {
   /**
    * The whole reason the permission exists. A role that can see the roster is
@@ -653,6 +729,9 @@ describe("the development.manage gate", () => {
         { teamId, memberId },
         { context: coach.context }
       )
+    ).rejects.toThrow(/development\.manage/);
+    await expect(
+      call(teamDevelopmentHandler, { teamId }, { context: coach.context })
     ).rejects.toThrow(/development\.manage/);
   });
 

@@ -83,7 +83,15 @@
     "addInSettings": "Add a member in team settings",
     "search": "Search name",
     "showArchived": "Show archived",
-    "groupByGroup": "Group by group",
+    "views": {
+      "label": "Member views",
+      "list": "List",
+      "development": "Follow-up",
+      "fill": "Fill in"
+    },
+    "lastAssessed": "Last assessed",
+    "neverAssessed": "Never assessed",
+    "noMetrics": "The team tracks no development metrics yet.",
     "ungrouped": "No group",
     "name": "Name",
     "birthYear": "Birth year",
@@ -105,7 +113,6 @@
     "customFields": "Custom fields",
     "editFields": "Edit fields",
     "noFields": "No custom fields are defined for this team.",
-    "fillFields": "Fill in fields",
     "chooseFields": "Choose fields",
     "noFieldsPicked": "No fields picked. Pick at least one above.",
     "cellSaveError": "Could not save the value.",
@@ -158,6 +165,8 @@
   },
   "common": {
     "loading": "Loading…",
+    "hideMenu": "‹ Hide menu",
+    "showMenu": "Show menu ›",
     "edit": "Edit",
     "delete": "Delete",
     "save": "Save",

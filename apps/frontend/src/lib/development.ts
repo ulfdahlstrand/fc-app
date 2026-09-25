@@ -112,6 +112,29 @@ export function labelledSteps(
 
 export { validateMetricDefinition };
 
+type Translate = (key: string) => string;
+
+/**
+ * How one stored reading reads on screen. A named step leads with its name and
+ * keeps the number beside it — the number is what the chart plots and what the
+ * delta counts, so dropping it would make "+1" unexplainable.
+ */
+export function readingLabel(
+  metric: DevelopmentMetric,
+  number: number | null,
+  text: string | null,
+  t: Translate,
+): string {
+  if (number !== null) {
+    const named = scaleLabelFor(metric, number);
+    return named ? `${named} (${number})` : formatMetricNumber(metric, number);
+  }
+  if (metric.valueType === "boolean") {
+    return text === "true" ? t("common.yes") : t("common.no");
+  }
+  return text ?? "";
+}
+
 export function developmentMetricsQueryOptions(
   teamId: string,
   includeArchived = false,
@@ -123,6 +146,14 @@ export function developmentMetricsQueryOptions(
 
 export function useDevelopmentMetrics(teamId: string, includeArchived = false) {
   return useQuery(developmentMetricsQueryOptions(teamId, includeArchived));
+}
+
+/** Each member's latest assessment, for the members page's follow-up view. */
+export function useTeamDevelopment(teamId: string, enabled = true) {
+  return useQuery({
+    ...orpcQuery.teamDevelopment.queryOptions({ input: { teamId } }),
+    enabled,
+  });
 }
 
 export function useMemberDevelopment(teamId: string, memberId: string) {
@@ -139,6 +170,9 @@ async function invalidateDevelopment(teamId: string): Promise<void> {
     }),
     queryClient.invalidateQueries({
       queryKey: orpcQuery.memberDevelopment.key({ input: { teamId } }),
+    }),
+    queryClient.invalidateQueries({
+      queryKey: orpcQuery.teamDevelopment.key({ input: { teamId } }),
     }),
   ]);
 }

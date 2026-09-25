@@ -83,7 +83,15 @@
     "addInSettings": "Lägg till medlem i laginställningar",
     "search": "Sök namn",
     "showArchived": "Visa arkiverade",
-    "groupByGroup": "Gruppera på grupper",
+    "views": {
+      "label": "Medlemsvyer",
+      "list": "Lista",
+      "development": "Uppföljning",
+      "fill": "Fyll i"
+    },
+    "lastAssessed": "Senast bedömd",
+    "neverAssessed": "Aldrig bedömd",
+    "noMetrics": "Laget följer inga utvecklingsmått än.",
     "ungrouped": "Utan grupp",
     "name": "Namn",
     "birthYear": "Födelseår",
@@ -105,7 +113,6 @@
     "customFields": "Egna fält",
     "editFields": "Redigera fält",
     "noFields": "Inga egna fält är definierade för laget.",
-    "fillFields": "Fyll i fält",
     "chooseFields": "Välj fält",
     "noFieldsPicked": "Inga fält valda. Välj minst ett fält ovan.",
     "cellSaveError": "Kunde inte spara värdet.",
@@ -158,6 +165,8 @@
   },
   "common": {
     "loading": "Laddar…",
+    "hideMenu": "‹ Dölj meny",
+    "showMenu": "Visa meny ›",
     "edit": "Redigera",
     "delete": "Ta bort",
     "save": "Spara",
