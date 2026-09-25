@@ -10,4 +10,13 @@ declare module "@tanstack/react-router" {
   interface Register {
     router: typeof router;
   }
+
+  interface StaticDataRouteOption {
+    /**
+     * `wide` lifts the desktop shell's 1100px cap for this page, so a page with
+     * a section menu can put it at the window's left edge and give the rest of
+     * the width to the section. See DDR-011.
+     */
+    layout?: "wide";
+  }
 }

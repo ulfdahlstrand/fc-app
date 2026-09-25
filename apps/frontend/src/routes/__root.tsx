@@ -6,12 +6,22 @@
  * the page's own save bar, `TabBar` — and only the middle moves. At 700px and
  * up it is the desktop app bar over a normally scrolling document. There is no
  * third arrangement: a tablet gets the desktop shell, centred and capped.
+ * A route that declares `staticData: { layout: "wide" }` lifts the cap — its
+ * content runs from gutter to gutter, which is what a page with a section menu
+ * needs on a large screen (DDR-011). The app bar is always gutter to gutter, so
+ * the club mark sits in the same place on every page.
  *
  * Both shells read the same ordered destination list (`lib/navigation.ts`), so
  * the pill nav and the tab bar cannot drift apart.
  */
 import { useQuery } from "@tanstack/react-query";
-import { createRootRoute, Link, Outlet, useNavigate } from "@tanstack/react-router";
+import {
+  createRootRoute,
+  Link,
+  Outlet,
+  useMatches,
+  useNavigate,
+} from "@tanstack/react-router";
 import { UserIcon } from "lucide-react";
 import { useState } from "react";
 import type { ReactNode } from "react";
@@ -77,6 +87,10 @@ function RootLayout() {
   const clubs = useQuery(myClubsQueryOptions);
   const callups = useMyCallups({ enabled: Boolean(user) });
   const [menuOpen, setMenuOpen] = useState(false);
+  const wide = useMatches({
+    select: (matches) =>
+      matches.some((match) => match.staticData.layout === "wide"),
+  });
 
   const permissions = selected?.team.permissions ?? [];
   const desktopDestinations = visibleDestinations(permissions);
@@ -118,7 +132,7 @@ function RootLayout() {
     >
       {/* Desktop: one fixed ink app bar, no sidebar. */}
       <header className="bg-ink hidden text-white kit:block">
-        <div className="mx-auto flex min-h-16 w-full max-w-[1100px] flex-wrap items-center gap-7 px-[var(--gutter)] py-[18px]">
+        <div className="flex min-h-16 w-full flex-wrap items-center gap-7 px-[var(--gutter)] py-[18px]">
           <Link to="/" className="flex items-center gap-3">
             <span className="bg-brand flex size-8 items-center justify-center rounded-full font-display text-[17px] leading-none text-white">
               {clubInitial}
@@ -187,7 +201,8 @@ function RootLayout() {
 
       <main
         className={cn(
-          "mx-auto w-full max-w-[1100px] flex-1 px-[var(--gutter)] py-8",
+          "mx-auto w-full flex-1 px-[var(--gutter)] py-8",
+          !wide && "max-w-[1100px]",
           // The middle band, and the only one that scrolls.
           "overflow-y-auto kit:overflow-visible",
         )}
