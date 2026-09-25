@@ -157,7 +157,9 @@ readable in one place.
 | `DATABASE_URL` | api | You | Neon, `sslmode=verify-full`. |
 | `GOOGLE_CLIENT_ID` / `_SECRET` | api | You | |
 | `AUTH_CALLBACK_URL` | api | You | The **web** origin + `/api/auth/google/callback`. Must match Google Cloud Console exactly. |
-| `FRONTEND_URL` | api | You | Redirect target *and* CORS origin. |
+| `FRONTEND_URL` | api | You | Redirect target, CORS origin, the only `Origin` the password routes accept, and the base of the links in sign-in mails. |
+| `RESEND_API_KEY` | api | You | Sends the verification and password-reset mails (ADR-024). Email and password sign-in stays hidden until this **and** `MAIL_FROM` are set. |
+| `MAIL_FROM` | api | You | E.g. `FC App <noreply@your-domain>`. The domain must be verified in Resend. |
 | `VITE_API_URL=/api` | web | `render.yaml` | Build-time. Relative, so it resolves to the page's own origin. |
 | `VITE_ENABLE_DEV_LOGIN=false` | web | `render.yaml` | |
 

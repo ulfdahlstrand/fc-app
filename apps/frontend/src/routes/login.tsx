@@ -1,15 +1,34 @@
 /** Login route — the only page a signed-out user sees. */
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { useForm } from "react-hook-form";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  Link,
+  createFileRoute,
+  redirect,
+  useNavigate,
+} from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { AuthCard } from "@/components/auth/AuthCard";
+import { AuthTextField } from "@/components/auth/AuthTextField";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Form } from "@/components/ui/form";
 import {
   ensureMe,
   getDevSignInUrl,
   getGoogleSignInUrl,
   isDevLoginEnabled,
 } from "../lib/auth";
+import { useZodResolver } from "../lib/form";
+import {
+  type LoginFormOutput,
+  type LoginFormValues,
+  PasswordAuthError,
+  authOptionsQueryOptions,
+  isPasswordLoginEnabled,
+  loginFormSchema,
+  loginWithPassword,
+} from "../lib/password-auth";
 
 export interface LoginSearch {
   error?: string;
@@ -26,6 +45,9 @@ export const Route = createFileRoute("/login")({
     if (user) {
       throw redirect({ to: "/" });
     }
+    // Loaded before render so the form does not pop in. If the API cannot
+    // say, Google alone is shown — the page must still work.
+    await isPasswordLoginEnabled().catch(() => false);
   },
   component: LoginPage,
 });
@@ -33,30 +55,104 @@ export const Route = createFileRoute("/login")({
 function LoginPage() {
   const { t } = useTranslation();
   const { error } = Route.useSearch();
+  const navigate = useNavigate();
+  // Off until the API can send mail (ADR-024), and hidden while unknown.
+  const passwordLogin = useQuery(authOptionsQueryOptions).data?.passwordLogin;
+
+  const form = useForm<LoginFormValues, unknown, LoginFormOutput>({
+    resolver: useZodResolver(loginFormSchema, "login.validation"),
+    defaultValues: { email: "", password: "" },
+  });
+
+  const signIn = useMutation({
+    mutationFn: loginWithPassword,
+    // "/" picks up a pending invitation, as it does after Google.
+    onSuccess: () => navigate({ to: "/" }),
+    onError: () => form.resetField("password"),
+  });
+
+  const errorCode =
+    signIn.error instanceof PasswordAuthError ? signIn.error.code : "failed";
 
   return (
-    <div className="mt-16 flex flex-col items-center">
-      <Card className="w-full max-w-sm">
-        <CardContent className="flex flex-col items-center gap-6">
-          <h1 className="font-display text-2xl">{t("login.heading")}</h1>
-          <p className="text-center text-muted-foreground">
-            {t("login.description")}
-          </p>
-          {error !== undefined && (
-            <Alert variant="destructive" className="w-full">
-              <AlertDescription>{t("login.error")}</AlertDescription>
-            </Alert>
-          )}
-          <Button asChild size="lg" className="w-full">
-            <a href={getGoogleSignInUrl()}>{t("login.google")}</a>
-          </Button>
-          {isDevLoginEnabled() && (
-            <Button asChild variant="outline" size="sm" className="w-full">
-              <a href={getDevSignInUrl()}>{t("login.devLogin")}</a>
+    <AuthCard heading={t("login.heading")} description={t("login.description")}>
+      {error !== undefined && (
+        <Alert variant="destructive">
+          <AlertDescription>{t("login.error")}</AlertDescription>
+        </Alert>
+      )}
+
+      <Button asChild size="lg" className="w-full">
+        <a href={getGoogleSignInUrl()}>{t("login.google")}</a>
+      </Button>
+
+      {passwordLogin && (
+        <>
+          <div
+            className="flex items-center gap-3 text-sm text-muted-foreground"
+            role="separator"
+          >
+            <span className="h-px flex-1 bg-border" />
+            {t("login.or")}
+            <span className="h-px flex-1 bg-border" />
+          </div>
+
+          <Form {...form}>
+            <form
+              className="flex flex-col gap-4"
+              onSubmit={form.handleSubmit((input) => signIn.mutate(input))}
+              noValidate
+            >
+              {signIn.isError && (
+                <Alert variant="destructive">
+                  <AlertDescription>
+                    {t(`passwordAuth.errors.${errorCode}`)}
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              <AuthTextField
+                control={form.control}
+                name="email"
+                type="email"
+                autoComplete="username"
+                label={t("passwordAuth.email")}
+              />
+              <AuthTextField
+                control={form.control}
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                label={t("passwordAuth.password")}
+              />
+
+              <Button
+                type="submit"
+                variant="outline"
+                size="lg"
+                disabled={signIn.isPending}
+              >
+                {t("login.withPassword")}
+              </Button>
+            </form>
+          </Form>
+
+          <div className="flex flex-col items-center gap-1 text-sm">
+            <Button asChild variant="link" size="sm">
+              <Link to="/forgot-password">{t("login.forgotPassword")}</Link>
             </Button>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+            <Button asChild variant="link" size="sm">
+              <Link to="/register">{t("login.createAccount")}</Link>
+            </Button>
+          </div>
+        </>
+      )}
+
+      {isDevLoginEnabled() && (
+        <Button asChild variant="outline" size="sm" className="w-full">
+          <a href={getDevSignInUrl()}>{t("login.devLogin")}</a>
+        </Button>
+      )}
+    </AuthCard>
   );
 }

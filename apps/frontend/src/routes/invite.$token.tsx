@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ensureMe, getGoogleSignInUrl, meQueryOptions } from "../lib/auth";
+import { ensureMe, meQueryOptions } from "../lib/auth";
 import { selectTeam } from "../lib/clubs";
 import { setPendingInvite } from "../lib/invitations";
 import { orpc } from "../orpc-client";
@@ -44,8 +44,10 @@ function InvitePage() {
   });
 
   const handleSignIn = () => {
+    // Via the login page, so the invitee can choose Google or a password;
+    // "/" picks the invitation up again once they are signed in.
     setPendingInvite(token);
-    window.location.href = getGoogleSignInUrl();
+    void navigate({ to: "/login" });
   };
 
   return (

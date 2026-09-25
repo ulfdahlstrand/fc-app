@@ -86,3 +86,9 @@ services:
       # post-sign-in redirect target, so a wrong value breaks both.
       - key: FRONTEND_URL
         sync: false
+      # Email and password sign-in (ADR-024): verification and reset mails.
+      - key: RESEND_API_KEY
+        sync: false
+      # E.g. "FC App <noreply@your-domain>"; the domain verified in Resend.
+      - key: MAIL_FROM
+        sync: false

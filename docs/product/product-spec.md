@@ -46,7 +46,10 @@ tracked items) is **configuration data, not code**.
 ### Public / entry
 | Page | Route | Purpose |
 |---|---|---|
-| Login | `/login` | Sign in with Google/Apple |
+| Login | `/login` | Sign in with Google, or email and password |
+| Register | `/register` | Create an email/password account; confirmed by a mailed link |
+| Forgot / reset password | `/forgot-password`, `/reset-password` | Mailed single-use link to choose a new password |
+| Verify email | `/verify-email` | Confirms the address from the signup mail and creates the account |
 | Club onboarding | `/onboarding` | Create a club + first team after first sign-in |
 | Accept invitation | `/invite/$token` | Join a club/team from an emailed/shared invite link |
 
@@ -71,6 +74,11 @@ tracked items) is **configuration data, not code**.
 
 ### 1. Accounts, clubs & roles
 - OAuth sign-in (Google first; Apple when a developer account is in place — ADR-004).
+- **Email and password** for those without Google (ADR-024). The account is only
+  created once the address is confirmed through a mailed link, since invitations
+  and coach appointments are matched by address. A Google account can get a
+  password the same way, through "Forgot password". Passwords are at least 10
+  characters and are stored only as a scrypt hash.
 - Create club → creates first team, seeds default configuration, makes creator `Admin`.
 - Invite users by link/email with a preset role; configurable roles per club.
 - **Coaches per team** (`/settings/team`, `settings.club`): a membership scoped

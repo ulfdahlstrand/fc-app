@@ -94,7 +94,7 @@ import {
   commitMemberImportHandler,
   previewMemberImportHandler,
 } from "./procedures/member-import.js";
-import { meHandler } from "./procedures/me.js";
+import { authOptionsHandler, meHandler } from "./procedures/me.js";
 import {
   createMemberHandler,
   getMemberHandler,
@@ -141,6 +141,7 @@ import { os } from "./orpc.js";
 export const router = os.router({
   health: healthHandler,
   me: meHandler,
+  authOptions: authOptionsHandler,
   myClubs: myClubsHandler,
   createClub: createClubHandler,
   listRoles: listRolesHandler,

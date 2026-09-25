@@ -963,3 +963,95 @@ small and shared that the app or CI actually depends on still belongs in
 - Using a tool means running `npm install` inside its directory first. Its
   README says so; nothing in the root install hints that it exists.
 - `docs/architecture.md`'s monorepo structure now lists `tools/`.
+
+---
+
+## ADR-024 — 2026-09-25 — Email and password sign-in, behind a proven address
+
+**Status:** Accepted (amends ADR-004)
+
+**Context:**
+ADR-004 chose OAuth only, "No passwords are ever stored". Families and coaches
+without a Google account could not sign in at all, so the club asked for email
+and password as a second way in — on the condition that it is genuinely safe
+and that no password is ever stored in the clear.
+
+Storing the password safely is the easy half. The hard half is that **the app
+treats an email address as a key**: invitations restricted to an address,
+`addCoachByEmail`, guardian contacts matched to accounts, and Google sign-in
+linking to an existing user by email (ADR-004). An account that could claim an
+address without proving it would inherit everything that address is owed —
+register `coach@club.se`, receive the coach's appointment.
+
+**Decision:**
+- **Passwords are hashed with scrypt** (`node:crypto`, no native dependency),
+  OWASP's `N=2^15, r=8, p=3` row (32 MiB each), a random 16-byte salt per hash,
+  compared in constant time. The stored form `scrypt$N$r$p$salt$hash` carries
+  its own parameters, so they can be raised later without a migration; a hash
+  made with weaker ones is replaced at the next successful sign-in. Input is
+  NFKC-normalised so the same passphrase typed on two devices matches.
+  `auth/password.ts` is the only code that touches a password (ADR-016).
+- **Rules:** at least 10 characters, at most 128, no composition rules
+  (NIST SP 800-63B). Stated once in the contract (ADR-010).
+- **An address is trusted only once a link sent to it has been used.** Signup
+  creates no user; it stores a pending `email_tokens` row holding the name and
+  the password *hash*, and mails a link. The account is created — or, when a
+  Google account already has the address, the password is added to it — only
+  when the link is followed. A password reset works the same way, and may also
+  give a Google-only account its first password.
+- **Email tokens** are 32 random bytes, stored only as SHA-256 (like sessions),
+  single-use, typed (`signup` / `reset`), and short-lived: 60 and 30 minutes.
+  Requesting a new reset link kills the previous one. A reset ends **every**
+  session of the account.
+- Links carry the token in the **fragment** (`/verify-email#token=…`), so it
+  never reaches a server log or a `Referer`; the page wipes it from the address
+  bar once read, and confirmation waits for a click so a mail scanner that
+  opens the link does not spend it.
+- **Nothing reveals whether an address has an account.** Register and
+  forgot-password always answer `202`; the mail itself says "you already have
+  an account" where that is true. Mail goes out after the response. Login on an
+  unknown address spends the same scrypt time as a real check.
+- **Google sign-in now requires `email_verified`.** Linking by email is only as
+  safe as the weakest way an address got onto an account.
+- **Transport:** plain JSON POSTs under `/auth/password/*`, beside the Google
+  routes, because they set the session cookie. `application/json` only (a
+  cross-site form post is impossible and a cross-site fetch is preflighted), an
+  `Origin` check against `FRONTEND_URL` (no login CSRF), an 8 KiB body cap.
+- **Rate limits**, in memory (one instance, ADR-020): 10 sign-in attempts per
+  address and 50 per IP per 15 minutes; 3 mails per address and 20 per IP per
+  hour; 30 token submissions per IP per 15 minutes. The per-address limits are
+  the ones that matter — the client IP comes from `X-Forwarded-For` and can be
+  forged.
+- **Mail is sent through Resend** over `fetch` (`RESEND_API_KEY`, `MAIL_FROM`).
+  Without a key, outside production, mails are printed to the backend console;
+  in production a missing key is an error.
+- **The whole feature is off until mail works.** In production, unless both
+  `RESEND_API_KEY` and `MAIL_FROM` are set, the public `authOptions` procedure
+  answers `passwordLogin: false`: the login page shows Google alone, the
+  password pages redirect to `/login`, and `/auth/password/*` answers `404`. A
+  signup whose confirmation can never arrive is a dead end, so it is not
+  offered. Setting the two variables turns it on with no code change.
+
+**Alternatives considered:**
+- **Neon Auth (managed Better Auth).** Would handle hashing and mail, but moves
+  users and sessions into Neon's schema, replacing the session model the whole
+  app is built on, does not exist in the local Docker Postgres, and still needs
+  a custom mail provider in production.
+- **`pgcrypto`'s `crypt()`.** Hashes in the database, which means sending the
+  plaintext password inside SQL, where it can reach query logs — and it proves
+  nothing about the address.
+- **Argon2id.** The first choice on paper, but Node 20 has no built-in and the
+  `argon2` package is a native build on the host. scrypt at OWASP's parameters
+  is an accepted equal.
+- **Signup via invitation only, no mail.** An invitation link proves only that
+  someone was handed the link, and leaves no way to recover a forgotten
+  password.
+
+**Consequences:**
+- Until a Resend account with a verified sending domain is in place, and
+  `RESEND_API_KEY` plus `MAIL_FROM` are set on the API service, production
+  behaves exactly as before: Google only.
+- The in-memory rate limits reset on deploy and do not span instances; scaling
+  out means moving them to the database.
+- ADR-004's "No passwords are ever stored" is replaced by "no password is ever
+  stored in the clear, and none exists for an unproven address".
