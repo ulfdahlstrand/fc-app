@@ -40,6 +40,7 @@ export interface TeamSettingsSearch {
 }
 
 export const Route = createFileRoute("/settings/team")({
+  staticData: { layout: "wide" },
   validateSearch: (search: Record<string, unknown>): TeamSettingsSearch => {
     return typeof search["section"] === "string"
       ? { section: search["section"] }

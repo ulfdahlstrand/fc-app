@@ -312,3 +312,32 @@ only the gutter (16 → 30px) and the Anton display steps scale.
   negative offset matching that padding.
 - Tap targets are **measured, not eyeballed**. A probe for `height < 44` found
   three that looked correct in a screenshot.
+
+---
+
+## DDR-011 — 2026-09-25 — A page with a section menu uses the whole width
+
+**Status:** Accepted
+
+**Context:**
+DDR-010 capped the desktop shell at 1100px, centred. That suits a page that is
+one column of reading. It does not suit a page with a section menu: on a large
+screen the members page drew its 220px menu, then a roster with many field
+columns squeezed into what was left, between two wide bands of empty
+background. The app bar had the same cap, so on the same screen its pills ran
+out of room and wrapped onto a second row.
+
+**Decision:**
+- **The app bar is always gutter to gutter.** Club mark at the left edge, the
+  pills at the right. It is the same on every page, so the mark does not move
+  when you navigate between a capped page and a wide one.
+- **A route opts out of the cap** with `staticData: { layout: "wide" }`. Its
+  content runs gutter to gutter, which puts the section menu at the window's
+  left edge, under the club mark, and gives everything else to the section.
+- Today that is the two pages with a section menu: members and team settings.
+  Every other page keeps the centred 1100px column.
+
+**Consequences:**
+- A new page with a `SectionColumns` menu should declare the wide layout too.
+- Below 1100px nothing changes: the cap was never reached there, and the phone
+  shell (DDR-010) has no app bar.

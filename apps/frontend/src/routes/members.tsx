@@ -85,6 +85,7 @@ export interface MembersSearch {
 }
 
 export const Route = createFileRoute("/members")({
+  staticData: { layout: "wide" },
   validateSearch: (search: Record<string, unknown>): MembersSearch => {
     const view = MEMBERS_VIEWS.find((candidate) => candidate === search["view"]);
     return view ? { view } : {};
