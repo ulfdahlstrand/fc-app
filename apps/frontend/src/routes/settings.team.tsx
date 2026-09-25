@@ -135,21 +135,19 @@ function TeamSettingsPage() {
   }
 
   return (
-    <div className="flex flex-col gap-8">
-      {heading}
-      <SectionColumns
-        nav={
-          <SectionNav
-            label={navLabel}
-            items={navItems}
-            activeId={active?.id ?? null}
-            variant="column"
-          />
-        }
-      >
-        {body}
-      </SectionColumns>
-    </div>
+    <SectionColumns
+      heading={heading}
+      nav={
+        <SectionNav
+          label={navLabel}
+          items={navItems}
+          activeId={active?.id ?? null}
+          variant="column"
+        />
+      }
+    >
+      {body}
+    </SectionColumns>
   );
 }
 
