@@ -51,9 +51,14 @@ function writeHidden(hidden: boolean): void {
  * The desktop's menu column beside a section, and the one control that folds
  * it away. Folded, the menu is gone rather than shrunk — no rail of icons —
  * and a single button above the section brings it back.
+ *
+ * The menu is the outermost thing on the page: it sits at the left edge, and
+ * the page's heading belongs to the column beside it, above the section — not
+ * above the menu, as if the menu were part of the content (DDR-011).
  */
 export function SectionColumns({
   nav,
+  heading,
   children,
 }: {
   /**
@@ -61,12 +66,21 @@ export function SectionColumns({
    * to show — then the section is all there is, and there is nothing to fold.
    */
   nav: ReactNode | null;
+  /** The page's title block, drawn at the top of the content column. */
+  heading?: ReactNode;
   children: ReactNode;
 }) {
   const { t } = useTranslation();
   const [hidden, setHidden] = useState(readHidden);
 
-  if (nav === null) return <>{children}</>;
+  if (nav === null) {
+    return (
+      <>
+        {heading}
+        {children}
+      </>
+    );
+  }
 
   const toggle = (): void => {
     setHidden(!hidden);
@@ -86,11 +100,18 @@ export function SectionColumns({
     </Button>
   );
 
+  const content = (
+    <div className="flex min-w-0 flex-col gap-8">
+      {heading}
+      {children}
+    </div>
+  );
+
   if (hidden) {
     return (
       <div className="flex flex-col gap-4">
         {toggleButton}
-        <div className="min-w-0">{children}</div>
+        {content}
       </div>
     );
   }
@@ -105,7 +126,7 @@ export function SectionColumns({
           {nav}
         </div>
       </div>
-      <div className="min-w-0">{children}</div>
+      {content}
     </div>
   );
 }

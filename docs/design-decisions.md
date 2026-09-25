@@ -334,6 +334,11 @@ out of room and wrapped onto a second row.
 - **A route opts out of the cap** with `staticData: { layout: "wide" }`. Its
   content runs gutter to gutter, which puts the section menu at the window's
   left edge, under the club mark, and gives everything else to the section.
+- **The menu is outside the page, not inside it.** It is the outermost column,
+  starting right under the app bar; the page's heading belongs to the column
+  beside it, above the section. A heading spanning both would say the menu is
+  part of the content it navigates. `SectionColumns` takes the heading for
+  that reason.
 - Today that is the two pages with a section menu: members and team settings.
   Every other page keeps the centred 1100px column.
 
