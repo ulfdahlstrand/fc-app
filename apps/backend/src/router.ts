@@ -132,6 +132,7 @@ import {
   deleteDevelopmentAssessmentHandler,
   listDevelopmentMetricsHandler,
   memberDevelopmentHandler,
+  teamDevelopmentHandler,
   saveDevelopmentAssessmentHandler,
   updateDevelopmentMetricHandler,
 } from "./procedures/development.js";
@@ -233,6 +234,7 @@ export const router = os.router({
   updateDevelopmentMetric: updateDevelopmentMetricHandler,
   archiveDevelopmentMetric: archiveDevelopmentMetricHandler,
   memberDevelopment: memberDevelopmentHandler,
+  teamDevelopment: teamDevelopmentHandler,
   saveDevelopmentAssessment: saveDevelopmentAssessmentHandler,
   deleteDevelopmentAssessment: deleteDevelopmentAssessmentHandler,
   dashboard: dashboardHandler,

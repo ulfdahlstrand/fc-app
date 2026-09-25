@@ -334,6 +334,21 @@ export const memberDevelopmentOutputSchema = z.object({
   assessments: z.array(developmentAssessmentSchema),
 });
 
+/**
+ * The squad at a glance: each member's most recent assessment, for the
+ * follow-up view on the members page. The history stays on the member.
+ */
+export const teamDevelopmentInputSchema = z.object({
+  teamId: z.string(),
+});
+
+export const teamDevelopmentOutputSchema = z.object({
+  /** Includes archived metrics, so a latest assessment can still label itself. */
+  metrics: z.array(developmentMetricSchema),
+  /** At most one per member — the newest. A member never assessed has none. */
+  latest: z.array(developmentAssessmentSchema),
+});
+
 /** A raw value as typed; `null` means "not measured", and clears any stored row. */
 export const developmentValueInputSchema = z.object({
   metricId: z.string(),

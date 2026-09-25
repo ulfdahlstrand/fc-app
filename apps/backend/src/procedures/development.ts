@@ -338,6 +338,50 @@ export const memberDevelopmentHandler = os.memberDevelopment.handler(
   }
 );
 
+export const teamDevelopmentHandler = os.teamDevelopment.handler(
+  async ({ input, context }) => {
+    const user = requireUser(context);
+    const db = getDb();
+    // The same gate as one member's history: a squad of latest assessments is
+    // that history, several children at once.
+    await requireTeamPermission(
+      db,
+      user.id,
+      input.teamId,
+      "development.manage"
+    );
+
+    const members = await db
+      .selectFrom("members")
+      .select("id")
+      .where("team_id", "=", input.teamId)
+      .execute();
+    const memberIds = members.map((member) => member.id);
+
+    const [metrics, assessments] = await Promise.all([
+      db
+        .selectFrom("development_metrics")
+        .selectAll()
+        .where("team_id", "=", input.teamId)
+        .orderBy("sort_order")
+        .orderBy("name")
+        .execute(),
+      memberIds.length === 0 ? [] : readAssessments(db, memberIds),
+    ]);
+
+    // Newest first per member, and (member, day) is unique — so the first
+    // assessment seen for a member is their latest.
+    const seen = new Set<string>();
+    const latest = assessments.filter((assessment) => {
+      if (seen.has(assessment.memberId)) return false;
+      seen.add(assessment.memberId);
+      return true;
+    });
+
+    return { metrics: metrics.map(toMetric), latest };
+  }
+);
+
 export const saveDevelopmentAssessmentHandler =
   os.saveDevelopmentAssessment.handler(async ({ input, context }) => {
     const user = requireUser(context);
