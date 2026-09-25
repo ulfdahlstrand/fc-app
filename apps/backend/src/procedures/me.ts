@@ -1,4 +1,5 @@
-/** The signed-in user, or null. */
+/** The signed-in user, or null — and which ways in the login page offers. */
+import { canSendMail } from "../auth/mailer.js";
 import { os } from "../orpc.js";
 
 /**
@@ -8,4 +9,9 @@ import { os } from "../orpc.js";
  */
 export const meHandler = os.me.handler(async ({ context }) => {
   return { user: context.user };
+});
+
+/** Public, like `me`: the login page asks before anybody is signed in. */
+export const authOptionsHandler = os.authOptions.handler(async () => {
+  return { passwordLogin: canSendMail() };
 });

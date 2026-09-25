@@ -9,8 +9,11 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VerifyEmailRouteImport } from './routes/verify-email'
 import { Route as TrackingRouteImport } from './routes/tracking'
 import { Route as StatisticsRouteImport } from './routes/statistics'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PostsRouteImport } from './routes/posts'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
@@ -18,6 +21,7 @@ import { Route as MembersRouteImport } from './routes/members'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ImportRouteImport } from './routes/import'
 import { Route as GroupsRouteImport } from './routes/groups'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as CallupsRouteImport } from './routes/callups'
 import { Route as ActivitiesRouteImport } from './routes/activities'
 import { Route as IndexRouteImport } from './routes/index'
@@ -28,6 +32,11 @@ import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as ImportAttendanceRouteImport } from './routes/import_.attendance'
 import { Route as ActivitiesActivityIdRouteImport } from './routes/activities_.$activityId'
 
+const VerifyEmailRoute = VerifyEmailRouteImport.update({
+  id: '/verify-email',
+  path: '/verify-email',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TrackingRoute = TrackingRouteImport.update({
   id: '/tracking',
   path: '/tracking',
@@ -36,6 +45,16 @@ const TrackingRoute = TrackingRouteImport.update({
 const StatisticsRoute = StatisticsRouteImport.update({
   id: '/statistics',
   path: '/statistics',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfileRoute = ProfileRouteImport.update({
@@ -71,6 +90,11 @@ const ImportRoute = ImportRouteImport.update({
 const GroupsRoute = GroupsRouteImport.update({
   id: '/groups',
   path: '/groups',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CallupsRoute = CallupsRouteImport.update({
@@ -123,6 +147,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/activities': typeof ActivitiesRoute
   '/callups': typeof CallupsRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/groups': typeof GroupsRoute
   '/import': typeof ImportRoute
   '/login': typeof LoginRoute
@@ -130,8 +155,11 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof OnboardingRoute
   '/posts': typeof PostsRoute
   '/profile': typeof ProfileRoute
+  '/register': typeof RegisterRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/statistics': typeof StatisticsRoute
   '/tracking': typeof TrackingRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/activities/$activityId': typeof ActivitiesActivityIdRoute
   '/import/attendance': typeof ImportAttendanceRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -143,6 +171,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/activities': typeof ActivitiesRoute
   '/callups': typeof CallupsRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/groups': typeof GroupsRoute
   '/import': typeof ImportRoute
   '/login': typeof LoginRoute
@@ -150,8 +179,11 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
   '/posts': typeof PostsRoute
   '/profile': typeof ProfileRoute
+  '/register': typeof RegisterRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/statistics': typeof StatisticsRoute
   '/tracking': typeof TrackingRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/activities/$activityId': typeof ActivitiesActivityIdRoute
   '/import/attendance': typeof ImportAttendanceRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -164,6 +196,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/activities': typeof ActivitiesRoute
   '/callups': typeof CallupsRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/groups': typeof GroupsRoute
   '/import': typeof ImportRoute
   '/login': typeof LoginRoute
@@ -171,8 +204,11 @@ export interface FileRoutesById {
   '/onboarding': typeof OnboardingRoute
   '/posts': typeof PostsRoute
   '/profile': typeof ProfileRoute
+  '/register': typeof RegisterRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/statistics': typeof StatisticsRoute
   '/tracking': typeof TrackingRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/activities_/$activityId': typeof ActivitiesActivityIdRoute
   '/import_/attendance': typeof ImportAttendanceRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -186,6 +222,7 @@ export interface FileRouteTypes {
     | '/'
     | '/activities'
     | '/callups'
+    | '/forgot-password'
     | '/groups'
     | '/import'
     | '/login'
@@ -193,8 +230,11 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/posts'
     | '/profile'
+    | '/register'
+    | '/reset-password'
     | '/statistics'
     | '/tracking'
+    | '/verify-email'
     | '/activities/$activityId'
     | '/import/attendance'
     | '/invite/$token'
@@ -206,6 +246,7 @@ export interface FileRouteTypes {
     | '/'
     | '/activities'
     | '/callups'
+    | '/forgot-password'
     | '/groups'
     | '/import'
     | '/login'
@@ -213,8 +254,11 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/posts'
     | '/profile'
+    | '/register'
+    | '/reset-password'
     | '/statistics'
     | '/tracking'
+    | '/verify-email'
     | '/activities/$activityId'
     | '/import/attendance'
     | '/invite/$token'
@@ -226,6 +270,7 @@ export interface FileRouteTypes {
     | '/'
     | '/activities'
     | '/callups'
+    | '/forgot-password'
     | '/groups'
     | '/import'
     | '/login'
@@ -233,8 +278,11 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/posts'
     | '/profile'
+    | '/register'
+    | '/reset-password'
     | '/statistics'
     | '/tracking'
+    | '/verify-email'
     | '/activities_/$activityId'
     | '/import_/attendance'
     | '/invite/$token'
@@ -247,6 +295,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ActivitiesRoute: typeof ActivitiesRoute
   CallupsRoute: typeof CallupsRoute
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
   GroupsRoute: typeof GroupsRoute
   ImportRoute: typeof ImportRoute
   LoginRoute: typeof LoginRoute
@@ -254,8 +303,11 @@ export interface RootRouteChildren {
   OnboardingRoute: typeof OnboardingRoute
   PostsRoute: typeof PostsRoute
   ProfileRoute: typeof ProfileRoute
+  RegisterRoute: typeof RegisterRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   StatisticsRoute: typeof StatisticsRoute
   TrackingRoute: typeof TrackingRoute
+  VerifyEmailRoute: typeof VerifyEmailRoute
   ActivitiesActivityIdRoute: typeof ActivitiesActivityIdRoute
   ImportAttendanceRoute: typeof ImportAttendanceRoute
   InviteTokenRoute: typeof InviteTokenRoute
@@ -266,6 +318,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/verify-email': {
+      id: '/verify-email'
+      path: '/verify-email'
+      fullPath: '/verify-email'
+      preLoaderRoute: typeof VerifyEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tracking': {
       id: '/tracking'
       path: '/tracking'
@@ -278,6 +337,20 @@ declare module '@tanstack/react-router' {
       path: '/statistics'
       fullPath: '/statistics'
       preLoaderRoute: typeof StatisticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profile': {
@@ -327,6 +400,13 @@ declare module '@tanstack/react-router' {
       path: '/groups'
       fullPath: '/groups'
       preLoaderRoute: typeof GroupsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/callups': {
@@ -399,6 +479,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ActivitiesRoute: ActivitiesRoute,
   CallupsRoute: CallupsRoute,
+  ForgotPasswordRoute: ForgotPasswordRoute,
   GroupsRoute: GroupsRoute,
   ImportRoute: ImportRoute,
   LoginRoute: LoginRoute,
@@ -406,8 +487,11 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingRoute: OnboardingRoute,
   PostsRoute: PostsRoute,
   ProfileRoute: ProfileRoute,
+  RegisterRoute: RegisterRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   StatisticsRoute: StatisticsRoute,
   TrackingRoute: TrackingRoute,
+  VerifyEmailRoute: VerifyEmailRoute,
   ActivitiesActivityIdRoute: ActivitiesActivityIdRoute,
   ImportAttendanceRoute: ImportAttendanceRoute,
   InviteTokenRoute: InviteTokenRoute,

@@ -34,6 +34,7 @@ export function getGoogleAuthUrl(state: string): string {
 const idTokenClaimsSchema = z.object({
   sub: z.string(),
   email: z.string(),
+  email_verified: z.boolean().optional(),
   name: z.string().optional(),
   picture: z.string().optional(),
 });
@@ -72,6 +73,13 @@ export async function exchangeGoogleCode(code: string): Promise<OAuthProfile> {
   }
 
   const claims = idTokenClaimsSchema.parse(decodeJwtPayload(data.id_token));
+
+  // Accounts are linked by email (ADR-004), and a password account can only
+  // be reached through a proven address (ADR-024). An address Google has not
+  // verified proves nothing, so it cannot be allowed to link either.
+  if (claims.email_verified !== true) {
+    throw new Error("[auth] Google account email is not verified");
+  }
 
   return {
     provider: "google",

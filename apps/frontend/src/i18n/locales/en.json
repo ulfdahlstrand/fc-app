@@ -39,7 +39,70 @@
     "description": "Sign in to manage your team.",
     "google": "Sign in with Google",
     "error": "Sign-in failed. Please try again.",
-    "devLogin": "Dev sign-in (no Google)"
+    "devLogin": "Dev sign-in (no Google)",
+    "or": "or",
+    "withPassword": "Sign in with email",
+    "forgotPassword": "Forgot password?",
+    "createAccount": "Create an account with email"
+  },
+  "passwordAuth": {
+    "email": "Email address",
+    "password": "Password",
+    "confirmPassword": "Repeat the password",
+    "passwordHelp": "At least {{min}} characters. A sentence you remember works well.",
+    "backToLogin": "Back to sign-in",
+    "errors": {
+      "invalid_credentials": "Wrong email address or password.",
+      "invalid_token": "The link is invalid, already used, or too old.",
+      "rate_limited": "Too many attempts. Wait a while and try again.",
+      "failed": "Something went wrong. Please try again."
+    },
+    "validation": {
+      "name": {
+        "too_small": "Enter your name."
+      },
+      "email": {
+        "invalid_format": "Enter a valid email address."
+      },
+      "password": {
+        "too_small": "The password must be at least 10 characters.",
+        "too_big": "The password may be at most 128 characters."
+      },
+      "confirmPassword": {
+        "custom": "The passwords do not match."
+      }
+    }
+  },
+  "register": {
+    "heading": "Create an account",
+    "description": "For those who would rather not sign in with Google.",
+    "name": "Your name",
+    "submit": "Create account",
+    "haveAccount": "Already have an account? Sign in",
+    "sentHeading": "Check your inbox",
+    "sent": "We have sent an email to {{email}}. Open the link in it to confirm the address — the account is only created then. The link is valid for 60 minutes."
+  },
+  "forgotPassword": {
+    "heading": "Forgot password",
+    "description": "Enter your email address and we will send a link where you can choose a new password.",
+    "submit": "Send link",
+    "sentHeading": "Check your inbox",
+    "sent": "If there is an account for {{email}}, we have sent a link there. It is valid for 30 minutes."
+  },
+  "resetPassword": {
+    "heading": "Choose a new password",
+    "description": "Once you change your password, every other device is signed out.",
+    "newPassword": "New password",
+    "submit": "Save password",
+    "invalidLink": "The link is invalid, already used, or too old.",
+    "requestNew": "Send a new link"
+  },
+  "verifyEmail": {
+    "heading": "Confirm email address",
+    "description": "Click below to confirm the address and create your account.",
+    "submit": "Confirm and sign in",
+    "invalidLink": "The link is invalid, already used, or too old.",
+    "registerAgain": "Register again"
   },
   "onboarding": {
     "heading": "Create your club",

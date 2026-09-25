@@ -29,6 +29,30 @@ export interface SessionsTable {
   created_at: Timestamp;
 }
 
+export interface PasswordCredentialsTable {
+  user_id: string;
+  /** `scrypt$N$r$p$salt$hash` — see auth/password.ts. Never the password. */
+  password_hash: string;
+  created_at: Timestamp;
+  updated_at: ColumnType<Date, never, Date>;
+}
+
+export interface EmailTokensTable {
+  id: Generated<string>;
+  token_hash: string;
+  purpose: "signup" | "reset";
+  /** Lowercased. */
+  email: string;
+  /** Set for `reset`; null for `signup`, whose user does not exist yet. */
+  user_id: string | null;
+  /** `signup` only: what the account is created with once the link is used. */
+  name: string | null;
+  password_hash: string | null;
+  expires_at: ColumnType<Date, Date, Date>;
+  used_at: ColumnType<Date, never, Date> | null;
+  created_at: Timestamp;
+}
+
 export interface ClubsTable {
   id: Generated<string>;
   name: string;
@@ -399,6 +423,8 @@ export interface Database {
   users: UsersTable;
   identities: IdentitiesTable;
   sessions: SessionsTable;
+  password_credentials: PasswordCredentialsTable;
+  email_tokens: EmailTokensTable;
   clubs: ClubsTable;
   teams: TeamsTable;
   memberships: MembershipsTable;

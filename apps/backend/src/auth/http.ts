@@ -4,6 +4,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { getDb } from "../db/client.js";
 import { clearCookie, parseCookies, serializeCookie } from "./cookies.js";
 import { exchangeGoogleCode, getGoogleAuthUrl } from "./google.js";
+import { handlePasswordRequest } from "./password-http.js";
 import {
   SESSION_COOKIE,
   createSession,
@@ -32,6 +33,10 @@ export async function handleAuthRequest(
   res: ServerResponse
 ): Promise<boolean> {
   const url = new URL(req.url ?? "/", "http://internal");
+
+  if (await handlePasswordRequest(req, res, url.pathname)) {
+    return true;
+  }
 
   if (req.method === "GET" && url.pathname === "/auth/google") {
     const state = randomBytes(16).toString("hex");

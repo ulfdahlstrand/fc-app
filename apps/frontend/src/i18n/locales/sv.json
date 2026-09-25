@@ -39,7 +39,70 @@
     "description": "Logga in för att administrera ditt lag.",
     "google": "Logga in med Google",
     "error": "Inloggningen misslyckades. Försök igen.",
-    "devLogin": "Dev-inloggning (utan Google)"
+    "devLogin": "Dev-inloggning (utan Google)",
+    "or": "eller",
+    "withPassword": "Logga in med e-post",
+    "forgotPassword": "Glömt lösenord?",
+    "createAccount": "Skapa konto med e-post"
+  },
+  "passwordAuth": {
+    "email": "E-postadress",
+    "password": "Lösenord",
+    "confirmPassword": "Upprepa lösenordet",
+    "passwordHelp": "Minst {{min}} tecken. En mening du kommer ihåg fungerar bra.",
+    "backToLogin": "Tillbaka till inloggningen",
+    "errors": {
+      "invalid_credentials": "Fel e-postadress eller lösenord.",
+      "invalid_token": "Länken är ogiltig, redan använd eller för gammal.",
+      "rate_limited": "För många försök. Vänta en stund och försök igen.",
+      "failed": "Något gick fel. Försök igen."
+    },
+    "validation": {
+      "name": {
+        "too_small": "Ange ditt namn."
+      },
+      "email": {
+        "invalid_format": "Ange en giltig e-postadress."
+      },
+      "password": {
+        "too_small": "Lösenordet måste vara minst 10 tecken.",
+        "too_big": "Lösenordet får vara högst 128 tecken."
+      },
+      "confirmPassword": {
+        "custom": "Lösenorden är inte likadana."
+      }
+    }
+  },
+  "register": {
+    "heading": "Skapa konto",
+    "description": "För dig som inte vill logga in med Google.",
+    "name": "Ditt namn",
+    "submit": "Skapa konto",
+    "haveAccount": "Har du redan ett konto? Logga in",
+    "sentHeading": "Kolla din inkorg",
+    "sent": "Vi har skickat ett mejl till {{email}}. Öppna länken i det för att bekräfta adressen – kontot skapas först då. Länken gäller i 60 minuter."
+  },
+  "forgotPassword": {
+    "heading": "Glömt lösenord",
+    "description": "Ange din e-postadress så skickar vi en länk där du kan välja ett nytt lösenord.",
+    "submit": "Skicka länk",
+    "sentHeading": "Kolla din inkorg",
+    "sent": "Om det finns ett konto för {{email}} har vi skickat en länk dit. Den gäller i 30 minuter."
+  },
+  "resetPassword": {
+    "heading": "Välj nytt lösenord",
+    "description": "När du har bytt lösenord loggas alla andra enheter ut.",
+    "newPassword": "Nytt lösenord",
+    "submit": "Spara lösenord",
+    "invalidLink": "Länken är ogiltig, redan använd eller för gammal.",
+    "requestNew": "Skicka en ny länk"
+  },
+  "verifyEmail": {
+    "heading": "Bekräfta e-postadress",
+    "description": "Klicka nedan för att bekräfta adressen och skapa ditt konto.",
+    "submit": "Bekräfta och logga in",
+    "invalidLink": "Länken är ogiltig, redan använd eller för gammal.",
+    "registerAgain": "Registrera dig igen"
   },
   "onboarding": {
     "heading": "Skapa din klubb",
