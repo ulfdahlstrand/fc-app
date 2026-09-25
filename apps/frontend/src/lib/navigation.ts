@@ -1,12 +1,13 @@
 /**
  * The app's destinations, in one ordered list.
  *
- * Both shells read this: the desktop `AppHeader` renders every destination the
- * user may see as a pill, and the phone's `TabBar` takes the first four and
- * drops the rest into `MenuSheet`. Kit allows five tabs at most, one of which
- * is always `Menu` — "anything beyond four sections belongs in the sheet, not
- * in a sixth tab" — so the split is a consequence of the order below, not a
- * second list that can drift out of step with this one.
+ * Both shells read this: the desktop app bar renders the `team` destinations
+ * as pills and puts the `club` ones in its `UserMenu`, and the phone's
+ * `TabBar` takes the first four and drops the rest into `MenuSheet`. Kit
+ * allows five tabs at most, one of which is always `Menu` — "anything beyond
+ * four sections belongs in the sheet, not in a sixth tab" — so the split is a
+ * consequence of the order below, not a second list that can drift out of
+ * step with this one.
  *
  * Order is deliberate. Overview leads because it is Kit's "Matchday": it
  * already carries today's session, its attendance and the call-up responses.

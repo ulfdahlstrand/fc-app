@@ -25,6 +25,12 @@ const ASSESSMENTS = [
 export default async function run(d) {
   const { page, dlg, say, clearCaption, click, type, fillDate, scrollTo, nav, pause, log } = d;
 
+  // Settings lives in the user menu, behind the name in the app bar.
+  const openTeamSettings = async () => {
+    await click(page.locator("header button[aria-haspopup='menu']"), 700);
+    await click(page.getByRole("menuitem", { name: "Laginställningar" }), 1600);
+  };
+
   /** A dialog that closed without writing anything must not pass silently. */
   async function expectMetric(name) {
     if ((await dlg().count()) !== 0) {
@@ -53,7 +59,7 @@ export default async function run(d) {
 
   // ------------------------------------------------------- the metrics
   await say("Först: bestäm vad laget mäter", 2600);
-  await click(nav("Laginställningar"), 1600);
+  await openTeamSettings();
   await clearCaption();
   // Settings is a menu and one section now, not a stack of all of them, so
   // the metrics are a click away rather than a scroll away.
@@ -168,7 +174,7 @@ export default async function run(d) {
 
   // ------------------------------------------------- rename, and prove
   await say("Namnen går att ändra i efterhand", 2600);
-  await click(nav("Laginställningar"), 1600);
+  await openTeamSettings();
   await clearCaption();
   await click(nav("Utvecklingsmått"), 1200);
   await scrollTo(page.getByRole("heading", { name: "UTVECKLINGSMÅTT" }));
