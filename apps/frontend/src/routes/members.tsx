@@ -268,10 +268,9 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
             {t(`members.views.${view}`)}
           </h1>
         </div>
-      ) : (
-        heading
-      )}
+      ) : null}
       <SectionColumns
+        heading={hasMenu && isPhone ? null : heading}
         nav={
           sideMenu ? (
             <SectionNav
