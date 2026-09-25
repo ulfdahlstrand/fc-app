@@ -593,6 +593,7 @@
     "heading": "Development",
     "occasions": "Assessments",
     "newAssessment": "New assessment",
+    "newAssessmentFor": "New assessment for {{name}}",
     "editAssessment": "Edit assessment",
     "date": "Date",
     "note": "Note",
