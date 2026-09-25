@@ -8,8 +8,13 @@
  *
  * Same shapes as the list: a table on the desktop, grouped the same way, and a
  * row per member on the phone. A row leads to the member, where the history is.
+ *
+ * Each row ends in a `+` that records a new assessment right here, in the same
+ * dialog the member page uses — going through the squad one by one should not
+ * mean leaving the list and coming back for every child.
  */
-import { Fragment } from "react";
+import { Fragment, useState } from "react";
+import { PlusIcon } from "lucide-react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import type {
@@ -20,6 +25,8 @@ import type {
 } from "@fc-app/contracts";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { DevelopmentAssessmentDialog } from "@/components/DevelopmentAssessmentDialog";
 import {
   Table,
   TableBody,
@@ -50,6 +57,7 @@ export function MemberDevelopmentOverview({
   const locale = useDateLocale();
   const navigate = useNavigate();
   const development = useTeamDevelopment(teamId);
+  const [assessing, setAssessing] = useState<Member | null>(null);
 
   if (development.isPending) {
     return <p className="text-muted-foreground">{t("common.loading")}</p>;
@@ -70,7 +78,10 @@ export function MemberDevelopmentOverview({
   }
 
   const latestByMember = new Map(
-    development.data.latest.map((assessment) => [assessment.memberId, assessment]),
+    development.data.latest.map((assessment) => [
+      assessment.memberId,
+      assessment,
+    ]),
   );
   const dateOf = (assessment: DevelopmentAssessment | undefined): string =>
     assessment
@@ -80,6 +91,36 @@ export function MemberDevelopmentOverview({
   const tableSections: MemberSection[] = sections ?? [
     { groupId: null, name: "", members },
   ];
+
+  const addButton = (member: Member) => (
+    <Button
+      type="button"
+      size="icon"
+      variant="ghost"
+      aria-label={t("development.newAssessmentFor", {
+        name: formatMemberName(member),
+      })}
+      title={t("development.newAssessment")}
+      // The row itself leads to the member; this one stays on the list.
+      onClick={(event) => {
+        event.stopPropagation();
+        setAssessing(member);
+      }}
+      className="flex-none"
+    >
+      <PlusIcon aria-hidden className="size-5" />
+    </Button>
+  );
+
+  const dialog = assessing && (
+    <DevelopmentAssessmentDialog
+      teamId={teamId}
+      memberId={assessing.id}
+      memberName={formatMemberName(assessing)}
+      metrics={development.data.metrics}
+      onClose={() => setAssessing(null)}
+    />
+  );
 
   if (compact) {
     return (
@@ -94,37 +135,47 @@ export function MemberDevelopmentOverview({
             {section.members.map((member) => {
               const latest = latestByMember.get(member.id);
               return (
-                <Link
+                // A link cannot hold a button, so the card is the row and the
+                // link fills everything but the `+`.
+                <div
                   key={member.id}
-                  to="/members/$memberId"
-                  params={{ memberId: member.id }}
-                  className="bg-card hover:bg-secondary flex flex-col gap-2 rounded-lg px-4 py-3 transition-colors duration-[120ms] ease-standard"
+                  className="bg-card hover:bg-secondary flex items-start gap-1 rounded-lg pr-1 transition-colors duration-[120ms] ease-standard"
                 >
-                  <span className="flex flex-col">
-                    <span className="truncate font-semibold">
-                      {formatMemberName(member)}
+                  <Link
+                    to="/members/$memberId"
+                    params={{ memberId: member.id }}
+                    className="flex min-w-0 flex-1 flex-col gap-2 px-4 py-3"
+                  >
+                    <span className="flex flex-col">
+                      <span className="truncate font-semibold">
+                        {formatMemberName(member)}
+                      </span>
+                      <span className="text-muted-foreground text-sm">
+                        {dateOf(latest)}
+                      </span>
                     </span>
-                    <span className="text-muted-foreground text-sm">
-                      {dateOf(latest)}
-                    </span>
-                  </span>
-                  {latest && (
-                    <dl className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1 text-sm">
-                      {metrics.map((metric) => (
-                        <Fragment key={metric.id}>
-                          <dt className="text-muted-foreground">{metric.name}</dt>
-                          <dd>
-                            <Reading metric={metric} assessment={latest} />
-                          </dd>
-                        </Fragment>
-                      ))}
-                    </dl>
-                  )}
-                </Link>
+                    {latest && (
+                      <dl className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1 text-sm">
+                        {metrics.map((metric) => (
+                          <Fragment key={metric.id}>
+                            <dt className="text-muted-foreground">
+                              {metric.name}
+                            </dt>
+                            <dd>
+                              <Reading metric={metric} assessment={latest} />
+                            </dd>
+                          </Fragment>
+                        ))}
+                      </dl>
+                    )}
+                  </Link>
+                  <div className="pt-1">{addButton(member)}</div>
+                </div>
               );
             })}
           </Fragment>
         ))}
+        {dialog}
       </div>
     );
   }
@@ -139,6 +190,9 @@ export function MemberDevelopmentOverview({
             {metrics.map((metric) => (
               <TableHead key={metric.id}>{metric.name}</TableHead>
             ))}
+            <TableHead>
+              <span className="sr-only">{t("development.newAssessment")}</span>
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -147,7 +201,7 @@ export function MemberDevelopmentOverview({
               {sections !== null && (
                 <TableRow className="hover:bg-transparent">
                   <TableCell
-                    colSpan={2 + metrics.length}
+                    colSpan={3 + metrics.length}
                     className="kit-overline text-muted-foreground pt-6"
                   >
                     {section.name} ({section.members.length})
@@ -178,6 +232,9 @@ export function MemberDevelopmentOverview({
                         <Reading metric={metric} assessment={latest} />
                       </TableCell>
                     ))}
+                    <TableCell className="w-0 py-1 text-right">
+                      {addButton(member)}
+                    </TableCell>
                   </TableRow>
                 );
               })}
@@ -185,6 +242,7 @@ export function MemberDevelopmentOverview({
           ))}
         </TableBody>
       </Table>
+      {dialog}
     </div>
   );
 }

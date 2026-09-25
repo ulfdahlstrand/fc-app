@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -52,12 +53,19 @@ function draftFrom(
 export function DevelopmentAssessmentDialog({
   teamId,
   memberId,
+  memberName,
   metrics,
   assessment,
   onClose,
 }: {
   teamId: string;
   memberId: string;
+  /**
+   * Who is being assessed, said under the title. The member page leaves it
+   * out — the page is that member — but from a list of the whole squad the
+   * dialog is the only thing on screen that says whose form it is.
+   */
+  memberName?: string;
   /** Every metric the team has, archived included. */
   metrics: DevelopmentMetric[];
   /** Present when correcting an occasion rather than recording a new one. */
@@ -113,6 +121,7 @@ export function DevelopmentAssessmentDialog({
               ? t("development.editAssessment")
               : t("development.newAssessment")}
           </DialogTitle>
+          {memberName && <DialogDescription>{memberName}</DialogDescription>}
         </DialogHeader>
 
         {save.isError && (

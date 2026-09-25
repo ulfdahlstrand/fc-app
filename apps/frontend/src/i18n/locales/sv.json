@@ -593,6 +593,7 @@
     "heading": "Utveckling",
     "occasions": "Bedömningstillfällen",
     "newAssessment": "Ny bedömning",
+    "newAssessmentFor": "Ny bedömning för {{name}}",
     "editAssessment": "Redigera bedömning",
     "date": "Datum",
     "note": "Anteckning",
