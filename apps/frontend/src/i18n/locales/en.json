@@ -151,7 +151,8 @@
       "label": "Member views",
       "list": "List",
       "development": "Follow-up",
-      "fill": "Fill in"
+      "fill": "Fill in",
+      "groups": "Groups"
     },
     "lastAssessed": "Last assessed",
     "assessedBy": "Assessed by",

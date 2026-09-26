@@ -151,7 +151,8 @@
       "label": "Medlemsvyer",
       "list": "Lista",
       "development": "Uppföljning",
-      "fill": "Fyll i"
+      "fill": "Fyll i",
+      "groups": "Grupper"
     },
     "lastAssessed": "Senast bedömd",
     "assessedBy": "Bedömd av",

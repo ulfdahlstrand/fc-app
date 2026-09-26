@@ -61,7 +61,7 @@ tracked items) is **configuration data, not code**.
 | Activity detail | `/activities/$id` | Info, attendance tab, call-up tab |
 | Members | `/members` | Roster with configurable columns, filtering by group |
 | Member detail | `/members/$id` | Profile with custom fields, guardians, attendance history, tracking status |
-| Groups | `/groups` | Custom member groups (e.g. "A squad", "born 2014") used for filtering, call-ups, and posts |
+| Groups | `/members?view=groups` | Custom member groups (e.g. "A squad", "born 2014") used for filtering, call-ups, and posts. A section in the members page's menu rather than a top-level destination; the old `/groups` redirects there |
 | Call-ups | `/callups` | Overview of squad selections and response status per match |
 | Statistics | `/statistics` | Attendance statistics per member, period, and activity type |
 | Posts | `/posts` | Announcements to the whole team or targeted groups |
