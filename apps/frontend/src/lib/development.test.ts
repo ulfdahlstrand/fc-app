@@ -3,10 +3,12 @@ import { describe, expect, it } from "vitest";
 import type { DevelopmentAssessment } from "@fc-app/contracts";
 import {
   chartBounds,
+  chartPercent,
   labelledSteps,
   latestAndDelta,
   metricFormSchema,
   metricFormToInput,
+  scaleGridLines,
   scaleSteps,
   seriesForMetric,
   sparklinePoints,
@@ -347,5 +349,40 @@ describe("metricFormToInput", () => {
     expect(
       metricFormToInput({ ...base, unit: "   ", valueType: "number" }).unit,
     ).toBeNull();
+  });
+});
+
+describe("scaleGridLines", () => {
+  it("draws one line per step, top to bottom within the drawing box", () => {
+    const lines = scaleGridLines({ min: 1, max: 5 });
+    expect(lines).toHaveLength(5);
+    // The highest step is nearest the top.
+    expect(lines.at(-1)!).toBeLessThan(lines[0]!);
+  });
+
+  it("puts a reading exactly on its step's line", () => {
+    const bounds = { min: 1, max: 5 };
+    const [point] = sparklinePoints(
+      [
+        { assessedOn: "2026-03-01", value: 2 },
+        { assessedOn: "2026-04-01", value: 3 },
+      ],
+      bounds,
+    );
+    expect(point!.y).toBeCloseTo(scaleGridLines(bounds)[1]!);
+  });
+
+  it("has no lines without scale bounds", () => {
+    expect(scaleGridLines(null)).toEqual([]);
+  });
+});
+
+describe("chartPercent", () => {
+  it("maps the drawing box corners to 0% and 100%", () => {
+    expect(chartPercent({ x: 0, y: 0 })).toEqual({ left: "0%", top: "0%" });
+    expect(chartPercent({ x: 100, y: 32 })).toEqual({
+      left: "100%",
+      top: "100%",
+    });
   });
 });

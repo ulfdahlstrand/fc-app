@@ -342,6 +342,39 @@ export function polylinePoints(points: { x: number; y: number }[]): string {
 
 export const CHART_VIEW_BOX = `0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`;
 
+/**
+ * A point in the drawing box as percentages of it. The chart stretches to the
+ * card (`preserveAspectRatio="none"`), which would squash a `<circle>` into an
+ * ellipse, so the dots are drawn outside the SVG and placed with these.
+ */
+export function chartPercent(point: { x: number; y: number }): {
+  left: string;
+  top: string;
+} {
+  return {
+    left: `${(point.x / CHART_WIDTH) * 100}%`,
+    top: `${(point.y / CHART_HEIGHT) * 100}%`,
+  };
+}
+
+/**
+ * Where each step of a scale sits in the drawing box, for faint guide lines.
+ * Without them a move from 1 to 2 on a 1–5 scale is a slope with nothing to
+ * measure it against; with them it is one line up.
+ */
+export function scaleGridLines(
+  bounds: { min: number; max: number } | null,
+): number[] {
+  if (!bounds || bounds.max <= bounds.min) return [];
+  const usableHeight = CHART_HEIGHT - CHART_PADDING * 2;
+  const lines: number[] = [];
+  for (let value = bounds.min; value <= bounds.max; value += 1) {
+    const height = (value - bounds.min) / (bounds.max - bounds.min);
+    lines.push(CHART_PADDING + (1 - height) * usableHeight);
+  }
+  return lines;
+}
+
 /** The bounds a metric's chart normalises against, or null to use its range. */
 export function chartBounds(
   metric: Pick<DevelopmentMetric, "valueType" | "scaleMin" | "scaleMax">,
