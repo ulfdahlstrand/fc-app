@@ -69,7 +69,7 @@ export function DevelopmentAssessmentDialog({
   /** Every metric the team has, archived included. */
   metrics: DevelopmentMetric[];
   /** Present when correcting an occasion rather than recording a new one. */
-  assessment?: DevelopmentAssessment;
+  assessment?: DevelopmentAssessment | undefined;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
