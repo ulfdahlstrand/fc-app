@@ -1119,3 +1119,81 @@ owner later signed in with Google and was linked to the same account.
   the owner changes it — which is the trust this ADR places in the role.
 - Becoming a site admin, locally or in production:
   `UPDATE users SET is_site_admin = true WHERE lower(email) = '…';`
+
+---
+
+## ADR-026 — 2026-09-26 — A site admin can see every account, and replace a password that already exists
+
+**Status:** Accepted (amends ADR-025)
+
+**Context:**
+ADR-025 gave the site admin one action — create an account — and listed setting
+the password of an existing one among the rejected alternatives: "a forgotten
+password is what the reset link is for once mail works, and the operator can
+write a new hash by hand in the meantime."
+
+Both halves of that have held up badly in use. Mail is still not configured, so
+"once mail works" is not a date anybody can wait for; and "write a new hash by
+hand" means the operator opening `psql` against production, computing a scrypt
+hash with the app's own parameters and writing it into
+`password_credentials` — a procedure far more dangerous than the button it was
+meant to avoid, performed under pressure because somebody cannot get in before
+a match. Meanwhile the site admin has no way to see which accounts exist at all,
+so even answering "does she have an account, and does it use Google?" means a
+query by hand.
+
+The rule ADR-024 actually protects is narrower than ADR-025's rejection made it
+sound: an address is trusted only once a link sent to it has been used. A
+password *replaced* on an account that already has one takes nothing over that
+its own creation did not already grant — for an account a site admin created,
+they chose the first password anyway. A password *added* to an account that has
+none is different in kind: that account's owner proved their address to Google,
+and a password put on it by somebody else is a takeover.
+
+**Decision:**
+- **`siteAdminUsers`** lists every account in the installation for a site
+  admin: name, address, whether it has a password, whether it has a Google
+  identity, whether it is a site admin, when it was created, and every club and
+  team it is a member of with the role held there. A search matches name and
+  address case-insensitively; the answer is capped at 100 accounts and says when
+  it was cut off, because the list is browsed by searching for one person.
+- **`siteAdminSetPassword`** replaces the password of an account that has one.
+  It refuses an account with no `password_credentials` row with `CONFLICT` —
+  this procedure never *adds* a password, only replaces one, and the page
+  disables the button on such rows and says why.
+- Changing a password here **ends every session of that account**, exactly as a
+  reset link does (ADR-024). The answer reports how many, so the admin can tell
+  the owner they have been signed out everywhere.
+- The page **suggests a password** rather than leaving one to be invented: three
+  groups of four characters from a 31-character alphabet with no glyph that is
+  read as another (`lib/password-suggest.ts`), drawn from `crypto.getRandomValues`
+  without modulo bias. An admin who has to think one up reaches for the club's
+  name and the year; one tap is how a sound password gets set instead.
+- ADR-025's rejection of "letting a site admin set the password of an existing
+  account" is **superseded for accounts that already have a password**, and
+  stands unchanged for accounts that do not.
+
+**Alternatives considered:**
+- **Letting it add a password to a Google-only account.** The takeover ADR-024
+  exists to prevent: that address was proved to Google, not to us. Such an
+  owner gets a password through their own inbox, which is what `forgot`/`reset`
+  are for once mail works.
+- **A "force a reset link" button instead.** Needs the mail that does not exist
+  yet; it is the right shape once it does, and can be added beside this without
+  removing it.
+- **Showing the new password only as a copy button, never as text.** The admin
+  reads the password out over the phone as often as they paste it, and a value
+  that cannot be seen cannot be dictated.
+- **Paging the account list.** An installation of this size is searched, not
+  scrolled; a cap with an honest "showing the first 100" costs one line and no
+  cursor state.
+
+**Consequences:**
+- A site admin who replaces a password knows it, and the owner is signed out
+  everywhere until they use it. That is the same trust ADR-025 already placed in
+  the role, now visible in the interface rather than in `psql`.
+- Nothing here grants `is_site_admin`; ADR-025's rule that the flag is set with
+  SQL only is untouched.
+- An account with neither a password nor a Google identity (created and never
+  used) shows as such and cannot be helped in with a reset — it is created with
+  a password, so this only happens to rows made by hand.

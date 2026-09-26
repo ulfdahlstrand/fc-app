@@ -1,5 +1,6 @@
 /**
- * Creating accounts as a site admin (ADR-025), against a real database.
+ * Site administration against a real database: creating accounts (ADR-025),
+ * listing them and replacing a password (ADR-026).
  *
  * The feature's promise is mostly about what it refuses: nobody but a site
  * admin reaches it, an address that already has an account is never given a
@@ -23,6 +24,8 @@ import {
 import {
   siteAdminClubHandler,
   siteAdminCreateUserHandler,
+  siteAdminSetPasswordHandler,
+  siteAdminUsersHandler,
 } from "./site-admin.js";
 
 const PASSWORD = "ett långt lösenord";
@@ -233,5 +236,234 @@ describe("siteAdminClub", () => {
       ),
       "FORBIDDEN"
     );
+  });
+});
+
+describe("siteAdminUsers", () => {
+  it("lists every account with how it signs in and where it belongs", async () => {
+    await call(siteAdminCreateUserHandler, input({ name: "Ada Bengtsson" }), {
+      context: siteAdmin,
+    });
+    const google = await createTestUser(db, club, {
+      name: "Google Gunnar",
+      email: "gunnar@example.test",
+      systemKey: "coach",
+      teamId: club.teamId,
+    });
+    await db
+      .insertInto("identities")
+      .values({
+        user_id: google.userId,
+        provider: "google",
+        subject: "g-gunnar",
+      })
+      .execute();
+
+    const { users, truncated } = await call(
+      siteAdminUsersHandler,
+      { search: "" },
+      { context: siteAdmin }
+    );
+
+    expect(truncated).toBe(false);
+    // The club admin from the fixture is in here too — everyone is.
+    expect(users).toHaveLength(3);
+
+    const ada = users.find((user) => user.name === "Ada Bengtsson");
+    expect(ada).toMatchObject({
+      email: "ny.tranare@example.test",
+      hasPassword: true,
+      hasGoogle: false,
+      isSiteAdmin: false,
+      memberships: [
+        { clubName: "Testklubben", teamName: "P14", roleName: "Coach" },
+      ],
+    });
+    expect(typeof ada?.createdAt).toBe("string");
+
+    const gunnar = users.find((user) => user.id === google.userId);
+    expect(gunnar).toMatchObject({ hasPassword: false, hasGoogle: true });
+
+    const admin = users.find((user) => user.id === clubAdmin.userId);
+    // The fixture's membership is club-wide, which the list shows as no team.
+    expect(admin).toMatchObject({
+      isSiteAdmin: true,
+      memberships: [{ clubName: "Testklubben", teamName: null }],
+    });
+  });
+
+  it("matches the search against name and address, either case", async () => {
+    await createTestUser(db, club, {
+      name: "Ada Bengtsson",
+      email: "ada@example.test",
+    });
+    await createTestUser(db, club, {
+      name: "Bo Karlsson",
+      email: "bo@sundbyberg.test",
+    });
+
+    const byName = await call(
+      siteAdminUsersHandler,
+      { search: "aDa" },
+      { context: siteAdmin }
+    );
+    expect(byName.users.map((user) => user.email)).toEqual(["ada@example.test"]);
+
+    const byEmail = await call(
+      siteAdminUsersHandler,
+      { search: "SUNDBYBERG" },
+      { context: siteAdmin }
+    );
+    expect(byEmail.users.map((user) => user.name)).toEqual(["Bo Karlsson"]);
+  });
+
+  it("treats a wildcard in the search as a character, not a pattern", async () => {
+    await createTestUser(db, club, { name: "Ada", email: "ada@example.test" });
+
+    const result = await call(
+      siteAdminUsersHandler,
+      { search: "%" },
+      { context: siteAdmin }
+    );
+    expect(result.users).toEqual([]);
+  });
+
+  it("is refused to a club admin, and to nobody signed in", async () => {
+    await expectRefused(
+      call(siteAdminUsersHandler, { search: "" }, { context: clubAdmin.context }),
+      "FORBIDDEN"
+    );
+    await expectRefused(
+      call(siteAdminUsersHandler, { search: "" }, { context: { user: null } }),
+      "UNAUTHORIZED"
+    );
+  });
+});
+
+describe("siteAdminSetPassword", () => {
+  const NEW_PASSWORD = "k7fp-2mqx-9vth";
+
+  async function accountWithPassword(): Promise<string> {
+    const { userId } = await call(siteAdminCreateUserHandler, input(), {
+      context: siteAdmin,
+    });
+    return userId;
+  }
+
+  it("replaces the password and ends every session the account had", async () => {
+    const userId = await accountWithPassword();
+    await db
+      .insertInto("sessions")
+      .values([
+        {
+          user_id: userId,
+          token_hash: "hash-a",
+          expires_at: new Date(Date.now() + 86_400_000),
+        },
+        {
+          user_id: userId,
+          token_hash: "hash-b",
+          expires_at: new Date(Date.now() + 86_400_000),
+        },
+      ])
+      .execute();
+
+    const result = await call(
+      siteAdminSetPasswordHandler,
+      { userId, password: NEW_PASSWORD },
+      { context: siteAdmin }
+    );
+
+    expect(result.sessionsEnded).toBe(2);
+    expect(await login(db, "ny.tranare@example.test", NEW_PASSWORD)).toBe(userId);
+    // The old one is gone, not merely superseded.
+    expect(await login(db, "ny.tranare@example.test", PASSWORD)).toBeNull();
+    const sessions = await db
+      .selectFrom("sessions")
+      .select("id")
+      .where("user_id", "=", userId)
+      .execute();
+    expect(sessions).toEqual([]);
+  });
+
+  it("leaves other accounts' sessions alone", async () => {
+    const userId = await accountWithPassword();
+    await db
+      .insertInto("sessions")
+      .values({
+        user_id: clubAdmin.userId,
+        token_hash: "hash-other",
+        expires_at: new Date(Date.now() + 86_400_000),
+      })
+      .execute();
+
+    const result = await call(
+      siteAdminSetPasswordHandler,
+      { userId, password: NEW_PASSWORD },
+      { context: siteAdmin }
+    );
+
+    expect(result.sessionsEnded).toBe(0);
+    const others = await db
+      .selectFrom("sessions")
+      .select("id")
+      .where("user_id", "=", clubAdmin.userId)
+      .execute();
+    expect(others).toHaveLength(1);
+  });
+
+  it("refuses an account that has no password — Google's is not ours to replace", async () => {
+    const google = await createTestUser(db, club, {
+      email: "gunnar@example.test",
+    });
+    await db
+      .insertInto("identities")
+      .values({
+        user_id: google.userId,
+        provider: "google",
+        subject: "g-gunnar",
+      })
+      .execute();
+
+    await expectRefused(
+      call(
+        siteAdminSetPasswordHandler,
+        { userId: google.userId, password: NEW_PASSWORD },
+        { context: siteAdmin }
+      ),
+      "CONFLICT"
+    );
+
+    const credentials = await db
+      .selectFrom("password_credentials")
+      .select("user_id")
+      .where("user_id", "=", google.userId)
+      .execute();
+    expect(credentials).toEqual([]);
+  });
+
+  it("refuses an account that does not exist", async () => {
+    await expectRefused(
+      call(
+        siteAdminSetPasswordHandler,
+        { userId: crypto.randomUUID(), password: NEW_PASSWORD },
+        { context: siteAdmin }
+      ),
+      "NOT_FOUND"
+    );
+  });
+
+  it("is refused to a club admin, who keeps their own password", async () => {
+    const userId = await accountWithPassword();
+
+    await expectRefused(
+      call(
+        siteAdminSetPasswordHandler,
+        { userId, password: NEW_PASSWORD },
+        { context: clubAdmin.context }
+      ),
+      "FORBIDDEN"
+    );
+    expect(await login(db, "ny.tranare@example.test", PASSWORD)).toBe(userId);
   });
 });

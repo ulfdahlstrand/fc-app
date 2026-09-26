@@ -237,7 +237,8 @@
     "close": "Close",
     "back": "Back",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "copied": "Copied!"
   },
   "permissions": {
     "members.view": "View members",
@@ -972,9 +973,34 @@
     "clubWide": "The whole club",
     "create": "Create user",
     "created": "Account created for {{email}}. They can sign in with email and the password you chose.",
+    "suggestPassword": "Suggest a strong password",
+    "copyPassword": "Copy password",
+    "users": "Users",
+    "usersHelp": "Every account in the installation. Search by name or address.",
+    "search": "Search",
+    "usersEmpty": "No account matches the search.",
+    "usersTruncated": "Showing the first {{shown}} accounts. Search to find a particular one.",
+    "signsInWithPassword": "Password",
+    "signsInWithGoogle": "Google",
+    "signsInWithNothing": "Has never signed in",
+    "isSiteAdmin": "Site admin",
+    "noMemberships": "No club or team yet.",
+    "createdOn": "Created {{date}}",
+    "setPassword": "Set a new password",
+    "setPasswordUnavailableGoogle": "This account signs in with Google. Do not put a password on it — its owner proved the address to Google.",
+    "setPasswordUnavailableNoPassword": "This account has no password yet. A password is replaced here, never added.",
+    "setPasswordFor": "New password for {{name}}",
+    "newPassword": "New password",
+    "newPasswordHelp": "At least {{min}} characters. Shown as you type, because you are the one handing it over.",
+    "passwordSet": "The password is changed. Hand over {{password}} — it is not shown again.",
+    "sessionsEnded_one": "{{count}} session ended. The account is signed out everywhere and must sign in with the new password.",
+    "sessionsEnded_other": "{{count}} sessions ended. The account is signed out everywhere and must sign in with the new password.",
     "errors": {
       "emailTaken": "That address already has an account. Add it to the club with an invitation instead.",
-      "failed": "The account could not be created. Please try again."
+      "failed": "The account could not be created. Please try again.",
+      "noPassword": "This account has no password to replace — it signs in with Google.",
+      "passwordFailed": "The password could not be changed. Try again.",
+      "usersFailed": "Could not load the accounts."
     },
     "validation": {
       "name": {
