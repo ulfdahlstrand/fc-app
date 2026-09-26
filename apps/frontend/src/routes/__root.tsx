@@ -12,7 +12,9 @@
  * the club mark sits in the same place on every page.
  *
  * Both shells read the same ordered destination list (`lib/navigation.ts`), so
- * the pill nav and the tab bar cannot drift apart.
+ * the pill nav and the tab bar cannot drift apart. On desktop the `club` group
+ * (team and club settings) sits in the `UserMenu` with the team switch rather
+ * than among the section pills.
  */
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -22,7 +24,6 @@ import {
   useMatches,
   useNavigate,
 } from "@tanstack/react-router";
-import { UserIcon } from "lucide-react";
 import { useState } from "react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
@@ -30,7 +31,7 @@ import { cn } from "@/lib/utils";
 import { MenuSheet } from "../components/navigation/MenuSheet";
 import { MobileTopBar } from "../components/navigation/MobileTopBar";
 import { TabBar, TabBarButton, TabBarLink } from "../components/navigation/TabBar";
-import { TeamSwitcher } from "../components/TeamSwitcher";
+import { UserMenu } from "../components/navigation/UserMenu";
 import { logout, meQueryOptions } from "../lib/auth";
 import { useMyCallups } from "../lib/callup-responses";
 import { myClubsQueryOptions, selectTeam, useSelectedTeam } from "../lib/clubs";
@@ -130,61 +131,44 @@ function RootLayout() {
         "kit:h-auto kit:min-h-screen kit:overflow-visible",
       )}
     >
-      {/* Desktop: one fixed ink app bar, no sidebar. */}
+      {/* Desktop: one fixed ink app bar, no sidebar — club mark at the far
+          left, the user menu at the far right. */}
       <header className="bg-ink hidden text-white kit:block">
-        <div className="flex min-h-16 w-full flex-wrap items-center gap-7 px-[var(--gutter)] py-[18px]">
-          <Link to="/" className="flex items-center gap-3">
+        <div className="flex min-h-16 w-full items-center gap-7 px-[var(--gutter)] py-[18px]">
+          <Link to="/" className="flex flex-none items-center gap-3">
             <span className="bg-brand flex size-8 items-center justify-center rounded-full font-display text-[17px] leading-none text-white">
               {clubInitial}
             </span>
-            <span className="font-display text-[19px] tracking-[0.4px]">
+            <span className="font-display text-[19px] tracking-[0.4px] whitespace-nowrap">
               {clubName}
             </span>
           </Link>
           {user && (
-            <nav className="ml-auto flex flex-wrap items-center justify-end gap-2">
-              {desktopDestinations
-                .filter((d) => d.group === "team")
-                .map((d) => (
-                  <NavPill key={d.to} to={d.to}>
-                    {t(`nav.${d.labelKey}`)}
-                  </NavPill>
-                ))}
-              {desktopDestinations.some((d) => d.group === "club") && (
-                <span aria-hidden className="bg-ink-raised mx-1 h-5 w-px" />
-              )}
-              {desktopDestinations
-                .filter((d) => d.group === "club")
-                .map((d) => (
-                  <NavPill key={d.to} to={d.to}>
-                    {t(`nav.${d.labelKey}`)}
-                  </NavPill>
-                ))}
-              <TeamSwitcher />
-              <Link
-                to="/profile"
-                className={cn(navPillClass, "gap-2 pl-1.5")}
-                activeProps={{
-                  className: cn(navPillClass, navPillActive, "gap-2 pl-1.5"),
-                }}
-                inactiveProps={{
-                  className: cn(navPillClass, navPillIdle, "gap-2 pl-1.5"),
-                }}
-              >
-                <span className="bg-ink-raised flex size-7 items-center justify-center overflow-hidden rounded-full">
-                  {user.imageUrl ? (
-                    <img
-                      src={user.imageUrl}
-                      alt={user.name}
-                      className="size-full object-cover"
-                    />
-                  ) : (
-                    <UserIcon className="size-4 text-white" />
+            <>
+              <nav className="flex min-w-0 flex-1 flex-wrap items-center justify-center gap-2">
+                {desktopDestinations
+                  .filter((d) => d.group === "team")
+                  .map((d) => (
+                    <NavPill key={d.to} to={d.to}>
+                      {t(`nav.${d.labelKey}`)}
+                    </NavPill>
+                  ))}
+              </nav>
+              <div className="flex-none">
+                <UserMenu
+                  userName={user.name}
+                  userImageUrl={user.imageUrl ?? null}
+                  teamName={selected?.team.name ?? null}
+                  clubs={clubs.data?.clubs ?? []}
+                  activeTeamId={selected?.team.id ?? null}
+                  onSelectTeam={selectTeam}
+                  destinations={desktopDestinations.filter(
+                    (d) => d.group === "club",
                   )}
-                </span>
-                {user.name}
-              </Link>
-            </nav>
+                  onSignOut={handleSignOut}
+                />
+              </div>
+            </>
           )}
         </div>
       </header>
