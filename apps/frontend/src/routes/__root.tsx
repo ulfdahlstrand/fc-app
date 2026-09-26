@@ -35,7 +35,11 @@ import { UserMenu } from "../components/navigation/UserMenu";
 import { logout, meQueryOptions } from "../lib/auth";
 import { useMyCallups } from "../lib/callup-responses";
 import { myClubsQueryOptions, selectTeam, useSelectedTeam } from "../lib/clubs";
-import { splitForTabBar, visibleDestinations } from "../lib/navigation";
+import {
+  SITE_ADMIN_DESTINATION,
+  splitForTabBar,
+  visibleDestinations,
+} from "../lib/navigation";
 
 export const Route = createRootRoute({
   component: RootLayout,
@@ -96,6 +100,8 @@ function RootLayout() {
   const permissions = selected?.team.permissions ?? [];
   const desktopDestinations = visibleDestinations(permissions);
   const { tabs, sheet } = splitForTabBar(permissions);
+  // Answers to the account, not the team, so it is added rather than listed.
+  const siteAdmin = user?.isSiteAdmin ? [SITE_ADMIN_DESTINATION] : [];
   const pendingCallups = callups.data?.pending ?? 0;
 
   // Call-ups rarely earn a tab, so an unanswered one raises the alert dot on
@@ -162,9 +168,10 @@ function RootLayout() {
                   clubs={clubs.data?.clubs ?? []}
                   activeTeamId={selected?.team.id ?? null}
                   onSelectTeam={selectTeam}
-                  destinations={desktopDestinations.filter(
-                    (d) => d.group === "club",
-                  )}
+                  destinations={[
+                    ...desktopDestinations.filter((d) => d.group === "club"),
+                    ...siteAdmin,
+                  ]}
                   onSignOut={handleSignOut}
                 />
               </div>
@@ -217,7 +224,7 @@ function RootLayout() {
         <MenuSheet
           open={menuOpen}
           onOpenChange={setMenuOpen}
-          destinations={sheet}
+          destinations={[...sheet, ...siteAdmin]}
           teams={teams}
           activeTeamId={selected?.team.id ?? null}
           onSelectTeam={selectTeam}

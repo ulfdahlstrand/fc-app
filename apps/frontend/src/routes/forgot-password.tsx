@@ -16,13 +16,13 @@ import {
   PasswordAuthError,
   forgotFormSchema,
   requestPasswordReset,
-  isPasswordLoginEnabled,
+  isPasswordSignupEnabled,
 } from "../lib/password-auth";
 
 export const Route = createFileRoute("/forgot-password")({
   beforeLoad: async () => {
     if (await ensureMe()) throw redirect({ to: "/" });
-    if (!(await isPasswordLoginEnabled())) throw redirect({ to: "/login" });
+    if (!(await isPasswordSignupEnabled())) throw redirect({ to: "/login" });
   },
   component: ForgotPasswordPage,
 });

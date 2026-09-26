@@ -46,7 +46,7 @@ tracked items) is **configuration data, not code**.
 ### Public / entry
 | Page | Route | Purpose |
 |---|---|---|
-| Login | `/login` | Sign in with Google, or email and password |
+| Login | `/login` | Sign in with Google, or email and password; the register and forgot-password links show only once mail works |
 | Register | `/register` | Create an email/password account; confirmed by a mailed link |
 | Forgot / reset password | `/forgot-password`, `/reset-password` | Mailed single-use link to choose a new password |
 | Verify email | `/verify-email` | Confirms the address from the signup mail and creates the account |
@@ -69,6 +69,7 @@ tracked items) is **configuration data, not code**.
 | Team settings | `/settings/team` | A section menu over coaches of the team (admin only), activity types, attendance statuses, seasons, adding a member and inviting imported guardians, member field definitions, tracking list definitions, development metrics. One section at a time, addressed by `?section=` |
 | Club settings | `/settings/club` | Club profile, teams, roles & permissions, users & invitations |
 | My profile | `/profile` | Own account, linked members, language |
+| Site admin | `/admin` | Site admins only (ADR-025): create an account with email and password, placed in the current club with a role |
 
 ## Features by area
 
@@ -79,6 +80,11 @@ tracked items) is **configuration data, not code**.
   and coach appointments are matched by address. A Google account can get a
   password the same way, through "Forgot password". Passwords are at least 10
   characters and are stored only as a scrypt hash.
+- **Site admins** (ADR-025) — whoever runs the installation, flagged with SQL —
+  can create an account directly, with an address and password they hand over,
+  and place it in a club with a role. It only creates: an address that already
+  has an account is refused. Signing in with a password works without mail;
+  registering and resetting wait until mail is configured.
 - Create club → creates first team, seeds default configuration, makes creator `Admin`.
 - Invite users by link/email with a preset role; configurable roles per club.
 - **Coaches per team** (`/settings/team`, `settings.club`): a membership scoped

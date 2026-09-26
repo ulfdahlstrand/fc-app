@@ -245,9 +245,11 @@ export async function handlePasswordRequest(
     return true;
   }
 
-  // Switched off until mail works (see `canSendMail`): refuse rather than
-  // accept a signup whose confirmation will never arrive.
-  if (!canSendMail()) {
+  // Everything but login rests on a mail arriving, so it is switched off until
+  // mail works (see `canSendMail`): refuse rather than accept a signup whose
+  // confirmation will never come. Login needs no mail and is always on — an
+  // account a site admin created has a password and nothing else (ADR-025).
+  if (name !== "login" && !canSendMail()) {
     send(res, 404, { error: "not_enabled" });
     return true;
   }

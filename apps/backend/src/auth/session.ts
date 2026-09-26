@@ -12,6 +12,8 @@ export interface AuthUser {
   name: string;
   email: string;
   imageUrl: string | null;
+  /** Above every club: may create accounts outright (ADR-025). */
+  isSiteAdmin: boolean;
 }
 
 export function generateSessionToken(): string {
@@ -52,6 +54,7 @@ export async function getUserBySessionToken(
       "users.name",
       "users.email",
       "users.image_url",
+      "users.is_site_admin",
       "sessions.expires_at",
     ])
     .where("sessions.token_hash", "=", hashSessionToken(token))
@@ -65,6 +68,7 @@ export async function getUserBySessionToken(
     name: row.name,
     email: row.email,
     imageUrl: row.image_url,
+    isSiteAdmin: row.is_site_admin,
   };
 }
 

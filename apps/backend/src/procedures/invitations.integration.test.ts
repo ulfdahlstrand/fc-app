@@ -150,6 +150,7 @@ describe("acceptInvitation, member-bound", () => {
             email: "new.parent@example.test",
             name: "Ny Förälder",
             imageUrl: null,
+            isSiteAdmin: false,
           },
         },
       }

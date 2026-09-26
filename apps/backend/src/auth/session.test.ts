@@ -23,6 +23,7 @@ const USER_ROW = {
   name: "Alice",
   email: "alice@example.com",
   image_url: null,
+  is_site_admin: false,
   expires_at: new Date(Date.now() + 60_000),
 };
 
@@ -48,6 +49,7 @@ describe("getUserBySessionToken", () => {
       name: USER_ROW.name,
       email: USER_ROW.email,
       imageUrl: null,
+      isSiteAdmin: false,
     });
     // The lookup must use the hash, not the raw token
     expect(where).toHaveBeenCalledWith(

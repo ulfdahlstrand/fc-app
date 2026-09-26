@@ -189,6 +189,40 @@ export async function verifySignup(
   });
 }
 
+/**
+ * Creates an account with a password already set, skipping the link that
+ * proves the address. Only a site admin may cause this (ADR-025), and only for
+ * an address that has no account at all: an existing one — Google or password
+ * — belongs to whoever proved it, and must never gain a password its owner did
+ * not choose. Returns the new user, or null when the address is taken.
+ */
+export async function createAccountWithPassword(
+  tx: Tx,
+  input: { name: string; email: string; passwordHash: string }
+): Promise<string | null> {
+  await lockEmail(tx, input.email);
+  if (await findUserByEmail(tx, input.email)) return null;
+
+  const { id } = await tx
+    .insertInto("users")
+    .values({ email: input.email, name: input.name })
+    .returning("id")
+    .executeTakeFirstOrThrow();
+  await setPassword(tx, id, input.passwordHash);
+
+  // A signup started for this address before the admin made the account is
+  // moot, like any other once the account exists.
+  await tx
+    .updateTable("email_tokens")
+    .set({ used_at: new Date() })
+    .where("email", "=", input.email)
+    .where("purpose", "=", "signup")
+    .where("used_at", "is", null)
+    .execute();
+
+  return id;
+}
+
 /** Checks a password. Returns the user to sign in, or null. */
 export async function login(
   db: Db,
