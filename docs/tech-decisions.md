@@ -1197,3 +1197,39 @@ and a password put on it by somebody else is a takeover.
 - An account with neither a password nor a Google identity (created and never
   used) shows as such and cannot be helped in with a reset — it is created with
   a password, so this only happens to rows made by hand.
+
+## ADR-027 — 2026-09-26 — A site admin can activate an account that has never been used
+
+**Status:** Accepted (amends ADR-026)
+
+**Context:**
+Appointing a coach by address (`procedures/coaches.ts`) creates a user row with
+neither a password nor a Google identity. ADR-026 assumed such rows were only
+made by hand and left them without a way in: `siteAdminSetPassword` refused
+every account without a password. In practice they are common, and the owner
+cannot get in until they have signed in once — which, without mail and without
+Google, they cannot do.
+
+ADR-026 refused adding a password to protect an owner who proved their address
+to Google. An account with no identity at all has no such owner yet: nobody has
+proved anything, and giving it a first password is the same act — with the same
+trust — as a site admin creating the account outright (ADR-025).
+
+**Decision:**
+- `siteAdminSetPassword` refuses with `CONFLICT` only an account that has a
+  Google identity and no password. An account with neither gets its first
+  password, which **activates** it; one with a password has it replaced as
+  before.
+- The page labels the button "Activate account" on such rows, and disables it
+  only on Google-only accounts, saying why.
+
+**Alternatives considered:**
+- **A separate `siteAdminActivate` procedure.** The same write, the same checks
+  and the same answer; a second procedure would only duplicate them.
+
+**Consequences:**
+- ADR-026's consequence that a never-used account "cannot be helped in with a
+  reset" no longer holds.
+- If the address's real owner later signs in with Google, `sign-in.ts` links
+  that identity to the same account, as it does for any account created by a
+  site admin.

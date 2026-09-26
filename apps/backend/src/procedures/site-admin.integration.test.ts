@@ -442,6 +442,23 @@ describe("siteAdminSetPassword", () => {
     expect(credentials).toEqual([]);
   });
 
+  it("activates an account that has never been used — neither password nor Google", async () => {
+    const unused = await createTestUser(db, club, {
+      email: "aldrig.inloggad@example.test",
+    });
+
+    const result = await call(
+      siteAdminSetPasswordHandler,
+      { userId: unused.userId, password: NEW_PASSWORD },
+      { context: siteAdmin }
+    );
+
+    expect(result.sessionsEnded).toBe(0);
+    expect(await login(db, "aldrig.inloggad@example.test", NEW_PASSWORD)).toBe(
+      unused.userId
+    );
+  });
+
   it("refuses an account that does not exist", async () => {
     await expectRefused(
       call(

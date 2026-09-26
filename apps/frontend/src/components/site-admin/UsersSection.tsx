@@ -6,7 +6,8 @@
  * always about one person — "which of these is the Anna who cannot get in?" —
  * and the clubs and teams beside each address are what tells two Annas apart.
  *
- * Reset is offered only on an account that already has a password. A Google
+ * Reset is offered on an account that already has a password, and activation —
+ * a first password — on one that has never been used (ADR-027). A Google-only
  * account's owner proved that address to Google, and giving it a password here
  * would hand the account to whoever typed it (ADR-024), so those rows say why
  * their button is off instead of hiding it — an admin looking for the button
@@ -122,6 +123,9 @@ function UserRow({
   const { t } = useTranslation();
   const locale = useDateLocale();
 
+  const googleOnly = user.hasGoogle && !user.hasPassword;
+  const activates = !user.hasGoogle && !user.hasPassword;
+
   const places = user.memberships.map((membership) =>
     membership.teamName === null
       ? `${membership.clubName} (${t("siteAdmin.clubWide")}) · ${membership.roleName}`
@@ -142,7 +146,7 @@ function UserRow({
             <Badge variant="secondary">{t("siteAdmin.signsInWithGoogle")}</Badge>
           )}
           {/* Neither: an account someone else created that has never been
-              used — worth seeing, since it cannot be helped in with a reset. */}
+              used — it gets in once it is activated below. */}
           {!user.hasPassword && !user.hasGoogle && (
             <Badge variant="outline">{t("siteAdmin.signsInWithNothing")}</Badge>
           )}
@@ -165,18 +169,14 @@ function UserRow({
         <Button
           size="sm"
           variant="outline"
-          disabled={!user.hasPassword}
+          disabled={googleOnly}
           onClick={() => onReset(user)}
         >
-          {t("siteAdmin.setPassword")}
+          {t(activates ? "siteAdmin.activate" : "siteAdmin.setPassword")}
         </Button>
-        {!user.hasPassword && (
+        {googleOnly && (
           <p className="text-muted-foreground max-w-56 text-right text-xs">
-            {t(
-              user.hasGoogle
-                ? "siteAdmin.setPasswordUnavailableGoogle"
-                : "siteAdmin.setPasswordUnavailableNoPassword",
-            )}
+            {t("siteAdmin.setPasswordUnavailableGoogle")}
           </p>
         )}
       </div>
@@ -193,6 +193,8 @@ function SetPasswordDialog({
 }) {
   const { t } = useTranslation();
   const setPassword = useSetPassword();
+  // Neither a password nor Google: the first password is what activates it.
+  const activates = !user.hasPassword && !user.hasGoogle;
   const [done, setDone] = useState<{ password: string; sessions: number } | null>(
     null,
   );
@@ -216,7 +218,11 @@ function SetPasswordDialog({
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("siteAdmin.setPasswordFor", { name: user.name })}</DialogTitle>
+          <DialogTitle>
+            {t(activates ? "siteAdmin.activateFor" : "siteAdmin.setPasswordFor", {
+              name: user.name,
+            })}
+          </DialogTitle>
           <DialogDescription>{user.email}</DialogDescription>
         </DialogHeader>
 
@@ -224,12 +230,17 @@ function SetPasswordDialog({
           <div className="grid gap-4">
             <Alert>
               <AlertDescription>
-                {t("siteAdmin.passwordSet", { password: done.password })}
+                {t(activates ? "siteAdmin.activated" : "siteAdmin.passwordSet", {
+                  password: done.password,
+                })}
               </AlertDescription>
             </Alert>
-            <p className="text-muted-foreground text-sm">
-              {t("siteAdmin.sessionsEnded", { count: done.sessions })}
-            </p>
+            {/* A never-used account had no sessions to end. */}
+            {!activates && (
+              <p className="text-muted-foreground text-sm">
+                {t("siteAdmin.sessionsEnded", { count: done.sessions })}
+              </p>
+            )}
             <DialogFooter>
               <Button onClick={onClose}>{t("common.close")}</Button>
             </DialogFooter>
@@ -286,7 +297,7 @@ function SetPasswordDialog({
                   {t("common.close")}
                 </Button>
                 <Button type="submit" disabled={setPassword.isPending}>
-                  {t("siteAdmin.setPassword")}
+                  {t(activates ? "siteAdmin.activate" : "siteAdmin.setPassword")}
                 </Button>
               </DialogFooter>
             </form>

@@ -1,6 +1,7 @@
 /**
- * Site administration (ADR-025, ADR-026): creating an account outright, seeing
- * every account, and replacing the password of one that has one.
+ * Site administration (ADR-025, ADR-026, ADR-027): creating an account
+ * outright, seeing every account, replacing the password of one that has one
+ * and activating one that has never been used.
  *
  * Gated on the `is_site_admin` flag, not on any club permission. A club admin
  * already decides who may act inside their club, but creating an account with
@@ -233,18 +234,32 @@ export const siteAdminSetPasswordHandler = os.siteAdminSetPassword.handler(
         "password_credentials.user_id",
         "users.id"
       )
-      .select(["users.id as id", "password_credentials.user_id as credential"])
+      .select((eb) => [
+        "users.id as id",
+        "password_credentials.user_id as credential",
+        eb
+          .exists(
+            eb
+              .selectFrom("identities")
+              .select("identities.user_id")
+              .whereRef("identities.user_id", "=", "users.id")
+              .where("identities.provider", "=", "google")
+          )
+          .as("hasGoogle"),
+      ])
       .where("users.id", "=", input.userId)
       .executeTakeFirst();
     if (!target) throw new ORPCError("NOT_FOUND", { message: "No such user" });
 
-    // The deliberate limit of ADR-026: this replaces a password, it never adds
-    // one. An account that only ever signed in with Google proved its address
-    // to Google, and a site admin who could give it a password would be taking
-    // the account over rather than helping its owner back in (ADR-024).
-    if (!target.credential) {
+    // The deliberate limit of ADR-026: an account that only ever signed in
+    // with Google proved its address to Google, and a site admin who could
+    // give it a password would be taking the account over rather than helping
+    // its owner back in (ADR-024). An account with neither — created by an
+    // appointment and never used — has no owner who proved anything yet, so
+    // giving it its first password is the same act as creating it (ADR-027).
+    if (!target.credential && target.hasGoogle) {
       throw new ORPCError("CONFLICT", {
-        message: "This account has no password to replace",
+        message: "This account signs in with Google only",
       });
     }
 

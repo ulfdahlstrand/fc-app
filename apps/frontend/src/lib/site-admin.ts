@@ -95,8 +95,8 @@ export function useSetPassword() {
   return useMutation({
     mutationFn: (input: { userId: string; password: string }) =>
       orpc.siteAdminSetPassword(input),
-    // `hasPassword` cannot change — the API refuses an account without one —
-    // but the list is what the next reset is chosen from, so keep it fresh.
+    // An activated account now has a password, and the list is what the next
+    // reset is chosen from, so keep it fresh.
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: orpcQuery.siteAdminUsers.key() }),
   });
@@ -104,7 +104,7 @@ export function useSetPassword() {
 
 /**
  * Names the refusal that is worth explaining: the account signs in with Google
- * only, so there is no password to replace (ADR-026). The button for such a row
+ * only, so there is no password to replace (ADR-026, ADR-027). The button for such a row
  * is disabled, so this is the belt to that braces.
  */
 export function setPasswordErrorKey(error: unknown): string {

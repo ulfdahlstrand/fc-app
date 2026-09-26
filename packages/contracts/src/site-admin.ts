@@ -82,9 +82,11 @@ export const siteAdminUsersOutputSchema = z.object({
 });
 
 /**
- * Replaces the password of an account that already has one. Never adds one to
- * an account that does not: that account's owner proved the address to Google
- * and nobody else may put a password on it (ADR-024, ADR-026).
+ * Replaces the password of an account that already has one, or gives a first
+ * one to an account that has never been used — neither a password nor Google —
+ * which activates it (ADR-027). Never adds one to a Google-only account: its
+ * owner proved the address to Google and nobody else may put a password on it
+ * (ADR-024, ADR-026).
  */
 export const siteAdminSetPasswordInputSchema = z.object({
   userId: z.string(),
