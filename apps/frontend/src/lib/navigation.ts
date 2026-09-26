@@ -60,7 +60,6 @@ export const DESTINATIONS: readonly Destination[] = [
     group: "team",
   },
   { to: "/posts", labelKey: "posts", anyOf: [], group: "team" },
-  { to: "/groups", labelKey: "groups", anyOf: ["members.view"], group: "team" },
   {
     to: "/tracking",
     labelKey: "tracking",
