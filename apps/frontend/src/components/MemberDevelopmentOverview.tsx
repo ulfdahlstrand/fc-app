@@ -7,7 +7,8 @@
  * has never been assessed says so rather than disappearing.
  *
  * Same shapes as the list: a table on the desktop, grouped the same way, and a
- * row per member on the phone.
+ * row per member on the phone. Each latest assessment names who wrote it, so a
+ * coach can tell their own from a colleague's before opening it.
  *
  * Everything happens in place, in the same dialog the member page uses — going
  * through the squad one by one should not mean leaving the list and coming
@@ -92,6 +93,8 @@ export function MemberDevelopmentOverview({
     assessment
       ? formatDateLong(`${assessment.assessedOn}T00:00:00Z`, locale)
       : t("members.neverAssessed");
+  const authorOf = (assessment: DevelopmentAssessment): string =>
+    assessment.createdByName ?? t("development.someone");
 
   const tableSections: MemberSection[] = sections ?? [
     { groupId: null, name: "", members },
@@ -176,6 +179,7 @@ export function MemberDevelopmentOverview({
                       </span>
                       <span className="text-muted-foreground text-sm">
                         {dateOf(latest)}
+                        {latest && ` · ${authorOf(latest)}`}
                       </span>
                     </span>
                     {latest && (
@@ -211,6 +215,7 @@ export function MemberDevelopmentOverview({
           <TableRow>
             <TableHead>{t("members.name")}</TableHead>
             <TableHead>{t("members.lastAssessed")}</TableHead>
+            <TableHead>{t("members.assessedBy")}</TableHead>
             {metrics.map((metric) => (
               <TableHead key={metric.id}>{metric.name}</TableHead>
             ))}
@@ -225,7 +230,7 @@ export function MemberDevelopmentOverview({
               {sections !== null && (
                 <TableRow className="hover:bg-transparent">
                   <TableCell
-                    colSpan={3 + metrics.length}
+                    colSpan={4 + metrics.length}
                     className="kit-overline text-muted-foreground pt-6"
                   >
                     {section.name} ({section.members.length})
@@ -246,6 +251,7 @@ export function MemberDevelopmentOverview({
                     >
                       {dateOf(latest)}
                     </TableCell>
+                    <TableCell>{latest && authorOf(latest)}</TableCell>
                     {metrics.map((metric) => (
                       <TableCell key={metric.id}>
                         <Reading metric={metric} assessment={latest} />
