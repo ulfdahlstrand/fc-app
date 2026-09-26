@@ -8,7 +8,15 @@
  * cannot be paired with this one. The rest is that the account it does create
  * can sign in with the password straight away and lands in the club.
  */
-import { afterAll, beforeEach, describe, expect, it } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import { call, ORPCError } from "@orpc/server";
 import type { Kysely } from "kysely";
 import type { AppContext } from "../context.js";
@@ -67,6 +75,10 @@ beforeEach(async () => {
   siteAdmin = {
     user: { ...clubAdmin.context.user!, isSiteAdmin: true },
   };
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
 });
 
 afterAll(async () => {
@@ -292,6 +304,24 @@ describe("siteAdminUsers", () => {
     });
   });
 
+  it("reports whether activation is switched on", async () => {
+    vi.stubEnv("ENABLE_ACCOUNT_ACTIVATION", "true");
+    const on = await call(
+      siteAdminUsersHandler,
+      { search: "" },
+      { context: siteAdmin }
+    );
+    expect(on.activationEnabled).toBe(true);
+
+    vi.stubEnv("ENABLE_ACCOUNT_ACTIVATION", "");
+    const off = await call(
+      siteAdminUsersHandler,
+      { search: "" },
+      { context: siteAdmin }
+    );
+    expect(off.activationEnabled).toBe(false);
+  });
+
   it("matches the search against name and address, either case", async () => {
     await createTestUser(db, club, {
       name: "Ada Bengtsson",
@@ -307,7 +337,9 @@ describe("siteAdminUsers", () => {
       { search: "aDa" },
       { context: siteAdmin }
     );
-    expect(byName.users.map((user) => user.email)).toEqual(["ada@example.test"]);
+    expect(byName.users.map((user) => user.email)).toEqual([
+      "ada@example.test",
+    ]);
 
     const byEmail = await call(
       siteAdminUsersHandler,
@@ -330,7 +362,11 @@ describe("siteAdminUsers", () => {
 
   it("is refused to a club admin, and to nobody signed in", async () => {
     await expectRefused(
-      call(siteAdminUsersHandler, { search: "" }, { context: clubAdmin.context }),
+      call(
+        siteAdminUsersHandler,
+        { search: "" },
+        { context: clubAdmin.context }
+      ),
       "FORBIDDEN"
     );
     await expectRefused(
@@ -375,7 +411,9 @@ describe("siteAdminSetPassword", () => {
     );
 
     expect(result.sessionsEnded).toBe(2);
-    expect(await login(db, "ny.tranare@example.test", NEW_PASSWORD)).toBe(userId);
+    expect(await login(db, "ny.tranare@example.test", NEW_PASSWORD)).toBe(
+      userId
+    );
     // The old one is gone, not merely superseded.
     expect(await login(db, "ny.tranare@example.test", PASSWORD)).toBeNull();
     const sessions = await db
@@ -442,7 +480,27 @@ describe("siteAdminSetPassword", () => {
     expect(credentials).toEqual([]);
   });
 
+  it("refuses a never-used account while activation is switched off", async () => {
+    vi.stubEnv("ENABLE_ACCOUNT_ACTIVATION", "false");
+    const unused = await createTestUser(db, club, {
+      email: "aldrig.inloggad@example.test",
+    });
+
+    await expectRefused(
+      call(
+        siteAdminSetPasswordHandler,
+        { userId: unused.userId, password: NEW_PASSWORD },
+        { context: siteAdmin }
+      ),
+      "CONFLICT"
+    );
+    expect(
+      await login(db, "aldrig.inloggad@example.test", NEW_PASSWORD)
+    ).toBeNull();
+  });
+
   it("activates an account that has never been used — neither password nor Google", async () => {
+    vi.stubEnv("ENABLE_ACCOUNT_ACTIVATION", "true");
     const unused = await createTestUser(db, club, {
       email: "aldrig.inloggad@example.test",
     });

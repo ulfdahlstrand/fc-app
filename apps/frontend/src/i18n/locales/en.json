@@ -991,6 +991,7 @@
     "activateFor": "Activate the account for {{name}}",
     "activated": "The account is activated. Hand over {{password}} — it is not shown again.",
     "setPasswordUnavailableGoogle": "This account signs in with Google. Do not put a password on it — its owner proved the address to Google.",
+    "setPasswordUnavailableNoPassword": "This account has no password yet. A password is replaced here, never added.",
     "setPasswordFor": "New password for {{name}}",
     "newPassword": "New password",
     "newPasswordHelp": "At least {{min}} characters. Shown as you type, because you are the one handing it over.",

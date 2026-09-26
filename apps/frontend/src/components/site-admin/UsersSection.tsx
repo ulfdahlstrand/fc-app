@@ -7,8 +7,8 @@
  * and the clubs and teams beside each address are what tells two Annas apart.
  *
  * Reset is offered on an account that already has a password, and activation —
- * a first password — on one that has never been used (ADR-027). A Google-only
- * account's owner proved that address to Google, and giving it a password here
+ * a first password — on one that has never been used, when the installation
+ * has it switched on (ADR-027). A Google-only account's owner proved that address to Google, and giving it a password here
  * would hand the account to whoever typed it (ADR-024), so those rows say why
  * their button is off instead of hiding it — an admin looking for the button
  * needs the reason, not a missing control.
@@ -90,7 +90,12 @@ export function SiteAdminUsers() {
       ) : (
         <div className="flex flex-col gap-2">
           {users.data.users.map((user) => (
-            <UserRow key={user.id} user={user} onReset={setTarget} />
+            <UserRow
+              key={user.id}
+              user={user}
+              activationEnabled={users.data.activationEnabled}
+              onReset={setTarget}
+            />
           ))}
         </div>
       )}
@@ -106,6 +111,7 @@ export function SiteAdminUsers() {
           // A new target starts a new form, with a suggestion of its own.
           key={target.id}
           user={target}
+          activationEnabled={users.data?.activationEnabled ?? false}
           onClose={() => setTarget(null)}
         />
       )}
@@ -115,16 +121,18 @@ export function SiteAdminUsers() {
 
 function UserRow({
   user,
+  activationEnabled,
   onReset,
 }: {
   user: SiteAdminUser;
+  activationEnabled: boolean;
   onReset: (user: SiteAdminUser) => void;
 }) {
   const { t } = useTranslation();
   const locale = useDateLocale();
 
-  const googleOnly = user.hasGoogle && !user.hasPassword;
-  const activates = !user.hasGoogle && !user.hasPassword;
+  const activates = activationEnabled && !user.hasGoogle && !user.hasPassword;
+  const unavailable = !user.hasPassword && !activates;
 
   const places = user.memberships.map((membership) =>
     membership.teamName === null
@@ -169,14 +177,18 @@ function UserRow({
         <Button
           size="sm"
           variant="outline"
-          disabled={googleOnly}
+          disabled={unavailable}
           onClick={() => onReset(user)}
         >
           {t(activates ? "siteAdmin.activate" : "siteAdmin.setPassword")}
         </Button>
-        {googleOnly && (
+        {unavailable && (
           <p className="text-muted-foreground max-w-56 text-right text-xs">
-            {t("siteAdmin.setPasswordUnavailableGoogle")}
+            {t(
+              user.hasGoogle
+                ? "siteAdmin.setPasswordUnavailableGoogle"
+                : "siteAdmin.setPasswordUnavailableNoPassword",
+            )}
           </p>
         )}
       </div>
@@ -186,15 +198,17 @@ function UserRow({
 
 function SetPasswordDialog({
   user,
+  activationEnabled,
   onClose,
 }: {
   user: SiteAdminUser;
+  activationEnabled: boolean;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
   const setPassword = useSetPassword();
   // Neither a password nor Google: the first password is what activates it.
-  const activates = !user.hasPassword && !user.hasGoogle;
+  const activates = activationEnabled && !user.hasPassword && !user.hasGoogle;
   const [done, setDone] = useState<{ password: string; sessions: number } | null>(
     null,
   );

@@ -18,6 +18,14 @@ import type { AppContext } from "../context.js";
 import { getDb } from "../db/client.js";
 import { os, requireUser } from "../orpc.js";
 
+/**
+ * Whether a never-used account may be given its first password (ADR-027).
+ * Off unless `ENABLE_ACCOUNT_ACTIVATION=true`.
+ */
+export function accountActivationEnabled(): boolean {
+  return process.env["ENABLE_ACCOUNT_ACTIVATION"] === "true";
+}
+
 /** Returns the signed-in site admin, or throws FORBIDDEN. */
 function requireSiteAdmin(context: AppContext): AuthUser {
   const user = requireUser(context);
@@ -160,7 +168,8 @@ export const siteAdminUsersHandler = os.siteAdminUsers.handler(
     const page = rows.slice(0, USER_PAGE_SIZE);
     const ids = page.map((row) => row.id);
 
-    if (ids.length === 0) return { users: [], truncated };
+    const activationEnabled = accountActivationEnabled();
+    if (ids.length === 0) return { users: [], truncated, activationEnabled };
 
     // Three small queries over the page rather than joins on the list itself:
     // an account with several memberships would otherwise multiply its row.
@@ -218,6 +227,7 @@ export const siteAdminUsersHandler = os.siteAdminUsers.handler(
         })),
       })),
       truncated,
+      activationEnabled,
     };
   }
 );
@@ -256,10 +266,15 @@ export const siteAdminSetPasswordHandler = os.siteAdminSetPassword.handler(
     // give it a password would be taking the account over rather than helping
     // its owner back in (ADR-024). An account with neither — created by an
     // appointment and never used — has no owner who proved anything yet, so
-    // giving it its first password is the same act as creating it (ADR-027).
-    if (!target.credential && target.hasGoogle) {
+    // giving it its first password is the same act as creating it (ADR-027) —
+    // but only behind ENABLE_ACCOUNT_ACTIVATION; without it this only ever
+    // replaces a password, as ADR-026 had it.
+    if (
+      !target.credential &&
+      (target.hasGoogle || !accountActivationEnabled())
+    ) {
       throw new ORPCError("CONFLICT", {
-        message: "This account signs in with Google only",
+        message: "This account has no password to replace",
       });
     }
 

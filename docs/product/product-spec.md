@@ -89,8 +89,8 @@ tracked items) is **configuration data, not code**.
   or address, with how each one signs in and which clubs and teams it belongs
   to, and can **give one a new password** (ADR-026) — or **activate** one that
   has never been used, with neither a password nor Google, by giving it its
-  first (ADR-027) — but never a Google-only account, whose owner proved that
-  address to Google. The new password signs the account out everywhere, and the page can
+  first, when `ENABLE_ACCOUNT_ACTIVATION` is on (ADR-027) — but never a
+  Google-only account, whose owner proved that address to Google. The new password signs the account out everywhere, and the page can
   suggest a readable strong one so nobody has to invent it.
 - Create club → creates first team, seeds default configuration, makes creator `Admin`.
 - Invite users by link/email with a preset role; configurable roles per club.

@@ -79,14 +79,16 @@ export const siteAdminUsersOutputSchema = z.object({
   users: z.array(siteAdminUserSchema),
   /** True when the search matched more accounts than were returned. */
   truncated: z.boolean(),
+  /** Whether a never-used account can be activated (ADR-027). */
+  activationEnabled: z.boolean(),
 });
 
 /**
  * Replaces the password of an account that already has one, or gives a first
  * one to an account that has never been used — neither a password nor Google —
- * which activates it (ADR-027). Never adds one to a Google-only account: its
- * owner proved the address to Google and nobody else may put a password on it
- * (ADR-024, ADR-026).
+ * which activates it when ENABLE_ACCOUNT_ACTIVATION is on (ADR-027). Never
+ * adds one to a Google-only account: its owner proved the address to Google
+ * and nobody else may put a password on it (ADR-024, ADR-026).
  */
 export const siteAdminSetPasswordInputSchema = z.object({
   userId: z.string(),

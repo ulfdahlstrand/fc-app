@@ -1220,8 +1220,12 @@ trust — as a site admin creating the account outright (ADR-025).
   Google identity and no password. An account with neither gets its first
   password, which **activates** it; one with a password has it replaced as
   before.
-- The page labels the button "Activate account" on such rows, and disables it
-  only on Google-only accounts, saying why.
+- Activation is **behind a flag**: the backend allows it only when
+  `ENABLE_ACCOUNT_ACTIVATION=true`, and `siteAdminUsers` reports the flag as
+  `activationEnabled` so the page follows the backend rather than a build-time
+  variable of its own. With the flag off, ADR-026 applies unchanged.
+- With the flag on, the page labels the button "Activate account" on such
+  rows, and disables it only on Google-only accounts, saying why.
 
 **Alternatives considered:**
 - **A separate `siteAdminActivate` procedure.** The same write, the same checks
