@@ -25,6 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { fieldLabel } from "@/lib/member-field-view";
 
 /** Sentinel select value for "no value" — Radix disallows an empty-string item value. */
 const NO_VALUE = "__none__";
@@ -126,7 +127,7 @@ function FieldInput({
   value: string;
   onChange: (value: string) => void;
 }) {
-  const label = field.required ? `${field.name} *` : field.name;
+  const label = field.required ? `${fieldLabel(field)} *` : fieldLabel(field);
   const id = `member-field-${field.id}`;
 
   if (field.fieldType === "boolean") {

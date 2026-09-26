@@ -223,6 +223,8 @@ export interface MemberFieldDefinitionsTable {
   show_in_list: Generated<boolean>;
   /** The one field drawn before the name; at most one per team. */
   presentation: Generated<boolean>;
+  /** The season the field is about; the roster drops it once that has ended. */
+  season_id: string | null;
   archived: Generated<boolean>;
   created_at: Timestamp;
 }

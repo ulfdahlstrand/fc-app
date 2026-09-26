@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import type { Member, MemberFieldDefinition } from "@fc-app/contracts";
 import {
   canMoveField,
+  fieldLabel,
   commitFieldValue,
   filledCount,
   listFields,
@@ -11,6 +12,7 @@ import {
   presentationCircle,
   readPickedFieldIds,
   rosterColumns,
+  seasonEnded,
   visibleFields,
   writePickedFieldIds,
 } from "./member-field-view";
@@ -29,6 +31,7 @@ function field(
     sortOrder: 0,
     showInList: true,
     presentation: false,
+    season: null,
     archived: false,
     ...overrides,
   };
@@ -38,19 +41,63 @@ function member(customFields: Record<string, string>): Pick<Member, "customField
   return { customFields };
 }
 
+const TODAY = "2026-09-26";
+
+function season(endsOn: string): MemberFieldDefinition["season"] {
+  return { id: `season-${endsOn}`, name: `Säsong ${endsOn}`, endsOn };
+}
+
+describe("fieldLabel", () => {
+  it("is the bare name for a field without a season", () => {
+    expect(fieldLabel(field("Allergier"))).toBe("Allergier");
+  });
+
+  it("puts the season after the name", () => {
+    const booklet = field("Stuvsta häfte", {
+      season: { id: "s", name: "höst 2026", endsOn: "2026-12-31" },
+    });
+    expect(fieldLabel(booklet)).toBe("Stuvsta häfte höst 2026");
+  });
+});
+
+describe("seasonEnded", () => {
+  it("is never true for a field without a season", () => {
+    expect(seasonEnded(field("a"), TODAY)).toBe(false);
+  });
+
+  it("counts the season's last day as still in it", () => {
+    expect(seasonEnded(field("a", { season: season(TODAY) }), TODAY)).toBe(false);
+  });
+
+  it("is true from the day after the season ends", () => {
+    expect(
+      seasonEnded(field("a", { season: season("2026-09-25") }), TODAY)
+    ).toBe(true);
+  });
+});
+
 describe("listFields", () => {
+  it("drops a field whose season has ended", () => {
+    const fields = [
+      field("a", { season: season("2026-06-30") }),
+      field("b", { season: season("2026-12-31") }),
+      field("c"),
+    ];
+    expect(listFields(fields, TODAY).map((one) => one.id)).toEqual(["b", "c"]);
+  });
+
   it("drops the fields the team keeps off the list", () => {
     const fields = [
       field("a"),
       field("b", { showInList: false }),
       field("c"),
     ];
-    expect(listFields(fields).map((one) => one.id)).toEqual(["a", "c"]);
+    expect(listFields(fields, TODAY).map((one) => one.id)).toEqual(["a", "c"]);
   });
 
   it("leaves the order alone", () => {
     const fields = [field("c"), field("a"), field("b")];
-    expect(listFields(fields).map((one) => one.id)).toEqual(["c", "a", "b"]);
+    expect(listFields(fields, TODAY).map((one) => one.id)).toEqual(["c", "a", "b"]);
   });
 });
 
@@ -197,13 +244,13 @@ describe("rosterColumns", () => {
       number,
       field("size"),
       field("note", { showInList: false }),
-    ]);
+    ], TODAY);
     expect(presentation).toBe(number);
     expect(rest.map((f) => f.id)).toEqual(["size"]);
   });
 
   it("answers null for a team that has not named one", () => {
-    const { presentation, rest } = rosterColumns([field("size")]);
+    const { presentation, rest } = rosterColumns([field("size")], TODAY);
     expect(presentation).toBeNull();
     expect(rest.map((f) => f.id)).toEqual(["size"]);
   });
@@ -213,9 +260,22 @@ describe("rosterColumns", () => {
     // a reachable state — the roster still must not draw a hidden column.
     const { presentation, rest } = rosterColumns([
       field("number", { presentation: true, showInList: false }),
-    ]);
+    ], TODAY);
     expect(presentation).toBeNull();
     expect(rest).toEqual([]);
+  });
+
+  it("lets a presentation field go with its season", () => {
+    // "Tröjnummer 2026" leads the roster for 2026 and not after it.
+    const { presentation, rest } = rosterColumns(
+      [
+        field("number", { presentation: true, season: season("2025-12-31") }),
+        field("size"),
+      ],
+      TODAY
+    );
+    expect(presentation).toBeNull();
+    expect(rest.map((f) => f.id)).toEqual(["size"]);
   });
 });
 

@@ -126,6 +126,11 @@ tracked items) is **configuration data, not code**.
   field that helps say *who* a row is, so it is drawn before the name in the
   roster and takes the place of the initials in the circle on a phone. One per
   team, and it is always in the list.
+- A field may belong to a **season** ("Stuvsta häfte" for "höst 2026"). It is
+  then labelled with the season after its name — "Stuvsta häfte höst 2026" —
+  and it leaves the roster's columns the day after the season ends. The values
+  stay on the player's own page; deleting the season unties the field rather
+  than removing it.
 - Adding a member by hand and inviting the guardians an import brought in are
   **team settings**, not roster controls: both are done a handful of times a
   year, and the roster is a page opened to read.

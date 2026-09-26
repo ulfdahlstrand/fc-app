@@ -23,6 +23,10 @@ async function invalidateSeasons(teamId: string): Promise<void> {
   await queryClient.invalidateQueries({
     queryKey: orpcQuery.listActivities.key({ input: { teamId } }),
   });
+  // …and whether a field tied to the season is still in the roster.
+  await queryClient.invalidateQueries({
+    queryKey: orpcQuery.listMemberFields.key({ input: { teamId } }),
+  });
 }
 
 /** Form schema for the season dialog, derived from the contract's write fields (ADR-007). */

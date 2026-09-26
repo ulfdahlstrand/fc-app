@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { commitFieldValue } from "../lib/member-field-view";
+import { commitFieldValue, fieldLabel } from "../lib/member-field-view";
 
 /** Radix disallows an empty-string item value, so "no value" needs a sentinel. */
 const NO_VALUE = "__none__";
@@ -68,7 +68,7 @@ export function MemberFieldCell({
     setFailed(false);
   }
 
-  const label = `${field.name} — ${memberName}`;
+  const label = `${fieldLabel(field)} — ${memberName}`;
   const error =
     invalid ?? (failed ? t("members.cellSaveError") : null);
 
