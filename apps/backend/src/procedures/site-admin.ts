@@ -1,6 +1,7 @@
 /**
- * Site administration (ADR-025, ADR-026): creating an account outright, seeing
- * every account, and replacing the password of one that has one.
+ * Site administration (ADR-025, ADR-026, ADR-027): creating an account
+ * outright, seeing every account, replacing the password of one that has one,
+ * and reading the sign-in audit.
  *
  * Gated on the `is_site_admin` flag, not on any club permission. A club admin
  * already decides who may act inside their club, but creating an account with
@@ -10,6 +11,8 @@
  * someone who could write the rows with `psql` anyway may do that.
  */
 import { ORPCError } from "@orpc/server";
+import { LOGIN_ATTEMPTS_PAGE_SIZE } from "@fc-app/contracts";
+import { sql } from "kysely";
 import { createAccountWithPassword } from "../auth/password-flows.js";
 import { hashPassword } from "../auth/password.js";
 import type { AuthUser } from "../auth/session.js";
@@ -275,5 +278,64 @@ export const siteAdminSetPasswordHandler = os.siteAdminSetPassword.handler(
     });
 
     return { sessionsEnded };
+  }
+);
+export const siteAdminLoginAttemptsHandler = os.siteAdminLoginAttempts.handler(
+  async ({ input, context }) => {
+    requireSiteAdmin(context);
+    let query = getDb()
+      .selectFrom("login_attempts as a")
+      .leftJoin("users as u", "u.id", "a.user_id")
+      .select([
+        "a.id",
+        "a.created_at",
+        "a.method",
+        "a.outcome",
+        // An email link names no address until it works; the account does.
+        (eb) => eb.fn.coalesce("a.email", "u.email").as("email"),
+        "u.name as user_name",
+        "a.ip",
+        "a.user_agent",
+      ])
+      .orderBy("a.created_at", "desc")
+      .orderBy("a.id", "desc")
+      // One more than a page, to know whether another follows.
+      .limit(LOGIN_ATTEMPTS_PAGE_SIZE + 1);
+
+    if (input.email) {
+      // Escaped, so a typed % or _ is a character and not a wildcard.
+      const pattern = `%${input.email.toLowerCase().replace(/[\\%_]/g, "\\$&")}%`;
+      query = query.where((eb) =>
+        eb.or([
+          eb("a.email", "like", pattern),
+          eb(eb.fn("lower", ["u.email"]), "like", pattern),
+        ])
+      );
+    }
+    if (input.onlyFailures) {
+      query = query.where("a.outcome", "!=", "success");
+    }
+    if (input.after) {
+      query = query.where(
+        sql<boolean>`(a.created_at, a.id) < (select created_at, id from login_attempts where id = ${input.after})`
+      );
+    }
+
+    const rows = await query.execute();
+    const page = rows.slice(0, LOGIN_ATTEMPTS_PAGE_SIZE);
+    return {
+      attempts: page.map((row) => ({
+        id: row.id,
+        at: row.created_at.toISOString(),
+        method: row.method,
+        outcome: row.outcome,
+        email: row.email,
+        userName: row.user_name,
+        ip: row.ip,
+        userAgent: row.user_agent,
+      })),
+      nextAfter:
+        rows.length > LOGIN_ATTEMPTS_PAGE_SIZE ? (page.at(-1)?.id ?? null) : null,
+    };
   }
 );

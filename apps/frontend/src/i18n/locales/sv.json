@@ -1015,6 +1015,32 @@
       "roleId": {
         "too_small": "Välj en roll."
       }
+    },
+    "loginAttempts": {
+      "heading": "Inloggningsförsök",
+      "help": "Varje försök att logga in, oavsett sätt och utfall. Sparas i 90 dagar.",
+      "filterEmail": "Filtrera på e-postadress",
+      "onlyFailures": "Bara misslyckade",
+      "when": "Tid",
+      "email": "E-post",
+      "method": "Sätt",
+      "outcome": "Utfall",
+      "ip": "IP-adress",
+      "empty": "Inga inloggningsförsök.",
+      "more": "Visa fler",
+      "loadError": "Inloggningsförsöken kunde inte hämtas.",
+      "methods": {
+        "password": "Lösenord",
+        "google": "Google",
+        "email_link": "E-postlänk"
+      },
+      "outcomes": {
+        "success": "Lyckades",
+        "invalid_credentials": "Fel uppgifter",
+        "invalid_token": "Ogiltig länk",
+        "rate_limited": "Spärrad (för många)",
+        "failed": "Misslyckades"
+      }
     }
   }
 }

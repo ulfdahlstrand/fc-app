@@ -1,11 +1,18 @@
 /**
- * Site administration (ADR-025, ADR-026): creating an account outright, and
- * the list of every account with the password of one of them.
+ * Site administration (ADR-025, ADR-026, ADR-027): creating an account
+ * outright, the list of every account with the password of one of them, and
+ * the sign-in audit.
  */
-import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+} from "@tanstack/react-query";
 import {
   siteAdminCreateUserInputSchema,
   siteAdminSetPasswordInputSchema,
+  type LoginAttemptOutcome,
 } from "@fc-app/contracts";
 import { z } from "zod";
 import { orpc } from "../orpc-client";
@@ -115,4 +122,37 @@ export function setPasswordErrorKey(error: unknown): string {
   return code === "CONFLICT"
     ? "siteAdmin.errors.noPassword"
     : "siteAdmin.errors.passwordFailed";
+}
+
+// ---------------------------------------------------------------------------
+// The sign-in audit (ADR-027).
+// ---------------------------------------------------------------------------
+
+/** Newest first, a page at a time; the filters restart it from the top. */
+export function useLoginAttempts(filters: {
+  email: string;
+  onlyFailures: boolean;
+}) {
+  const email = filters.email.trim();
+  return useInfiniteQuery({
+    ...orpcQuery.siteAdminLoginAttempts.infiniteOptions({
+      input: (after: string | undefined) => ({
+        ...(email ? { email } : {}),
+        ...(filters.onlyFailures ? { onlyFailures: true } : {}),
+        ...(after ? { after } : {}),
+      }),
+      initialPageParam: undefined,
+      getNextPageParam: (page) => page.nextAfter ?? undefined,
+    }),
+    // Typing in the filter should not blank the table between keystrokes.
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function outcomeVariant(
+  outcome: LoginAttemptOutcome
+): "present" | "absent" | "late" {
+  if (outcome === "success") return "present";
+  if (outcome === "rate_limited") return "late";
+  return "absent";
 }

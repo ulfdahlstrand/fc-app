@@ -55,6 +55,29 @@ export interface EmailTokensTable {
   created_at: Timestamp;
 }
 
+export type LoginMethod = "password" | "google" | "email_link";
+
+export type LoginOutcome =
+  | "success"
+  | "invalid_credentials"
+  | "invalid_token"
+  | "rate_limited"
+  | "failed";
+
+/** One attempt to sign in (ADR-027). Written only by `auth/login-audit.ts`. */
+export interface LoginAttemptsTable {
+  id: Generated<string>;
+  method: LoginMethod;
+  outcome: LoginOutcome;
+  /** Lowercased; null when the attempt never named an address. */
+  email: string | null;
+  /** Set when the attempt resolved to an account. */
+  user_id: string | null;
+  ip: string | null;
+  user_agent: string | null;
+  created_at: Timestamp;
+}
+
 export interface ClubsTable {
   id: Generated<string>;
   name: string;
@@ -427,6 +450,7 @@ export interface Database {
   sessions: SessionsTable;
   password_credentials: PasswordCredentialsTable;
   email_tokens: EmailTokensTable;
+  login_attempts: LoginAttemptsTable;
   clubs: ClubsTable;
   teams: TeamsTable;
   memberships: MembershipsTable;

@@ -19,6 +19,12 @@ import {
 import type { z } from "zod";
 import { getDb } from "../db/client.js";
 import { serializeCookie } from "./cookies.js";
+import {
+  clientIp,
+  recordLoginAttempt,
+  requestOrigin,
+  type LoginAttempt,
+} from "./login-audit.js";
 import { canSendMail, sendMail, type Mail } from "./mailer.js";
 import {
   login,
@@ -56,19 +62,6 @@ function corsHeaders(): Record<string, string> {
     "Access-Control-Allow-Credentials": "true",
     Vary: "Origin",
   };
-}
-
-/**
- * The address the request came from. Behind Render's proxy that is the first
- * X-Forwarded-For entry, which a client can forge — so per-IP limits are only
- * the coarse brake, and the per-email ones carry the weight.
- */
-function clientIp(req: IncomingMessage): string {
-  const forwarded = req.headers["x-forwarded-for"];
-  const first = (Array.isArray(forwarded) ? forwarded[0] : forwarded)
-    ?.split(",")[0]
-    ?.trim();
-  return first || req.socket.remoteAddress || "unknown";
 }
 
 /**
@@ -157,6 +150,22 @@ async function signIn(res: ServerResponse, userId: string): Promise<void> {
   });
 }
 
+/**
+ * Records a sign-in attempt (ADR-027). Defaults to an email link — the verify
+ * and reset routes, which sign in by token and know no address until it works.
+ */
+function audit(
+  req: IncomingMessage,
+  attempt: Omit<LoginAttempt, "method" | "ip" | "userAgent"> &
+    Partial<Pick<LoginAttempt, "method">>
+): Promise<void> {
+  return recordLoginAttempt(getDb(), {
+    method: "email_link",
+    ...attempt,
+    ...requestOrigin(req),
+  });
+}
+
 type Route = (req: IncomingMessage, res: ServerResponse) => Promise<void>;
 
 const routes: Record<string, Route> = {
@@ -175,26 +184,38 @@ const routes: Record<string, Route> = {
   },
 
   async verify(req, res) {
-    if (refuseIfLimited(res, limits.tokenPerIp.hit(clientIp(req)))) return;
+    if (refuseIfLimited(res, limits.tokenPerIp.hit(clientIp(req)))) {
+      return audit(req, { outcome: "rate_limited" });
+    }
     const { token } = await parse(req, emailVerifyInputSchema);
     const userId = await verifySignup(getDb(), token);
-    if (!userId) return send(res, 400, { error: "invalid_token" });
+    if (!userId) {
+      await audit(req, { outcome: "invalid_token" });
+      return send(res, 400, { error: "invalid_token" });
+    }
+    await audit(req, { outcome: "success", userId });
     await signIn(res, userId);
   },
 
   async login(req, res) {
     const { email, password } = await parse(req, passwordLoginInputSchema);
+    const attempt = { method: "password", email } as const;
     if (
       refuseIfLimited(
         res,
         limits.loginPerIp.hit(clientIp(req)),
         limits.loginPerEmail.hit(email)
       )
-    )
-      return;
+    ) {
+      return audit(req, { ...attempt, outcome: "rate_limited" });
+    }
     const userId = await login(getDb(), email, password);
-    if (!userId) return send(res, 401, { error: "invalid_credentials" });
+    if (!userId) {
+      await audit(req, { ...attempt, outcome: "invalid_credentials" });
+      return send(res, 401, { error: "invalid_credentials" });
+    }
     limits.loginPerEmail.reset(email);
+    await audit(req, { ...attempt, outcome: "success", userId });
     await signIn(res, userId);
   },
 
@@ -213,10 +234,16 @@ const routes: Record<string, Route> = {
   },
 
   async reset(req, res) {
-    if (refuseIfLimited(res, limits.tokenPerIp.hit(clientIp(req)))) return;
+    if (refuseIfLimited(res, limits.tokenPerIp.hit(clientIp(req)))) {
+      return audit(req, { outcome: "rate_limited" });
+    }
     const { token, password } = await parse(req, passwordResetInputSchema);
     const userId = await resetPassword(getDb(), token, password);
-    if (!userId) return send(res, 400, { error: "invalid_token" });
+    if (!userId) {
+      await audit(req, { outcome: "invalid_token" });
+      return send(res, 400, { error: "invalid_token" });
+    }
+    await audit(req, { outcome: "success", userId });
     await signIn(res, userId);
   },
 };

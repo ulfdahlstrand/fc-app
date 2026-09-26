@@ -4,6 +4,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { getDb } from "../db/client.js";
 import { clearCookie, parseCookies, serializeCookie } from "./cookies.js";
 import { exchangeGoogleCode, getGoogleAuthUrl } from "./google.js";
+import { recordLoginAttempt, requestOrigin } from "./login-audit.js";
 import { handlePasswordRequest } from "./password-http.js";
 import {
   SESSION_COOKIE,
@@ -51,6 +52,8 @@ export async function handleAuthRequest(
   }
 
   if (req.method === "GET" && url.pathname === "/auth/google/callback") {
+    // Known once Google has answered; a failure before that names no one.
+    let email: string | null = null;
     try {
       const cookies = parseCookies(req.headers.cookie);
       const state = url.searchParams.get("state");
@@ -60,8 +63,16 @@ export async function handleAuthRequest(
       }
 
       const profile = await exchangeGoogleCode(code);
+      email = profile.email;
       const userId = await signInWithProfile(getDb(), profile);
       const { token, expiresAt } = await createSession(getDb(), userId);
+      await recordLoginAttempt(getDb(), {
+        method: "google",
+        outcome: "success",
+        email,
+        userId,
+        ...requestOrigin(req),
+      });
 
       res.writeHead(302, {
         "Set-Cookie": [
@@ -73,6 +84,12 @@ export async function handleAuthRequest(
       res.end();
     } catch (error) {
       console.error("[auth] Sign-in failed:", error);
+      await recordLoginAttempt(getDb(), {
+        method: "google",
+        outcome: "failed",
+        email,
+        ...requestOrigin(req),
+      });
       res.writeHead(302, {
         "Set-Cookie": clearCookie(STATE_COOKIE),
         Location: `${frontendUrl()}/login?error=auth_failed`,

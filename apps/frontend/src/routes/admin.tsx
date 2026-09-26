@@ -3,13 +3,15 @@
  * reached from the user menu. Creates an account with an address and password
  * chosen for the person, and places it in the club being looked at, so someone
  * without Google can sign in without the app having to send mail; below that,
- * every account in the installation, with the password of one of them.
+ * every account in the installation, with the password of one of them; and
+ * last every attempt to sign in (ADR-027).
  */
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { PASSWORD_MIN_LENGTH } from "@fc-app/contracts";
+import { LoginAttemptsSection } from "@/components/site-admin/LoginAttemptsSection";
 import { SiteAdminUsers } from "@/components/site-admin/UsersSection";
 import { SuggestPasswordButton } from "@/components/site-admin/SuggestPasswordButton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -83,6 +85,8 @@ function SiteAdminPage() {
       )}
 
       <SiteAdminUsers />
+
+      <LoginAttemptsSection />
     </div>
   );
 }

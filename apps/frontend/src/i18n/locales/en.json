@@ -1015,6 +1015,32 @@
       "roleId": {
         "too_small": "Choose a role."
       }
+    },
+    "loginAttempts": {
+      "heading": "Sign-in attempts",
+      "help": "Every attempt to sign in, whichever way and however it ended. Kept for 90 days.",
+      "filterEmail": "Filter by email address",
+      "onlyFailures": "Failures only",
+      "when": "Time",
+      "email": "Email",
+      "method": "Method",
+      "outcome": "Outcome",
+      "ip": "IP address",
+      "empty": "No sign-in attempts.",
+      "more": "Show more",
+      "loadError": "The sign-in attempts could not be loaded.",
+      "methods": {
+        "password": "Password",
+        "google": "Google",
+        "email_link": "Email link"
+      },
+      "outcomes": {
+        "success": "Succeeded",
+        "invalid_credentials": "Wrong credentials",
+        "invalid_token": "Invalid link",
+        "rate_limited": "Rate limited",
+        "failed": "Failed"
+      }
     }
   }
 }
