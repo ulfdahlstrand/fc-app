@@ -71,6 +71,7 @@ export function useCreateMemberField(teamId: string) {
       required?: boolean;
       showInList?: boolean;
       presentation?: boolean;
+      seasonId?: string | null;
     }) => orpc.createMemberField({ teamId, ...input }),
     onSuccess: () => invalidateFields(teamId),
   });
@@ -86,6 +87,7 @@ export function useUpdateMemberField(teamId: string) {
       sortOrder?: number;
       showInList?: boolean;
       presentation?: boolean;
+      seasonId?: string | null;
     }) => orpc.updateMemberField({ teamId, ...input }),
     onSuccess: () => invalidateFields(teamId),
   });

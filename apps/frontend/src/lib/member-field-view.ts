@@ -79,6 +79,34 @@ export function visibleFields(
 }
 
 /**
+ * What a field is called wherever its values are shown: its own name, and for
+ * a season-bound field the season after it — "Stuvsta häfte" tied to "höst
+ * 2026" heads its column "Stuvsta häfte höst 2026", so two seasons' versions
+ * of the same question are never two identical headers.
+ *
+ * The settings list keeps the bare name and shows the season as a badge.
+ */
+export function fieldLabel(
+  field: Pick<MemberFieldDefinition, "name" | "season">
+): string {
+  return field.season === null
+    ? field.name
+    : `${field.name} ${field.season.name}`;
+}
+
+/**
+ * Whether a season-bound field's season is over. `today` is the local date as
+ * "YYYY-MM-DD", which compares as a string against the season's last day —
+ * and that day itself still counts as the season.
+ */
+export function seasonEnded(
+  field: Pick<MemberFieldDefinition, "season">,
+  today: string
+): boolean {
+  return field.season !== null && field.season.endsOn < today;
+}
+
+/**
  * The fields the roster is allowed to show at all.
  *
  * Two decisions stack here and they are not the same one. The **team** says
@@ -86,11 +114,18 @@ export function visibleFields(
  * of those to actually show, and that pick is what `visibleFields` resolves.
  * So this runs first, and a field turned off for the list cannot be brought
  * back by a stored id — the same way an archived one cannot.
+ *
+ * A field tied to a season that has ended drops out here too: the column was
+ * a question for that season, and it is answered. Its values stay on the
+ * member's own page.
  */
 export function listFields(
-  fields: readonly MemberFieldDefinition[]
+  fields: readonly MemberFieldDefinition[],
+  today: string
 ): MemberFieldDefinition[] {
-  return fields.filter((field) => field.showInList);
+  return fields.filter(
+    (field) => field.showInList && !seasonEnded(field, today)
+  );
 }
 
 /**
@@ -105,15 +140,18 @@ export function listFields(
  * The server sorts the presentation field first, so `fields[0]` would usually
  * do; this does not rely on that.
  */
-export function rosterColumns(fields: readonly MemberFieldDefinition[]): {
+export function rosterColumns(
+  fields: readonly MemberFieldDefinition[],
+  today: string
+): {
   presentation: MemberFieldDefinition | null;
   rest: MemberFieldDefinition[];
 } {
-  const presentation =
-    fields.find((field) => field.presentation && field.showInList) ?? null;
+  const listed = listFields(fields, today);
+  const presentation = listed.find((field) => field.presentation) ?? null;
   return {
     presentation,
-    rest: listFields(fields).filter((field) => field.id !== presentation?.id),
+    rest: listed.filter((field) => field.id !== presentation?.id),
   };
 }
 

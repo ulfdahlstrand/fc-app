@@ -99,6 +99,18 @@ export const memberFieldDefinitionSchema = z.object({
    * it.
    */
   presentation: z.boolean(),
+  /**
+   * The season the field belongs to, or null for a field that is always
+   * asked. Once `endsOn` is behind today the roster stops offering it as a
+   * column (`listFields` in the frontend); the values stay, and the member's
+   * own page still shows them.
+   *
+   * Carried whole rather than as an id so every screen can decide "has it
+   * ended" without loading the team's seasons alongside.
+   */
+  season: z
+    .object({ id: z.string(), name: z.string(), endsOn: z.string() })
+    .nullable(),
   archived: z.boolean(),
 });
 
@@ -254,6 +266,8 @@ export const createMemberFieldInputSchema = z.object({
   required: z.boolean().optional(),
   showInList: z.boolean().optional(),
   presentation: z.boolean().optional(),
+  /** A season of the same team; omitted or null for a field with no end. */
+  seasonId: z.string().nullable().optional(),
 });
 
 export const createMemberFieldOutputSchema = z.object({
@@ -273,6 +287,8 @@ export const updateMemberFieldInputSchema = z.object({
    * whichever field held it — one team, one presentation field.
    */
   presentation: z.boolean().optional(),
+  /** Null unties the field from its season. */
+  seasonId: z.string().nullable().optional(),
 });
 
 export const updateMemberFieldOutputSchema = z.object({

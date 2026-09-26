@@ -14,8 +14,11 @@ import { loadMemberValues } from "../members/values.js";
 import { os, requireUser } from "../orpc.js";
 import { requireTeamPermission } from "../tenancy/membership.js";
 
+type FieldSeason = MemberFieldDefinition["season"];
+
 function toDefinition(
-  row: Selectable<MemberFieldDefinitionsTable>
+  row: Selectable<MemberFieldDefinitionsTable>,
+  seasons: ReadonlyMap<string, NonNullable<FieldSeason>>
 ): MemberFieldDefinition {
   return {
     id: row.id,
@@ -27,8 +30,68 @@ function toDefinition(
     sortOrder: row.sort_order,
     showInList: row.show_in_list,
     presentation: row.presentation,
+    season: row.season_id === null ? null : (seasons.get(row.season_id) ?? null),
     archived: row.archived,
   };
+}
+
+/**
+ * Definitions with their season attached. One query for the seasons the rows
+ * name, rather than a join in each of the five places that return fields.
+ */
+async function toDefinitions(
+  db: Kysely<Database>,
+  rows: readonly Selectable<MemberFieldDefinitionsTable>[]
+): Promise<MemberFieldDefinition[]> {
+  const ids = [
+    ...new Set(
+      rows.flatMap((row) => (row.season_id === null ? [] : [row.season_id]))
+    ),
+  ];
+  const seasons = new Map<string, NonNullable<FieldSeason>>();
+  if (ids.length > 0) {
+    const found = await db
+      .selectFrom("seasons")
+      .select(["id", "name", "ends_on"])
+      .where("id", "in", ids)
+      .execute();
+    for (const season of found) {
+      seasons.set(season.id, {
+        id: season.id,
+        name: season.name,
+        endsOn: season.ends_on,
+      });
+    }
+  }
+  return rows.map((row) => toDefinition(row, seasons));
+}
+
+async function toOneDefinition(
+  db: Kysely<Database>,
+  row: Selectable<MemberFieldDefinitionsTable>
+): Promise<MemberFieldDefinition> {
+  const [definition] = await toDefinitions(db, [row]);
+  return definition as MemberFieldDefinition;
+}
+
+/**
+ * A field can only be tied to a season of its own team — an id from another
+ * team would leak that team's season name back through the definition.
+ */
+async function assertTeamSeason(
+  db: Kysely<Database>,
+  teamId: string,
+  seasonId: string
+): Promise<void> {
+  const season = await db
+    .selectFrom("seasons")
+    .select("id")
+    .where("id", "=", seasonId)
+    .where("team_id", "=", teamId)
+    .executeTakeFirst();
+  if (!season) {
+    throw new ORPCError("NOT_FOUND", { message: "Season not found" });
+  }
 }
 
 /**
@@ -115,7 +178,7 @@ export const listMemberFieldsHandler = os.listMemberFields.handler(
       query = query.where("archived", "=", false);
     }
     const rows = await inFieldOrder(query).execute();
-    return { fields: rows.map(toDefinition) };
+    return { fields: await toDefinitions(db, rows) };
   }
 );
 
@@ -140,6 +203,9 @@ export const createMemberFieldHandler = os.createMemberField.handler(
         });
       }
     }
+
+    const seasonId = input.seasonId ?? null;
+    if (seasonId !== null) await assertTeamSeason(db, input.teamId, seasonId);
 
     // Append to the end of the current ordering.
     const max = await db
@@ -166,11 +232,12 @@ export const createMemberFieldHandler = os.createMemberField.handler(
           // withhold — the contradiction was refused above.
           show_in_list: presentation || (input.showInList ?? true),
           presentation,
+          season_id: seasonId,
         })
         .returningAll()
         .executeTakeFirstOrThrow();
     });
-    return { field: toDefinition(inserted) };
+    return { field: await toOneDefinition(db, inserted) };
   }
 );
 
@@ -205,6 +272,12 @@ export const updateMemberFieldHandler = os.updateMemberField.handler(
       updates["presentation"] = input.presentation;
       if (input.presentation) updates["show_in_list"] = true;
     }
+    if (input.seasonId !== undefined) {
+      if (input.seasonId !== null) {
+        await assertTeamSeason(db, input.teamId, input.seasonId);
+      }
+      updates["season_id"] = input.seasonId;
+    }
     if (input.options !== undefined) {
       if (existing.field_type !== "select") {
         throw new ORPCError("BAD_REQUEST", {
@@ -220,7 +293,7 @@ export const updateMemberFieldHandler = os.updateMemberField.handler(
     }
 
     if (Object.keys(updates).length === 0) {
-      return { field: toDefinition(existing) };
+      return { field: await toOneDefinition(db, existing) };
     }
 
     const updated = await db.transaction().execute(async (trx) => {
@@ -237,7 +310,7 @@ export const updateMemberFieldHandler = os.updateMemberField.handler(
         .returningAll()
         .executeTakeFirstOrThrow();
     });
-    return { field: toDefinition(updated) };
+    return { field: await toOneDefinition(db, updated) };
   }
 );
 
@@ -292,7 +365,7 @@ export const reorderMemberFieldsHandler = os.reorderMemberFields.handler(
         .selectAll()
         .where("team_id", "=", input.teamId)
     ).execute();
-    return { fields: updated.map(toDefinition) };
+    return { fields: await toDefinitions(db, updated) };
   }
 );
 
@@ -310,7 +383,7 @@ export const archiveMemberFieldHandler = os.archiveMemberField.handler(
       .where("team_id", "=", input.teamId)
       .returningAll()
       .executeTakeFirstOrThrow();
-    return { field: toDefinition(updated) };
+    return { field: await toOneDefinition(db, updated) };
   }
 );
 

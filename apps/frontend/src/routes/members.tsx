@@ -45,7 +45,7 @@ import { formatFieldValue } from "../components/memberFieldDisplay";
 import { MemberFieldCell } from "../components/MemberFieldCell";
 import { MemberFieldValue } from "../components/MemberFieldValue";
 import { ensureMe } from "../lib/auth";
-import { SEPARATOR } from "../lib/dates";
+import { SEPARATOR, toDateInput } from "../lib/dates";
 import { useIsPhone } from "../lib/breakpoint";
 import { ensureMyClubs, useHasPermission, useSelectedTeam } from "../lib/clubs";
 import { useGroups } from "../lib/groups";
@@ -58,6 +58,7 @@ import {
   filledCount,
   presentationCircle,
   readPickedFieldIds,
+  fieldLabel,
   rosterColumns,
   visibleFields,
   writePickedFieldIds,
@@ -159,8 +160,11 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
   // own page, and the user's pick below chooses among these. The presentation
   // field is held apart because it does not sit among the columns at all — it
   // goes in front of the name (#8 follow-up).
+  // A field tied to a season that has ended is gone from the roster too
+  // (`listFields`); "today" is the viewer's local date.
   const { presentation, rest: customColumns } = rosterColumns(
-    fields.data?.fields ?? []
+    fields.data?.fields ?? [],
+    toDateInput(new Date())
   );
   const teamGroups = groups.data?.groups ?? [];
 
@@ -426,12 +430,12 @@ function Roster({ teamId, teamName }: { teamId: string; teamName: string }) {
                   <TableRow>
                     {/* Before the name, not among the columns: the team said this
                         field helps say who a row is. */}
-                    {presentation && <TableHead>{presentation.name}</TableHead>}
+                    {presentation && <TableHead>{fieldLabel(presentation)}</TableHead>}
                     <TableHead>{t("members.name")}</TableHead>
                     <TableHead>{t("members.birthYear")}</TableHead>
                     <TableHead>{t("members.contact")}</TableHead>
                     {customColumns.map((field) => (
-                      <TableHead key={field.id}>{field.name}</TableHead>
+                      <TableHead key={field.id}>{fieldLabel(field)}</TableHead>
                     ))}
                   </TableRow>
                 </TableHeader>
@@ -543,7 +547,7 @@ function FieldPicker({
             aria-pressed={on}
             onClick={() => onToggle(field.id)}
           >
-            {field.name}
+            {fieldLabel(field)}
           </Button>
         );
       })}
@@ -623,7 +627,7 @@ function FillIn({
             >
               <div className="flex items-baseline justify-between gap-3 px-1">
                 <span className="font-semibold">
-                  {field.required ? `${field.name} *` : field.name}
+                  {field.required ? `${fieldLabel(field)} *` : fieldLabel(field)}
                 </span>
                 {/* Seeing what is still missing is the point of opening this.
                     The denominator is the rows on screen, after the search and
@@ -786,7 +790,7 @@ function FillHeading({
   return (
     <span className="flex flex-col gap-0.5">
       <span className="font-semibold">
-        {field.required ? `${field.name} *` : field.name}
+        {field.required ? `${fieldLabel(field)} *` : fieldLabel(field)}
       </span>
       <span className="text-muted-foreground text-xs font-semibold tabular-nums">
         {progress.done}/{progress.total}
@@ -839,7 +843,7 @@ function MemberRow({
         {circle}
       </span>
       {fromField && presentation && (
-        <span className="sr-only">{`${presentation.name}: ${circle}`}</span>
+        <span className="sr-only">{`${fieldLabel(presentation)}: ${circle}`}</span>
       )}
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="truncate font-semibold">

@@ -5,7 +5,7 @@
  */
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { sql, type Kysely } from "kysely";
 import type { Database } from "../db/types.js";
 import { closeTestDb, testDb, truncateAll } from "../test/database.js";
@@ -130,8 +130,13 @@ describe("password sign-in", () => {
     const res = await postLogin(email, "fel lösenord nr x");
 
     expect(res.status).toBe(429);
-    const rows = await attempts();
-    expect(rows).toHaveLength(11);
+    // The 429 is sent before the audit row is written, so the row can land a
+    // moment after the response — wait for it rather than race it.
+    const rows = await vi.waitFor(async () => {
+      const found = await attempts();
+      expect(found).toHaveLength(11);
+      return found;
+    });
     expect(rows.at(-1)).toMatchObject({ outcome: "rate_limited", email });
   });
 });

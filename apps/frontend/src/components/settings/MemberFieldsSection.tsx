@@ -32,7 +32,12 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useZodResolver } from "@/lib/form";
-import { canMoveField, moveField } from "@/lib/member-field-view";
+import { toDateInput } from "@/lib/dates";
+import {
+  canMoveField,
+  moveField,
+  seasonEnded,
+} from "@/lib/member-field-view";
 import {
   memberFieldFormSchema,
   useArchiveMemberField,
@@ -43,6 +48,7 @@ import {
   type MemberFieldFormOutput,
   type MemberFieldFormValues,
 } from "@/lib/member-fields";
+import { useSeasons } from "@/lib/seasons";
 import { cn } from "@/lib/utils";
 import {
   memberFieldTypeSchema,
@@ -61,6 +67,7 @@ export function MemberFields({ teamId }: { teamId: string }) {
   // and every screen reads that sort, so a move here moves the roster column
   // and the member page's fields together.
   const ordered = fields.data?.fields ?? [];
+  const today = toDateInput(new Date());
   const move = (index: number, direction: -1 | 1): void => {
     const next = moveField(ordered, index, direction);
     // The buttons that cannot move — either end of the list, and either side
@@ -117,6 +124,15 @@ export function MemberFields({ teamId }: { teamId: string }) {
                     {!field.showInList && (
                       <Badge variant="secondary">
                         {t("settings.team.detailOnly")}
+                      </Badge>
+                    )}
+                    {field.season && (
+                      <Badge variant="secondary">
+                        {seasonEnded(field, today)
+                          ? t("settings.team.seasonEndedBadge", {
+                              season: field.season.name,
+                            })
+                          : field.season.name}
                       </Badge>
                     )}
                     {field.archived && (
@@ -211,6 +227,9 @@ const FIELD_TYPES = memberFieldTypeSchema.options;
  */
 const PRESENTATION_TYPES: readonly string[] = ["text", "number"];
 
+/** The select's value for "no season" — Radix reserves the empty string. */
+const NO_SEASON = "none";
+
 function FieldDialog({
   teamId,
   field,
@@ -223,6 +242,7 @@ function FieldDialog({
   const { t } = useTranslation();
   const createField = useCreateMemberField(teamId);
   const updateField = useUpdateMemberField(teamId);
+  const seasons = useSeasons(teamId);
   const isEdit = field !== undefined;
 
   const form = useForm<MemberFieldFormValues, unknown, MemberFieldFormOutput>({
@@ -238,6 +258,7 @@ function FieldDialog({
   const [optionsText, setOptionsText] = useState(
     (field?.options ?? []).join("\n")
   );
+  const [seasonId, setSeasonId] = useState(field?.season?.id ?? NO_SEASON);
 
   const fieldType = form.watch("fieldType");
   const needsOptions = fieldType === "select";
@@ -262,6 +283,7 @@ function FieldDialog({
         required: data.required,
         showInList: presents || data.showInList,
         presentation: presents,
+        seasonId: seasonId === NO_SEASON ? null : seasonId,
         ...(field.fieldType === "select" ? { options } : {}),
       });
     } else {
@@ -271,6 +293,7 @@ function FieldDialog({
         required: data.required,
         showInList: presents || data.showInList,
         presentation: presents,
+        seasonId: seasonId === NO_SEASON ? null : seasonId,
         ...(needsOptions ? { options } : {}),
       });
     }
@@ -362,6 +385,30 @@ function FieldDialog({
                 </p>
               </div>
             )}
+
+            {/* A field about one season — a jersey number for 2026 — leaves
+                the roster once that season is over. The values stay. */}
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="field-season">{t("settings.team.season")}</Label>
+              <Select value={seasonId} onValueChange={setSeasonId}>
+                <SelectTrigger id="field-season" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NO_SEASON}>
+                    {t("settings.team.seasonNone")}
+                  </SelectItem>
+                  {(seasons.data?.seasons ?? []).map((season) => (
+                    <SelectItem key={season.id} value={season.id}>
+                      {season.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-muted-foreground">
+                {t("settings.team.seasonHint")}
+              </p>
+            </div>
 
             <FormField
               control={form.control}

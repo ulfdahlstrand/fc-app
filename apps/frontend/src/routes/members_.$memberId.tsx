@@ -26,6 +26,7 @@ import { ensureMe } from "../lib/auth";
 import { ensureMyClubs, useHasPermission, useSelectedTeam } from "../lib/clubs";
 import { useMemberContacts } from "../lib/guardians";
 import { useMemberGroups } from "../lib/groups";
+import { fieldLabel } from "../lib/member-field-view";
 import { useMemberFields, useSetMemberFieldValues } from "../lib/member-fields";
 import {
   formatMemberName,
@@ -185,7 +186,7 @@ function MemberDetail({
                 <div key={field.id}>
                   {index > 0 && <div className="mb-4 border-t" />}
                   <Field
-                    label={field.name}
+                    label={fieldLabel(field)}
                     value={formatFieldValue(field, m.customFields[field.id], t)}
                   />
                 </div>
