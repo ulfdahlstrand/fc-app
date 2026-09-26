@@ -154,6 +154,7 @@
       "fill": "Fill in"
     },
     "lastAssessed": "Last assessed",
+    "assessedBy": "Assessed by",
     "neverAssessed": "Never assessed",
     "noMetrics": "The team tracks no development metrics yet.",
     "ungrouped": "No group",

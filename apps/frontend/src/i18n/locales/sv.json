@@ -154,6 +154,7 @@
       "fill": "Fyll i"
     },
     "lastAssessed": "Senast bedömd",
+    "assessedBy": "Bedömd av",
     "neverAssessed": "Aldrig bedömd",
     "noMetrics": "Laget följer inga utvecklingsmått än.",
     "ungrouped": "Utan grupp",
