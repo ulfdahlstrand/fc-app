@@ -7,15 +7,16 @@
  * has never been assessed says so rather than disappearing.
  *
  * Same shapes as the list: a table on the desktop, grouped the same way, and a
- * row per member on the phone. A row leads to the member, where the history is.
+ * row per member on the phone.
  *
- * Each row ends in a `+` that records a new assessment right here, in the same
- * dialog the member page uses — going through the squad one by one should not
- * mean leaving the list and coming back for every child.
+ * Everything happens in place, in the same dialog the member page uses — going
+ * through the squad one by one should not mean leaving the list and coming
+ * back for every child. A row opens its latest assessment, or a new one for a
+ * member never assessed; its `…` holds that same edit, a new assessment and
+ * the way to the member's history.
  */
 import { Fragment, useState } from "react";
-import { PlusIcon } from "lucide-react";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import type {
   DevelopmentAssessment,
@@ -25,8 +26,8 @@ import type {
 } from "@fc-app/contracts";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { DevelopmentAssessmentDialog } from "@/components/DevelopmentAssessmentDialog";
+import { RowActions } from "@/components/RowActions";
 import {
   Table,
   TableBody,
@@ -57,7 +58,11 @@ export function MemberDevelopmentOverview({
   const locale = useDateLocale();
   const navigate = useNavigate();
   const development = useTeamDevelopment(teamId);
-  const [assessing, setAssessing] = useState<Member | null>(null);
+  /** The open dialog: whose, and the occasion when correcting one. */
+  const [assessing, setAssessing] = useState<{
+    member: Member;
+    assessment?: DevelopmentAssessment | undefined;
+  } | null>(null);
 
   if (development.isPending) {
     return <p className="text-muted-foreground">{t("common.loading")}</p>;
@@ -92,32 +97,51 @@ export function MemberDevelopmentOverview({
     { groupId: null, name: "", members },
   ];
 
-  const addButton = (member: Member) => (
-    <Button
-      type="button"
-      size="icon"
-      variant="ghost"
-      aria-label={t("development.newAssessmentFor", {
-        name: formatMemberName(member),
-      })}
-      title={t("development.newAssessment")}
-      // The row itself leads to the member; this one stays on the list.
-      onClick={(event) => {
-        event.stopPropagation();
-        setAssessing(member);
-      }}
-      className="flex-none"
-    >
-      <PlusIcon aria-hidden className="size-5" />
-    </Button>
-  );
+  const open = (member: Member) =>
+    setAssessing({ member, assessment: latestByMember.get(member.id) });
+
+  const actions = (member: Member) => {
+    const latest = latestByMember.get(member.id);
+    return (
+      <RowActions
+        compact={compact}
+        title={formatMemberName(member)}
+        label={t("development.actionsFor", { name: formatMemberName(member) })}
+        actions={[
+          // The same as clicking the row, but a menu that lists what a row can
+          // do should not leave out the thing it does most.
+          ...(latest
+            ? [
+                {
+                  label: t("development.editAssessment"),
+                  onSelect: () => setAssessing({ member, assessment: latest }),
+                },
+              ]
+            : []),
+          {
+            label: t("development.newAssessment"),
+            onSelect: () => setAssessing({ member }),
+          },
+          {
+            label: t("development.openHistory"),
+            onSelect: () =>
+              navigate({
+                to: "/members/$memberId",
+                params: { memberId: member.id },
+              }),
+          },
+        ]}
+      />
+    );
+  };
 
   const dialog = assessing && (
     <DevelopmentAssessmentDialog
       teamId={teamId}
-      memberId={assessing.id}
-      memberName={formatMemberName(assessing)}
+      memberId={assessing.member.id}
+      memberName={formatMemberName(assessing.member)}
       metrics={development.data.metrics}
+      assessment={assessing.assessment}
       onClose={() => setAssessing(null)}
     />
   );
@@ -135,16 +159,16 @@ export function MemberDevelopmentOverview({
             {section.members.map((member) => {
               const latest = latestByMember.get(member.id);
               return (
-                // A link cannot hold a button, so the card is the row and the
-                // link fills everything but the `+`.
+                // A button cannot hold a button, so the card is the row and
+                // the open button fills everything but the `…`.
                 <div
                   key={member.id}
                   className="bg-card hover:bg-secondary flex items-start gap-1 rounded-lg pr-1 transition-colors duration-[120ms] ease-standard"
                 >
-                  <Link
-                    to="/members/$memberId"
-                    params={{ memberId: member.id }}
-                    className="flex min-w-0 flex-1 flex-col gap-2 px-4 py-3"
+                  <button
+                    type="button"
+                    onClick={() => open(member)}
+                    className="flex min-w-0 flex-1 flex-col gap-2 px-4 py-3 text-left"
                   >
                     <span className="flex flex-col">
                       <span className="truncate font-semibold">
@@ -168,8 +192,8 @@ export function MemberDevelopmentOverview({
                         ))}
                       </dl>
                     )}
-                  </Link>
-                  <div className="pt-1">{addButton(member)}</div>
+                  </button>
+                  <div className="pt-1">{actions(member)}</div>
                 </div>
               );
             })}
@@ -191,7 +215,7 @@ export function MemberDevelopmentOverview({
               <TableHead key={metric.id}>{metric.name}</TableHead>
             ))}
             <TableHead>
-              <span className="sr-only">{t("development.newAssessment")}</span>
+              <span className="sr-only">{t("development.actions")}</span>
             </TableHead>
           </TableRow>
         </TableHeader>
@@ -214,12 +238,7 @@ export function MemberDevelopmentOverview({
                   <TableRow
                     key={member.id}
                     className="cursor-pointer"
-                    onClick={() =>
-                      navigate({
-                        to: "/members/$memberId",
-                        params: { memberId: member.id },
-                      })
-                    }
+                    onClick={() => open(member)}
                   >
                     <TableCell>{formatMemberName(member)}</TableCell>
                     <TableCell
@@ -233,7 +252,7 @@ export function MemberDevelopmentOverview({
                       </TableCell>
                     ))}
                     <TableCell className="w-0 py-1 text-right">
-                      {addButton(member)}
+                      {actions(member)}
                     </TableCell>
                   </TableRow>
                 );
