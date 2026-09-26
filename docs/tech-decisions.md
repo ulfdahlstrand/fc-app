@@ -1197,3 +1197,47 @@ and a password put on it by somebody else is a takeover.
 - An account with neither a password nor a Google identity (created and never
   used) shows as such and cannot be helped in with a reset — it is created with
   a password, so this only happens to rows made by hand.
+
+---
+
+## ADR-027 — 2026-09-26 — Sign-in attempts are recorded for site admins
+
+**Status:** Accepted
+
+**Context:**
+Since ADR-025 a password typed on the login page is always checked, and
+accounts exist whose passwords were chosen by someone else. Whoever runs the
+installation had no way to see whether an address was being guessed at, whether
+someone they gave an account to ever got in, or why a person says "it doesn't
+work". The rate limits refuse quietly and forget within fifteen minutes.
+
+**Decision:**
+- Every attempt to sign in writes a row to **`login_attempts`**: the way in
+  (`password`, `google`, `email_link` for the verify and reset links), how it
+  ended (`success`, `invalid_credentials`, `invalid_token`, `rate_limited`,
+  `failed`), the address typed or given by Google, the account when the attempt
+  resolved to one, the client IP and the user agent.
+- The address is kept **even when no account has it** — an unknown address being
+  tried is what an audit is for. A wrong password does not name the account
+  either: the row says what was typed, not what it matched.
+- Recording **never decides the attempt**. `recordLoginAttempt` swallows and logs
+  its own errors, so a sign-in that would have worked still works.
+- Rows are **pruned after 90 days**, as new ones are written — no scheduled job.
+  An address and an IP are personal data, and a rolling window is all an audit
+  of this kind needs.
+- Site admins read it at `/admin` (`siteAdminLoginAttempts`), newest first, 50
+  at a time, filtered by part of an address and to failures.
+
+**Alternatives considered:**
+- **Application logs only.** Render keeps them briefly and nobody but the
+  operator with a dashboard login can search them; the page is the point.
+- **Recording only failures.** A success is the answer to "did they ever get
+  in?", and an unexpected success is the most interesting row there is.
+
+**Consequences:**
+- The IP is the first `X-Forwarded-For` entry, which a client can forge; it
+  points somewhere, it proves nothing.
+- Each attempt costs an insert and a pruning delete. The `created_at` index keeps
+  both cheap at the volume a club app sees.
+- Invalid input (a malformed body) is refused before it counts as an attempt and
+  is not recorded.

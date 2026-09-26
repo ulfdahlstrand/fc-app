@@ -69,7 +69,7 @@ tracked items) is **configuration data, not code**.
 | Team settings | `/settings/team` | A section menu over coaches of the team (admin only), activity types, attendance statuses, seasons, adding a member and inviting imported guardians, member field definitions, tracking list definitions, development metrics. One section at a time, addressed by `?section=` |
 | Club settings | `/settings/club` | Club profile, teams, roles & permissions, users & invitations |
 | My profile | `/profile` | Own account, linked members, language |
-| Site admin | `/admin` | Site admins only (ADR-025, ADR-026): create an account with email and password, placed in the current club with a role; below that every account in the installation, searchable, with a new password for one that already has one |
+| Site admin | `/admin` | Site admins only (ADR-025, ADR-026): create an account with email and password, placed in the current club with a role; below that every account in the installation, searchable, with a new password for one that already has one; read every sign-in attempt, filterable by address and to failures (ADR-027) |
 
 ## Features by area
 
@@ -81,7 +81,7 @@ tracked items) is **configuration data, not code**.
   password the same way, through "Forgot password". Passwords are at least 10
   characters and are stored only as a scrypt hash.
 - **Site admins** (ADR-025) — whoever runs the installation, flagged with SQL —
-  can create an account directly, with an address and password they hand over,
+  can read the sign-in audit (ADR-027) and create an account directly, with an address and password they hand over,
   and place it in a club with a role. It only creates: an address that already
   has an account is refused. Signing in with a password works without mail;
   registering and resetting wait until mail is configured.

@@ -100,6 +100,7 @@ import {
   siteAdminCreateUserHandler,
   siteAdminSetPasswordHandler,
   siteAdminUsersHandler,
+  siteAdminLoginAttemptsHandler,
 } from "./procedures/site-admin.js";
 import {
   createMemberHandler,
@@ -153,6 +154,7 @@ export const router = os.router({
   siteAdminCreateUser: siteAdminCreateUserHandler,
   siteAdminUsers: siteAdminUsersHandler,
   siteAdminSetPassword: siteAdminSetPasswordHandler,
+  siteAdminLoginAttempts: siteAdminLoginAttemptsHandler,
   myClubs: myClubsHandler,
   createClub: createClubHandler,
   listRoles: listRolesHandler,

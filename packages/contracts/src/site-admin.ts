@@ -9,7 +9,7 @@
 
 import { z } from "zod";
 import { accountEmailSchema, passwordSchema } from "./auth.js";
-import { isoInstantSchema } from "./common.js";
+import { isoInstantSchema, queryBooleanSchema } from "./common.js";
 
 /** What the create form needs from a club: its roles and its teams. */
 export const siteAdminClubInputSchema = z.object({
@@ -101,3 +101,48 @@ export type SiteAdminCreateUserInput = z.infer<
   typeof siteAdminCreateUserInputSchema
 >;
 export type SiteAdminUser = z.infer<typeof siteAdminUserSchema>;
+
+/** Sign-in audit (ADR-027): the attempts to sign in, newest first. */
+export const LOGIN_METHODS = ["password", "google", "email_link"] as const;
+export const LOGIN_OUTCOMES = [
+  "success",
+  "invalid_credentials",
+  "invalid_token",
+  "rate_limited",
+  "failed",
+] as const;
+
+export const LOGIN_ATTEMPTS_PAGE_SIZE = 50;
+
+export const siteAdminLoginAttemptsInputSchema = z.object({
+  /** Part of an address, matched case-insensitively. */
+  email: z.string().trim().max(254).optional(),
+  onlyFailures: queryBooleanSchema.optional(),
+  /** The id of the last row already shown; the page continues after it. */
+  after: z.uuid().optional(),
+});
+
+export const loginAttemptSchema = z.object({
+  id: z.string(),
+  at: isoInstantSchema,
+  method: z.enum(LOGIN_METHODS),
+  outcome: z.enum(LOGIN_OUTCOMES),
+  /** As typed, or the account's own when the attempt named none (email links). */
+  email: z.string().nullable(),
+  /** The account the attempt resolved to, if it did. */
+  userName: z.string().nullable(),
+  ip: z.string().nullable(),
+  userAgent: z.string().nullable(),
+});
+
+export const siteAdminLoginAttemptsOutputSchema = z.object({
+  attempts: z.array(loginAttemptSchema),
+  /** Pass as `after` for the next page; null when there is none. */
+  nextAfter: z.string().nullable(),
+});
+
+export type LoginAttempt = z.infer<typeof loginAttemptSchema>;
+export type LoginAttemptOutcome = (typeof LOGIN_OUTCOMES)[number];
+export type SiteAdminLoginAttemptsInput = z.infer<
+  typeof siteAdminLoginAttemptsInputSchema
+>;

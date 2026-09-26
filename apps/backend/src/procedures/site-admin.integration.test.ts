@@ -13,6 +13,7 @@ import { call, ORPCError } from "@orpc/server";
 import type { Kysely } from "kysely";
 import type { AppContext } from "../context.js";
 import type { Database } from "../db/types.js";
+import { recordLoginAttempt } from "../auth/login-audit.js";
 import { login } from "../auth/password-flows.js";
 import { closeTestDb, testDb, truncateAll } from "../test/database.js";
 import {
@@ -24,6 +25,7 @@ import {
 import {
   siteAdminClubHandler,
   siteAdminCreateUserHandler,
+  siteAdminLoginAttemptsHandler,
   siteAdminSetPasswordHandler,
   siteAdminUsersHandler,
 } from "./site-admin.js";
@@ -465,5 +467,190 @@ describe("siteAdminSetPassword", () => {
       "FORBIDDEN"
     );
     expect(await login(db, "ny.tranare@example.test", PASSWORD)).toBe(userId);
+  });
+});
+
+describe("siteAdminLoginAttempts", () => {
+  it("lists attempts newest first, naming the account an email link used", async () => {
+    await recordLoginAttempt(db, {
+      method: "password",
+      outcome: "invalid_credentials",
+      email: "someone@example.test",
+      ip: "203.0.113.7",
+    });
+    await recordLoginAttempt(db, {
+      method: "email_link",
+      outcome: "success",
+      userId: clubAdmin.userId,
+    });
+
+    const { attempts, nextAfter } = await call(
+      siteAdminLoginAttemptsHandler,
+      {},
+      { context: siteAdmin }
+    );
+
+    expect(nextAfter).toBeNull();
+    expect(attempts).toEqual([
+      expect.objectContaining({
+        method: "email_link",
+        outcome: "success",
+        email: clubAdmin.email,
+        userName: "Test User",
+      }),
+      expect.objectContaining({
+        method: "password",
+        outcome: "invalid_credentials",
+        email: "someone@example.test",
+        userName: null,
+        ip: "203.0.113.7",
+      }),
+    ]);
+  });
+
+  it("filters by part of an address, and to failures", async () => {
+    await recordLoginAttempt(db, { method: "password", outcome: "success", email: "anna@club.test" });
+    await recordLoginAttempt(db, { method: "password", outcome: "invalid_credentials", email: "anna@club.test" });
+    await recordLoginAttempt(db, { method: "password", outcome: "invalid_credentials", email: "bo@club.test" });
+    // A typed % is a character, not "match everything".
+    await recordLoginAttempt(db, { method: "password", outcome: "failed", email: "odd%name@club.test" });
+
+    const failuresForAnna = await call(
+      siteAdminLoginAttemptsHandler,
+      { email: "ANNA", onlyFailures: true },
+      { context: siteAdmin }
+    );
+    expect(failuresForAnna.attempts.map((a) => [a.email, a.outcome])).toEqual([
+      ["anna@club.test", "invalid_credentials"],
+    ]);
+
+    const percent = await call(
+      siteAdminLoginAttemptsHandler,
+      { email: "%" },
+      { context: siteAdmin }
+    );
+    expect(percent.attempts.map((a) => a.email)).toEqual(["odd%name@club.test"]);
+  });
+
+  it("pages through with the cursor it hands out", async () => {
+    for (let i = 0; i < 55; i++) {
+      await recordLoginAttempt(db, { method: "google", outcome: "success", email: `u${i}@example.test` });
+    }
+
+    const first = await call(siteAdminLoginAttemptsHandler, {}, { context: siteAdmin });
+    expect(first.attempts).toHaveLength(50);
+    expect(first.nextAfter).not.toBeNull();
+
+    const second = await call(
+      siteAdminLoginAttemptsHandler,
+      { after: first.nextAfter ?? undefined },
+      { context: siteAdmin }
+    );
+    expect(second.attempts).toHaveLength(5);
+    expect(second.nextAfter).toBeNull();
+    const ids = new Set([...first.attempts, ...second.attempts].map((a) => a.id));
+    expect(ids.size).toBe(55);
+  });
+
+  it("is refused to a club admin who is not a site admin", async () => {
+    await expectRefused(
+      call(siteAdminLoginAttemptsHandler, {}, { context: clubAdmin.context }),
+      "FORBIDDEN"
+    );
+  });
+});
+
+describe("siteAdminLoginAttempts", () => {
+  it("lists attempts newest first, naming the account an email link used", async () => {
+    await recordLoginAttempt(db, {
+      method: "password",
+      outcome: "invalid_credentials",
+      email: "someone@example.test",
+      ip: "203.0.113.7",
+    });
+    await recordLoginAttempt(db, {
+      method: "email_link",
+      outcome: "success",
+      userId: clubAdmin.userId,
+    });
+
+    const { attempts, nextAfter } = await call(
+      siteAdminLoginAttemptsHandler,
+      {},
+      { context: siteAdmin }
+    );
+
+    expect(nextAfter).toBeNull();
+    expect(attempts).toEqual([
+      expect.objectContaining({
+        method: "email_link",
+        outcome: "success",
+        email: clubAdmin.email,
+        userName: "Test User",
+      }),
+      expect.objectContaining({
+        method: "password",
+        outcome: "invalid_credentials",
+        email: "someone@example.test",
+        userName: null,
+        ip: "203.0.113.7",
+      }),
+    ]);
+  });
+
+  it("filters by part of an address, and to failures", async () => {
+    const password = { method: "password" } as const;
+    await recordLoginAttempt(db, { ...password, outcome: "success", email: "anna@club.test" });
+    await recordLoginAttempt(db, { ...password, outcome: "invalid_credentials", email: "anna@club.test" });
+    await recordLoginAttempt(db, { ...password, outcome: "invalid_credentials", email: "bo@club.test" });
+    // A typed % is a character, not "match everything".
+    await recordLoginAttempt(db, { ...password, outcome: "failed", email: "odd%name@club.test" });
+
+    const failuresForAnna = await call(
+      siteAdminLoginAttemptsHandler,
+      { email: "ANNA", onlyFailures: true },
+      { context: siteAdmin }
+    );
+    expect(failuresForAnna.attempts.map((a) => [a.email, a.outcome])).toEqual([
+      ["anna@club.test", "invalid_credentials"],
+    ]);
+
+    const percent = await call(
+      siteAdminLoginAttemptsHandler,
+      { email: "%" },
+      { context: siteAdmin }
+    );
+    expect(percent.attempts.map((a) => a.email)).toEqual(["odd%name@club.test"]);
+  });
+
+  it("pages through with the cursor it hands out", async () => {
+    for (let i = 0; i < 55; i++) {
+      await recordLoginAttempt(db, {
+        method: "google",
+        outcome: "success",
+        email: `u${i}@example.test`,
+      });
+    }
+
+    const first = await call(siteAdminLoginAttemptsHandler, {}, { context: siteAdmin });
+    expect(first.attempts).toHaveLength(50);
+    expect(first.nextAfter).not.toBeNull();
+
+    const second = await call(
+      siteAdminLoginAttemptsHandler,
+      { after: first.nextAfter ?? undefined },
+      { context: siteAdmin }
+    );
+    expect(second.attempts).toHaveLength(5);
+    expect(second.nextAfter).toBeNull();
+    const ids = new Set([...first.attempts, ...second.attempts].map((a) => a.id));
+    expect(ids.size).toBe(55);
+  });
+
+  it("is refused to a club admin who is not a site admin", async () => {
+    await expectRefused(
+      call(siteAdminLoginAttemptsHandler, {}, { context: clubAdmin.context }),
+      "FORBIDDEN"
+    );
   });
 });
