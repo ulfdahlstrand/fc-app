@@ -3,6 +3,7 @@ import { ORPCError } from "@orpc/server";
 import type { Kysely, Selectable } from "kysely";
 import type {
   Callup,
+  CallupCriteria,
   CallupInvitation,
   CallupResponse,
 } from "@fc-app/contracts";
@@ -14,6 +15,11 @@ import type {
 } from "../db/types.js";
 import { os, requireUser } from "../orpc.js";
 import { requireTeamPermission } from "../tenancy/membership.js";
+import {
+  assertSlots,
+  loadTemplate,
+  requireLevelScale,
+} from "./callup-templates.js";
 
 /** Call-ups (issue #16) — the matchtrupp. */
 function toCallup(row: Selectable<CallupsTable>): Callup {
@@ -22,6 +28,56 @@ function toCallup(row: Selectable<CallupsTable>): Callup {
     activityId: row.activity_id,
     note: row.note,
     published: row.published,
+  };
+}
+
+/** The criteria a call-up was set up with, or null when none were chosen. */
+function toCriteria(row: Selectable<CallupsTable>): CallupCriteria | null {
+  if (row.slots === null) return null;
+  return {
+    templateId: row.template_id,
+    minAttendanceRate: row.min_attendance_rate,
+    slots: row.slots,
+    minCoachChildren: row.min_coach_children,
+  };
+}
+
+/**
+ * The columns a criteria write sets, checked against the template's scale.
+ * A mix only means something on the scale it names steps of, so criteria
+ * without a match level are refused rather than stored adrift.
+ */
+async function criteriaColumns(
+  db: Kysely<Database>,
+  teamId: string,
+  criteria: CallupCriteria | null
+): Promise<{
+  template_id: string | null;
+  min_attendance_rate: number | null;
+  slots: string | null;
+  min_coach_children: number;
+}> {
+  if (criteria === null) {
+    return {
+      template_id: null,
+      min_attendance_rate: null,
+      slots: null,
+      min_coach_children: 0,
+    };
+  }
+  if (criteria.templateId === null) {
+    throw new ORPCError("BAD_REQUEST", { message: "Pick a match level first" });
+  }
+  const template = await loadTemplate(db, teamId, criteria.templateId);
+  assertSlots(
+    criteria.slots,
+    await requireLevelScale(db, teamId, template.level_metric_id)
+  );
+  return {
+    template_id: template.id,
+    min_attendance_rate: criteria.minAttendanceRate,
+    slots: JSON.stringify(criteria.slots),
+    min_coach_children: criteria.minCoachChildren,
   };
 }
 
@@ -99,11 +155,12 @@ export const getCallupHandler = os.getCallup.handler(
     // An activity has no call-up until a squad is first saved; that is a
     // null, not an empty one, so the UI can tell "not started" from "emptied".
     const callup = await loadCallup(db, input.activityId);
-    if (!callup) return { callup: null, invitations: [] };
+    if (!callup) return { callup: null, invitations: [], criteria: null };
 
     return {
       callup: toCallup(callup),
       invitations: await loadInvitations(db, callup.id),
+      criteria: toCriteria(callup),
     };
   }
 );
@@ -130,6 +187,11 @@ export const setCallupSquadHandler = os.setCallupSquad.handler(
         });
       }
     }
+
+    const criteria =
+      input.criteria === undefined
+        ? undefined
+        : await criteriaColumns(db, input.teamId, input.criteria);
 
     // One transaction: a squad that half-saved would leave a coach unsure who
     // has actually been called up.
@@ -175,18 +237,18 @@ export const setCallupSquadHandler = os.setCallupSquad.handler(
           .execute();
       }
 
-      await trx
+      return await trx
         .updateTable("callups")
-        .set({ updated_at: new Date() })
+        .set({ ...criteria, updated_at: new Date() })
         .where("id", "=", row.id)
-        .execute();
-
-      return row;
+        .returningAll()
+        .executeTakeFirstOrThrow();
     });
 
     return {
       callup: toCallup(callup),
       invitations: await loadInvitations(db, callup.id),
+      criteria: toCriteria(callup),
     };
   }
 );

@@ -1,6 +1,7 @@
 /** Squad selection and the answers to it (ADR-013, ADR-016). */
 
 import { z } from "zod";
+import { callupCriteriaSchema } from "./callup-criteria.js";
 import { isoInstantSchema, queryBooleanSchema } from "./common.js";
 
 export const callupResponseSchema = z.enum([
@@ -51,18 +52,26 @@ export const getCallupOutputSchema = z.object({
   /** null until a squad is first saved — an activity has no call-up by default. */
   callup: callupSchema.nullable(),
   invitations: z.array(callupInvitationSchema),
+  /** The match level and mix; null until a coach picks one (ADR-028). */
+  criteria: callupCriteriaSchema.nullable(),
 });
 
-/** The squad, as a whole. */
+/**
+ * The squad, as a whole — and the criteria it was picked by, since a coach
+ * settles both in one sitting and saves them with one button (ADR-019).
+ * Leaving `criteria` out keeps what is stored; null clears it.
+ */
 export const setCallupSquadInputSchema = z.object({
   teamId: z.string(),
   activityId: z.string(),
   memberIds: z.array(z.string()),
+  criteria: callupCriteriaSchema.nullable().optional(),
 });
 
 export const setCallupSquadOutputSchema = z.object({
   callup: callupSchema,
   invitations: z.array(callupInvitationSchema),
+  criteria: callupCriteriaSchema.nullable(),
 });
 
 export const updateCallupInputSchema = z.object({

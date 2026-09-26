@@ -25,6 +25,7 @@ export * from "./seasons.js";
 export * from "./attendance.js";
 export * from "./attendance-import.js";
 export * from "./callups.js";
+export * from "./callup-criteria.js";
 export * from "./posts.js";
 export * from "./tracking.js";
 export * from "./development.js";

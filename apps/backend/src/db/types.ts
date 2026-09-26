@@ -272,8 +272,35 @@ export interface CallupsTable {
   note: string | null;
   /** Draft until a coach publishes: picking a squad is not telling it. */
   published: Generated<boolean>;
+  /** The match level (ADR-028); null when none was chosen. */
+  template_id: string | null;
+  min_attendance_rate: number | null;
+  /** `CallupSlot[]`, copied from the template; null when no criteria are set. */
+  slots: ColumnType<CallupSlotRow[] | null, string | null, string | null>;
+  min_coach_children: Generated<number>;
   created_at: Timestamp;
   updated_at: ColumnType<Date, never, Date>;
+}
+
+/** One slot as stored in jsonb — see `callupSlotSchema`. */
+export interface CallupSlotRow {
+  count: number;
+  levels: number[];
+}
+
+export interface CallupTemplatesTable {
+  id: Generated<string>;
+  team_id: string;
+  name: string;
+  level_metric_id: string;
+  min_attendance_rate: number | null;
+  /** Null means every activity type that does not take call-ups. */
+  attendance_activity_type_id: string | null;
+  slots: ColumnType<CallupSlotRow[], string, string>;
+  min_coach_children: Generated<number>;
+  sort_order: Generated<number>;
+  archived: Generated<boolean>;
+  created_at: Timestamp;
 }
 
 export interface CallupInvitationsTable {
@@ -476,6 +503,7 @@ export interface Database {
   attendance_statuses: AttendanceStatusesTable;
   attendance_records: AttendanceRecordsTable;
   callups: CallupsTable;
+  callup_templates: CallupTemplatesTable;
   callup_invitations: CallupInvitationsTable;
   tracking_definitions: TrackingDefinitionsTable;
   tracking_entries: TrackingEntriesTable;

@@ -6,6 +6,7 @@ import { archiveAttendanceStatusInputSchema, archiveAttendanceStatusOutputSchema
 import { commitAttendanceImportInputSchema, commitAttendanceImportOutputSchema, previewAttendanceImportInputSchema, previewAttendanceImportOutputSchema } from "./attendance-import.js";
 import { authOptionsInputSchema, authOptionsOutputSchema, meInputSchema, meOutputSchema } from "./auth.js";
 import { getCallupInputSchema, getCallupOutputSchema, listCallupsInputSchema, listCallupsOutputSchema, myCallupsInputSchema, myCallupsOutputSchema, respondToCallupInputSchema, respondToCallupOutputSchema, setCallupSquadInputSchema, setCallupSquadOutputSchema, updateCallupInputSchema, updateCallupOutputSchema } from "./callups.js";
+import { archiveCallupTemplateInputSchema, archiveCallupTemplateOutputSchema, callupCandidatesInputSchema, callupCandidatesOutputSchema, createCallupTemplateInputSchema, createCallupTemplateOutputSchema, listCallupTemplatesInputSchema, listCallupTemplatesOutputSchema, updateCallupTemplateInputSchema, updateCallupTemplateOutputSchema } from "./callup-criteria.js";
 import { createClubInputSchema, createClubOutputSchema, myClubsInputSchema, myClubsOutputSchema } from "./clubs.js";
 import { addCoachByEmailInputSchema, addCoachByEmailOutputSchema, addMemberAsCoachInputSchema, addMemberAsCoachOutputSchema, addTeamCoachInputSchema, addTeamCoachOutputSchema, listTeamCoachesInputSchema, listTeamCoachesOutputSchema, removeTeamCoachInputSchema, removeTeamCoachOutputSchema } from "./coaches.js";
 import { dashboardInputSchema, dashboardOutputSchema } from "./dashboard.js";
@@ -346,6 +347,26 @@ export const contract = oc.router({
     .route({ method: "POST", path: "/callups/update" })
     .input(updateCallupInputSchema)
     .output(updateCallupOutputSchema),
+  callupCandidates: oc
+    .route({ method: "GET", path: "/callups/candidates" })
+    .input(callupCandidatesInputSchema)
+    .output(callupCandidatesOutputSchema),
+  listCallupTemplates: oc
+    .route({ method: "GET", path: "/callup-templates" })
+    .input(listCallupTemplatesInputSchema)
+    .output(listCallupTemplatesOutputSchema),
+  createCallupTemplate: oc
+    .route({ method: "POST", path: "/callup-templates" })
+    .input(createCallupTemplateInputSchema)
+    .output(createCallupTemplateOutputSchema),
+  updateCallupTemplate: oc
+    .route({ method: "POST", path: "/callup-templates/update" })
+    .input(updateCallupTemplateInputSchema)
+    .output(updateCallupTemplateOutputSchema),
+  archiveCallupTemplate: oc
+    .route({ method: "POST", path: "/callup-templates/archive" })
+    .input(archiveCallupTemplateInputSchema)
+    .output(archiveCallupTemplateOutputSchema),
   respondToCallup: oc
     .route({ method: "POST", path: "/callups/respond" })
     .input(respondToCallupInputSchema)

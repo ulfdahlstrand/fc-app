@@ -1241,3 +1241,83 @@ work". The rate limits refuse quietly and forget within fifteen minutes.
   both cheap at the volume a club app sees.
 - Invalid input (a malformed body) is refused before it counts as an attempt and
   is not recorded.
+
+## ADR-028 — 2026-09-27 — A proposed squad is a draft; rotation counts attendance
+
+**Status:** Accepted
+
+**Context:**
+Matches are booked at a level, and a squad for a level is a *mix* — an easy
+match might want six easy players, two medium and two extra easy. Coaches also
+want everyone to get roughly the same number of matches over a season, only
+players who train, and players on the line between two levels to play at both.
+Until now the squad was picked by hand, one tap per player, with nothing on the
+screen to say who had played how much.
+
+**Decision:**
+- A **match level** is a `callup_templates` row per team (ADR-005): a name, the
+  `scale` development metric that holds a player's level, an optional least
+  training attendance, which activity type counts as training (null = every
+  type without call-ups), and **slots** — `{count, levels[]}` as jsonb.
+- A slot lists the **scale steps allowed to fill it, outright**. A borderline
+  player is a step the team added to its scale ("Lätt/Medel") and ticked in two
+  slots. No label is parsed and no "half-step" concept exists in code.
+- A call-up **copies** the criteria it was set up with (`template_id`,
+  `min_attendance_rate`, `slots`) rather than reading the template live, so a
+  mix adjusted for one match leaves the template alone and a template edited
+  later does not rewrite what past matches asked for. `template_id` stays as
+  the match's level, which rotation counts by. The criteria are saved **with
+  the squad**, by the same button (ADR-019); leaving them out keeps what is
+  stored, null clears them.
+- The rule is `suggestSquad` in the contract, pure and shared (ADR-010/016). The
+  screen runs it, so the proposal follows the mix as it is edited; the server
+  only supplies the numbers (`callupCandidates`):
+  - level = the member's **latest** value on the metric;
+  - attendance = attended ÷ marked (ADR-012) on training in the period, where
+    fewer than `AT_RISK_MIN_MARKED` marked sessions is *unknown*, not low;
+  - matches played = matches (types with `supports_call_ups`) the player was
+    **registered present** at — not invited to, not accepted;
+  - the period is the season containing the match, up to the match; with no
+    season, the 90 days before it.
+- Slots are filled **tightest first** (least slack between eligible players and
+  places), and within a slot by fewest matches played, then fewest at this
+  level, then higher attendance, then name. Tightest-first stops a wide slot
+  from taking the only players a narrow one could use.
+- A match level may require **at least N coach children** (`min_coach_children`,
+  copied like the rest). A coach child is a member one of whose guardians
+  (`member_guardians`) may pick this team's squad — a membership reaching the
+  team whose role grants `callups.manage` — so no role name is assumed. The
+  squad is filled as usual first; only if it holds too few coach children is
+  one brought in: the coach child **closest to being picked anyway**, in place
+  of the player with the weakest claim to that slot, or into a place nobody
+  could fill. Picking the coach child who had played least instead was tried
+  and rejected by simulation: it kept pulling in the one at the level with
+  fewest places, who then played twice as much as their peers. When no coach
+  child fits the mix and the threshold, the proposal says so rather than
+  failing.
+- A proposal **saves nothing** (ADR-013). It replaces the squad on screen; the
+  coach adjusts and saves as always. Excluded players stay pickable by hand.
+- `callupCandidates` is gated on **`callups.manage`**, not `development.manage`
+  (ADR-011): the question is who to pick. Only the level number crosses over —
+  never an assessment's note or history.
+
+**Alternatives considered:**
+- **Levels as groups.** Groups have no order and no history; a level changes
+  over a season and the latest assessment is the one that counts.
+- **A borderline flag on the assessment.** A second concept beside the scale,
+  and still a question of which slots it widens to — ticking the step in the
+  slots answers that directly.
+- **Solving the placement optimally.** A matching algorithm would find a fill
+  the greedy pass misses in contrived cases; with a handful of slots and a
+  coach reviewing every proposal, the simple rule that can be explained in a
+  sentence wins.
+- **Counting accepted call-ups as played.** A yes is not a match; attendance
+  is what the team already records after the game.
+
+**Consequences:**
+- Rotation is only as good as match attendance: a team that never registers
+  who played will see everyone at zero and get alphabetical proposals.
+- A level with no assessment yet leaves the player out of proposals (marked
+  "no level") until a coach assesses them.
+- Archiving a template hides it from new call-ups; matches booked at it keep
+  counting towards "at this level".

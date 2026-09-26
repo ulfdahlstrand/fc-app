@@ -56,6 +56,12 @@ export const TEAM_SETTINGS_SECTIONS: readonly TeamSettingsSection[] = [
   { id: "member-fields", labelKey: "settings.team.fields", requires: null },
   { id: "tracking", labelKey: "settings.team.tracking", requires: null },
   { id: "development", labelKey: "settings.team.development", requires: null },
+  // After development: a match level is read off one of its scales.
+  {
+    id: "callup-templates",
+    labelKey: "callupTemplates.heading",
+    requires: null,
+  },
 ];
 
 export function visibleTeamSettingsSections(

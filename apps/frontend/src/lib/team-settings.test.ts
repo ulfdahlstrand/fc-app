@@ -31,6 +31,7 @@ describe("visibleTeamSettingsSections", () => {
       "member-fields",
       "tracking",
       "development",
+      "callup-templates",
     ]);
   });
 

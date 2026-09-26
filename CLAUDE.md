@@ -5,7 +5,7 @@ and should be read before changing anything structural:
 
 - `docs/product/product-spec.md` — what the product is, page by page
 - `docs/architecture.md` — components and the stack
-- `docs/tech-decisions.md` — ADR-001…ADR-023, the binding technical rules
+- `docs/tech-decisions.md` — ADR-001…ADR-028, the binding technical rules
 - `docs/design-decisions.md` — DDR-001…DDR-011, the Kit design language
 
 ## Recording a demo video when a task is finished

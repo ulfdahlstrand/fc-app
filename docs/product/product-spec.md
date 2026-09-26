@@ -155,6 +155,24 @@ tracked items) is **configuration data, not code**.
 - **Removing a member from a squad is silent**, published or not. It stays
   silent when notifications arrive later: being taken out of a squad is a
   conversation a coach should have, not a message an app should send.
+- **Match levels** (ADR-028): a match can be booked at a level set up in team
+  settings — "Lätt match" wants, say, 6 Lätt, 2 Medel and 2 Extra lätt. Each
+  player's level is their latest value on a development scale the team picks;
+  a borderline player is a step the team adds to that scale ("Lätt/Medel") and
+  may fill slots on either side of it. A level can also ask for a least
+  training attendance.
+- **Propose squad** fills the mix from the roster: players below the attendance
+  threshold or without a level are left out (and marked why), and within each
+  slot whoever has **played fewest matches** this season goes first — then
+  whoever has played fewest at this level, which is what rotates a borderline
+  player between levels over time. A played match is attendance registered on
+  it. The proposal is a draft like any squad: the coach adjusts it, and the mix
+  can be tweaked for the one match, before saving.
+- **Coach children**: a match level can require at least N coach children —
+  players one of whose guardians coaches the team — since a match can only be
+  coached if a coach is there, and a coach comes with their child. The proposal
+  meets it at the least cost to everyone else, and warns when no coach child
+  fits.
 
 ### 6. Communication
 - Posts/announcements to the team or targeted groups.
