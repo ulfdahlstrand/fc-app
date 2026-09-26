@@ -214,11 +214,13 @@ export function MemberDevelopmentOverview({
         <TableHeader>
           <TableRow>
             <TableHead>{t("members.name")}</TableHead>
-            <TableHead>{t("members.lastAssessed")}</TableHead>
-            <TableHead>{t("members.assessedBy")}</TableHead>
             {metrics.map((metric) => (
               <TableHead key={metric.id}>{metric.name}</TableHead>
             ))}
+            {/* When and by whom close the row, however many metrics a team
+                has, so they are always found in the same place. */}
+            <TableHead>{t("members.lastAssessed")}</TableHead>
+            <TableHead>{t("members.assessedBy")}</TableHead>
             <TableHead>
               <span className="sr-only">{t("development.actions")}</span>
             </TableHead>
@@ -246,17 +248,17 @@ export function MemberDevelopmentOverview({
                     onClick={() => open(member)}
                   >
                     <TableCell>{formatMemberName(member)}</TableCell>
+                    {metrics.map((metric) => (
+                      <TableCell key={metric.id}>
+                        <Reading metric={metric} assessment={latest} />
+                      </TableCell>
+                    ))}
                     <TableCell
                       className={latest ? undefined : "text-muted-foreground"}
                     >
                       {dateOf(latest)}
                     </TableCell>
                     <TableCell>{latest && authorOf(latest)}</TableCell>
-                    {metrics.map((metric) => (
-                      <TableCell key={metric.id}>
-                        <Reading metric={metric} assessment={latest} />
-                      </TableCell>
-                    ))}
                     <TableCell className="w-0 py-1 text-right">
                       {actions(member)}
                     </TableCell>
