@@ -15,6 +15,7 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ActivityTypes } from "@/components/settings/ActivityTypesSection";
+import { CallupTemplates } from "@/components/settings/CallupTemplatesSection";
 import { AttendanceStatuses } from "@/components/settings/AttendanceStatusesSection";
 import { DevelopmentMetrics } from "@/components/settings/DevelopmentMetricsSection";
 import { MemberAdmin } from "@/components/settings/MemberAdminSection";
@@ -178,6 +179,8 @@ function SectionBody({
       return <TrackingLists teamId={teamId} />;
     case "development":
       return <DevelopmentMetrics teamId={teamId} />;
+    case "callup-templates":
+      return <CallupTemplates teamId={teamId} />;
     default:
       return null;
   }

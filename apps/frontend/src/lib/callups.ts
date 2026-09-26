@@ -1,6 +1,6 @@
 /** Call-up data hooks (issue #16) — the matchtrupp. */
 import { useMutation, useQuery } from "@tanstack/react-query";
-import type { CallupResponse } from "@fc-app/contracts";
+import type { CallupCriteria, CallupResponse } from "@fc-app/contracts";
 import { orpc } from "../orpc-client";
 import { queryClient } from "../query-client";
 import { orpcQuery } from "./orpc-query";
@@ -24,8 +24,11 @@ async function invalidateCallup(
 
 export function useSetCallupSquad(teamId: string, activityId: string) {
   return useMutation({
-    mutationFn: (memberIds: string[]) =>
-      orpc.setCallupSquad({ teamId, activityId, memberIds }),
+    // `criteria` left out keeps what is stored; null clears it (ADR-028).
+    mutationFn: (input: {
+      memberIds: string[];
+      criteria?: CallupCriteria | null;
+    }) => orpc.setCallupSquad({ teamId, activityId, ...input }),
     onSuccess: () => invalidateCallup(teamId, activityId),
   });
 }

@@ -20,6 +20,13 @@ import {
   setCallupSquadHandler,
   updateCallupHandler,
 } from "./procedures/callups.js";
+import { callupCandidatesHandler } from "./procedures/callup-candidates.js";
+import {
+  archiveCallupTemplateHandler,
+  createCallupTemplateHandler,
+  listCallupTemplatesHandler,
+  updateCallupTemplateHandler,
+} from "./procedures/callup-templates.js";
 import {
   listCallupsHandler,
   myCallupsHandler,
@@ -226,6 +233,11 @@ export const router = os.router({
   getCallup: getCallupHandler,
   setCallupSquad: setCallupSquadHandler,
   updateCallup: updateCallupHandler,
+  callupCandidates: callupCandidatesHandler,
+  listCallupTemplates: listCallupTemplatesHandler,
+  createCallupTemplate: createCallupTemplateHandler,
+  updateCallupTemplate: updateCallupTemplateHandler,
+  archiveCallupTemplate: archiveCallupTemplateHandler,
   respondToCallup: respondToCallupHandler,
   myCallups: myCallupsHandler,
   listCallups: listCallupsHandler,

@@ -1,15 +1,41 @@
-/** Call-up — squad selection (issue #16). */
+/** Call-up — squad selection (issue #16), with match levels (ADR-028). */
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type {
-  Activity,
-  CallupInvitation,
-  CallupResponse,
-  Member,
+import {
+  belowAttendance,
+  isCoachChild,
+  slotFill,
+  suggestSquad,
+  type Activity,
+  type CallupCandidate,
+  type CallupCriteria,
+  type CallupExclusion,
+  type CallupInvitation,
+  type CallupLevelScale,
+  type CallupResponse,
+  type CallupTemplate,
+  type Member,
+  type SquadSuggestion,
 } from "@fc-app/contracts";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import {
+  criteriaEqual,
+  criteriaFromTemplate,
+  levelName,
+  slotLabel,
+  useCallupCandidates,
+  useCallupTemplates,
+} from "@/lib/callup-criteria";
 import { useRespondToCallup } from "@/lib/callup-responses";
 import {
   countResponses,
@@ -61,6 +87,20 @@ export function CallupSection({
   const [squad, setSquad] = useState<Set<string>>(new Set());
   useEffect(() => setSquad(saved), [saved]);
 
+  /** The match level and mix, as saved and as being edited. */
+  const savedCriteria = callup.data?.criteria ?? null;
+  const [criteria, setCriteria] = useState<CallupCriteria | null>(null);
+  useEffect(() => setCriteria(savedCriteria), [savedCriteria]);
+  const [suggestion, setSuggestion] = useState<SquadSuggestion | null>(null);
+
+  const templates = useCallupTemplates(teamId);
+  const candidates = useCallupCandidates(
+    teamId,
+    activity.id,
+    criteria?.templateId ?? null,
+    canManage,
+  );
+
   if (members.isPending || callup.isPending) {
     return <p className="text-muted-foreground">{t("common.loading")}</p>;
   }
@@ -85,7 +125,33 @@ export function CallupSection({
   const counts = countResponses(
     [...squad].map((memberId) => ({ response: responseOf(memberId) })),
   );
-  const dirty = squadChanged(squad, saved);
+  const criteriaDirty = !criteriaEqual(criteria, savedCriteria);
+  const dirty = squadChanged(squad, saved) || criteriaDirty;
+
+  const scale = candidates.data?.scale ?? null;
+  const candidateById = new Map(
+    (candidates.data?.candidates ?? []).map((one) => [one.memberId, one]),
+  );
+  const exclusionOf = (memberId: string): CallupExclusion | null => {
+    const candidate = candidateById.get(memberId);
+    if (!candidate || !criteria) return null;
+    if (candidate.level === null) return "noLevel";
+    return belowAttendance(candidate, criteria.minAttendanceRate)
+      ? "lowAttendance"
+      : null;
+  };
+
+  const propose = () => {
+    if (!criteria || !candidates.data) return;
+    const result = suggestSquad(
+      candidates.data.candidates,
+      criteria.slots,
+      criteria.minAttendanceRate,
+      criteria.minCoachChildren,
+    );
+    setSuggestion(result);
+    setSquad(new Set(result.picked.map((one) => one.memberId)));
+  };
 
   const toggle = (memberId: string) =>
     setSquad((current) => {
@@ -159,6 +225,26 @@ export function CallupSection({
         </Alert>
       )}
 
+      {canManage && (
+        <CriteriaPanel
+          templates={templates.data?.templates ?? []}
+          criteria={criteria}
+          scale={scale}
+          period={candidates.data?.period ?? null}
+          loading={candidates.isFetching}
+          squad={[...squad].flatMap((id) => {
+            const one = candidateById.get(id);
+            return one ? [one] : [];
+          })}
+          suggestion={suggestion}
+          onChange={(next) => {
+            setCriteria(next);
+            setSuggestion(null);
+          }}
+          onPropose={propose}
+        />
+      )}
+
       {canManage && (groups.data?.groups.length ?? 0) > 0 && (
         <div className="flex flex-wrap items-center gap-2">
           <span className="kit-overline">{t("callups.addGroup")}</span>
@@ -188,6 +274,10 @@ export function CallupSection({
             teamId={teamId}
             activityId={activity.id}
             onToggle={() => toggle(member.id)}
+            candidate={criteria ? candidateById.get(member.id) : undefined}
+            scale={scale}
+            exclusion={exclusionOf(member.id)}
+            minAttendanceRate={criteria?.minAttendanceRate ?? null}
           />
         ))}
       </div>
@@ -211,14 +301,23 @@ export function CallupSection({
               <Button
                 variant="outline"
                 disabled={saveSquad.isPending}
-                onClick={() => setSquad(saved)}
+                onClick={() => {
+                  setSquad(saved);
+                  setCriteria(savedCriteria);
+                  setSuggestion(null);
+                }}
               >
                 {t("attendance.discard")}
               </Button>
             )}
             <Button
               disabled={!dirty || saveSquad.isPending}
-              onClick={() => saveSquad.mutate([...squad])}
+              onClick={() =>
+                saveSquad.mutate({
+                  memberIds: [...squad],
+                  ...(criteriaDirty && { criteria }),
+                })
+              }
             >
               {t("callups.save", { count: counts.squad })}
             </Button>
@@ -273,6 +372,10 @@ function SquadRow({
   teamId,
   activityId,
   onToggle,
+  candidate,
+  scale,
+  exclusion,
+  minAttendanceRate,
 }: {
   member: Member;
   inSquad: boolean;
@@ -283,6 +386,11 @@ function SquadRow({
   teamId: string;
   activityId: string;
   onToggle: () => void;
+  /** Level, attendance and matches — present once a match level is chosen. */
+  candidate?: CallupCandidate | undefined;
+  scale: CallupLevelScale | null;
+  exclusion: CallupExclusion | null;
+  minAttendanceRate: number | null;
 }) {
   const { t } = useTranslation();
   const respond = useRespondToCallup();
@@ -337,6 +445,14 @@ function SquadRow({
             </span>
           )}
         </span>
+        {candidate && (
+          <CandidateLine
+            candidate={candidate}
+            scale={scale}
+            exclusion={exclusion}
+            minAttendanceRate={minAttendanceRate}
+          />
+        )}
       </span>
 
       {/* Recording "he phoned to say he can't make it" — the way a good half
@@ -408,5 +524,310 @@ function SquadRow({
         )
       )}
     </div>
+  );
+}
+
+/**
+ * The match level, the mix it asks for and how full each slot is with the
+ * squad on screen. Proposing replaces the picked squad but saves nothing —
+ * a proposal is a draft like any other (ADR-013).
+ */
+function CriteriaPanel({
+  templates,
+  criteria,
+  scale,
+  period,
+  loading,
+  squad,
+  suggestion,
+  onChange,
+  onPropose,
+}: {
+  templates: CallupTemplate[];
+  criteria: CallupCriteria | null;
+  scale: CallupLevelScale | null;
+  period: { seasonName: string | null } | null;
+  loading: boolean;
+  squad: CallupCandidate[];
+  suggestion: SquadSuggestion | null;
+  onChange: (criteria: CallupCriteria | null) => void;
+  onPropose: () => void;
+}) {
+  const { t } = useTranslation();
+  const NONE = "__none__";
+
+  if (templates.length === 0 && criteria === null) {
+    return (
+      <p className="text-muted-foreground text-sm">
+        {t("callupCriteria.noTemplates")}
+      </p>
+    );
+  }
+
+  const fill = criteria ? slotFill(squad, criteria.slots) : null;
+  const coachChildrenPicked = squad.filter(isCoachChild);
+  const wanted = criteria?.slots.reduce((sum, slot) => sum + slot.count, 0) ?? 0;
+
+  const setCount = (index: number, count: number) => {
+    if (!criteria) return;
+    onChange({
+      ...criteria,
+      slots: criteria.slots.map((slot, i) =>
+        i === index ? { ...slot, count: Math.max(1, count) } : slot,
+      ),
+    });
+  };
+
+  return (
+    <div className="bg-card flex flex-col gap-4 rounded-xl p-4 kit:p-5">
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="flex min-w-48 flex-1 flex-col gap-1.5">
+          <span className="kit-overline">{t("callupCriteria.level")}</span>
+          <Select
+            value={criteria?.templateId ?? NONE}
+            onValueChange={(value) => {
+              const template = templates.find((one) => one.id === value);
+              onChange(template ? criteriaFromTemplate(template) : null);
+            }}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NONE}>{t("callupCriteria.noLevel")}</SelectItem>
+              {templates.map((template) => (
+                <SelectItem key={template.id} value={template.id}>
+                  {template.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {criteria && (
+          <div className="flex w-40 flex-col gap-1.5">
+            <label htmlFor="callup-min-rate" className="kit-overline">
+              {t("callupCriteria.minRate")}
+            </label>
+            <Input
+              id="callup-min-rate"
+              inputMode="numeric"
+              value={
+                criteria.minAttendanceRate === null
+                  ? ""
+                  : String(criteria.minAttendanceRate)
+              }
+              placeholder="—"
+              onChange={(event) => {
+                const raw = event.target.value.trim();
+                const value = Number(raw);
+                if (raw !== "" && (!Number.isInteger(value) || value < 0 || value > 100)) {
+                  return;
+                }
+                onChange({
+                  ...criteria,
+                  minAttendanceRate: raw === "" ? null : value,
+                });
+              }}
+            />
+          </div>
+        )}
+
+        {criteria && (
+          <Button
+            variant="brand"
+            disabled={loading || scale === null}
+            onClick={onPropose}
+          >
+            {t("callupCriteria.propose")}
+          </Button>
+        )}
+      </div>
+
+      {criteria && scale && fill && (
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-wrap gap-2">
+            {criteria.slots.map((slot, index) => {
+              const filled = fill.filled[index] ?? 0;
+              return (
+                <div
+                  key={index}
+                  className={cn(
+                    "flex items-center gap-2 rounded-lg px-3 py-2",
+                    filled >= slot.count
+                      ? "bg-surface-present"
+                      : "bg-secondary",
+                  )}
+                >
+                  <span className="text-sm font-semibold">
+                    {slotLabel(slot, scale)}
+                  </span>
+                  <span className="font-display text-lg leading-none">
+                    {filled}
+                    <span className="text-muted-foreground">/{slot.count}</span>
+                  </span>
+                  <span className="flex">
+                    <button
+                      type="button"
+                      aria-label={t("callupCriteria.fewer", {
+                        slot: slotLabel(slot, scale),
+                      })}
+                      disabled={slot.count <= 1}
+                      onClick={() => setCount(index, slot.count - 1)}
+                      className="hover:bg-card size-tap rounded-full text-sm font-bold disabled:opacity-30 kit:size-7"
+                    >
+                      −
+                    </button>
+                    <button
+                      type="button"
+                      aria-label={t("callupCriteria.more", {
+                        slot: slotLabel(slot, scale),
+                      })}
+                      onClick={() => setCount(index, slot.count + 1)}
+                      className="hover:bg-card size-tap rounded-full text-sm font-bold kit:size-7"
+                    >
+                      +
+                    </button>
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+          {criteria.minCoachChildren > 0 && (
+            <p
+              className={cn(
+                "text-sm font-semibold",
+                coachChildrenPicked.length < criteria.minCoachChildren &&
+                  "text-absent",
+              )}
+            >
+              {t("callupCriteria.coachChildren", {
+                picked: coachChildrenPicked.length,
+                wanted: criteria.minCoachChildren,
+              })}
+              {coachChildrenPicked.length > 0 &&
+                ` · ${t("callupCriteria.coaching", {
+                  names: [
+                    ...new Set(coachChildrenPicked.flatMap((c) => c.coachNames)),
+                  ].join(", "),
+                })}`}
+            </p>
+          )}
+          <p className="text-muted-foreground text-xs">
+            {t("callupCriteria.wanted", { count: wanted })}
+            {fill.unplaced.length > 0 &&
+              ` · ${t("callupCriteria.unplaced", { count: fill.unplaced.length })}`}
+            {" · "}
+            {period?.seasonName
+              ? t("callupCriteria.periodSeason", { season: period.seasonName })
+              : t("callupCriteria.periodFallback")}
+          </p>
+        </div>
+      )}
+
+      {suggestion && scale && criteria && (
+        <SuggestionSummary
+          suggestion={suggestion}
+          criteria={criteria}
+          scale={scale}
+        />
+      )}
+    </div>
+  );
+}
+
+function SuggestionSummary({
+  suggestion,
+  criteria,
+  scale,
+}: {
+  suggestion: SquadSuggestion;
+  criteria: CallupCriteria;
+  scale: CallupLevelScale;
+}) {
+  const { t } = useTranslation();
+  const low = suggestion.excluded.filter((one) => one.reason === "lowAttendance").length;
+  const noLevel = suggestion.excluded.filter((one) => one.reason === "noLevel").length;
+  return (
+    <div className="flex flex-col gap-1 text-sm">
+      <p className="font-semibold">
+        {t("callupCriteria.proposed", { count: suggestion.picked.length })}
+      </p>
+      {suggestion.coachChildrenMissing > 0 && (
+        <p className="text-absent">
+          {t("callupCriteria.noCoach", {
+            count: suggestion.coachChildrenMissing,
+          })}
+        </p>
+      )}
+      {suggestion.unfilled.map((one) => {
+        const slot = criteria.slots[one.slotIndex];
+        if (!slot) return null;
+        return (
+          <p key={one.slotIndex} className="text-absent">
+            {t("callupCriteria.short", {
+              count: one.missing,
+              slot: slotLabel(slot, scale),
+            })}
+          </p>
+        );
+      })}
+      {(low > 0 || noLevel > 0) && (
+        <p className="text-muted-foreground">
+          {[
+            low > 0 && t("callupCriteria.excludedLow", { count: low }),
+            noLevel > 0 && t("callupCriteria.excludedNoLevel", { count: noLevel }),
+          ]
+            .filter(Boolean)
+            .join(" · ")}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/** "Lätt/Medel · 82 % träning · 3 matcher" — why a player was or was not proposed. */
+function CandidateLine({
+  candidate,
+  scale,
+  exclusion,
+  minAttendanceRate,
+}: {
+  candidate: CallupCandidate;
+  scale: CallupLevelScale | null;
+  exclusion: CallupExclusion | null;
+  minAttendanceRate: number | null;
+}) {
+  const { t } = useTranslation();
+  const parts = [
+    candidate.level === null || scale === null
+      ? t("callupCriteria.levelUnknown")
+      : levelName(scale, candidate.level),
+    candidate.attendanceRate === null
+      ? t("callupCriteria.noTraining")
+      : t("callupCriteria.training", { rate: candidate.attendanceRate }),
+    t("callupCriteria.matches", { count: candidate.matchesPlayed }),
+  ];
+  return (
+    <span className="text-muted-foreground flex flex-wrap items-center gap-x-1.5 text-xs">
+      {parts.join(" · ")}
+      {isCoachChild(candidate) && (
+        <span
+          className="rounded-pill bg-secondary text-foreground px-2 py-px text-[11px] font-bold"
+          title={candidate.coachNames.join(", ")}
+        >
+          {t("callupCriteria.coachChild")}
+        </span>
+      )}
+      {exclusion && (
+        <span className="rounded-pill bg-surface-absent text-absent px-2 py-px text-[11px] font-bold">
+          {exclusion === "noLevel"
+            ? t("callupCriteria.exclusion.noLevel")
+            : t("callupCriteria.exclusion.lowAttendance", {
+                rate: minAttendanceRate ?? 0,
+              })}
+        </span>
+      )}
+    </span>
   );
 }

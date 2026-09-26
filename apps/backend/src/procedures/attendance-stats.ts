@@ -49,7 +49,7 @@ async function selectActivityIds(
 }
 
 /** The statuses that count towards presence, per this team's configuration. */
-async function presentStatusIds(
+export async function presentStatusIds(
   db: Kysely<Database>,
   teamId: string
 ): Promise<Set<string>> {
