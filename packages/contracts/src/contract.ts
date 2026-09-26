@@ -18,7 +18,7 @@ import { archiveMemberFieldInputSchema, archiveMemberFieldOutputSchema, createMe
 import { commitMemberImportInputSchema, commitMemberImportOutputSchema, previewMemberImportInputSchema, previewMemberImportOutputSchema } from "./member-import.js";
 import { createPostInputSchema, createPostOutputSchema, deletePostInputSchema, deletePostOutputSchema, getPostInputSchema, getPostOutputSchema, listPostsInputSchema, listPostsOutputSchema, setPostPublishedInputSchema, setPostPublishedOutputSchema, updatePostInputSchema, updatePostOutputSchema } from "./posts.js";
 import { createRoleInputSchema, createRoleOutputSchema, deleteRoleInputSchema, deleteRoleOutputSchema, listRolesInputSchema, listRolesOutputSchema, updateRoleInputSchema, updateRoleOutputSchema } from "./roles.js";
-import { siteAdminClubInputSchema, siteAdminClubOutputSchema, siteAdminCreateUserInputSchema, siteAdminCreateUserOutputSchema } from "./site-admin.js";
+import { siteAdminClubInputSchema, siteAdminClubOutputSchema, siteAdminCreateUserInputSchema, siteAdminCreateUserOutputSchema, siteAdminSetPasswordInputSchema, siteAdminSetPasswordOutputSchema, siteAdminUsersInputSchema, siteAdminUsersOutputSchema } from "./site-admin.js";
 import { createSeasonInputSchema, createSeasonOutputSchema, deleteSeasonInputSchema, deleteSeasonOutputSchema, listSeasonsInputSchema, listSeasonsOutputSchema, updateSeasonInputSchema, updateSeasonOutputSchema } from "./seasons.js";
 import { archiveTrackingDefinitionInputSchema, archiveTrackingDefinitionOutputSchema, createTrackingDefinitionInputSchema, createTrackingDefinitionOutputSchema, listTrackingDefinitionsInputSchema, listTrackingDefinitionsOutputSchema, memberTrackingInputSchema, memberTrackingOutputSchema, setTrackingEntryInputSchema, setTrackingEntryOutputSchema, trackingMatrixInputSchema, trackingMatrixOutputSchema, updateTrackingDefinitionInputSchema, updateTrackingDefinitionOutputSchema } from "./tracking.js";
 import { archiveDevelopmentMetricInputSchema, archiveDevelopmentMetricOutputSchema, createDevelopmentMetricInputSchema, createDevelopmentMetricOutputSchema, deleteDevelopmentAssessmentInputSchema, deleteDevelopmentAssessmentOutputSchema, listDevelopmentMetricsInputSchema, listDevelopmentMetricsOutputSchema, memberDevelopmentInputSchema, memberDevelopmentOutputSchema, saveDevelopmentAssessmentInputSchema, saveDevelopmentAssessmentOutputSchema, teamDevelopmentInputSchema, teamDevelopmentOutputSchema, updateDevelopmentMetricInputSchema, updateDevelopmentMetricOutputSchema } from "./development.js";
@@ -46,6 +46,14 @@ export const contract = oc.router({
     .route({ method: "POST", path: "/site-admin/users" })
     .input(siteAdminCreateUserInputSchema)
     .output(siteAdminCreateUserOutputSchema),
+  siteAdminUsers: oc
+    .route({ method: "GET", path: "/site-admin/users" })
+    .input(siteAdminUsersInputSchema)
+    .output(siteAdminUsersOutputSchema),
+  siteAdminSetPassword: oc
+    .route({ method: "POST", path: "/site-admin/users/password" })
+    .input(siteAdminSetPasswordInputSchema)
+    .output(siteAdminSetPasswordOutputSchema),
   myClubs: oc
     .route({ method: "GET", path: "/my-clubs" })
     .input(myClubsInputSchema)

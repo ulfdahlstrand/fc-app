@@ -69,7 +69,7 @@ tracked items) is **configuration data, not code**.
 | Team settings | `/settings/team` | A section menu over coaches of the team (admin only), activity types, attendance statuses, seasons, adding a member and inviting imported guardians, member field definitions, tracking list definitions, development metrics. One section at a time, addressed by `?section=` |
 | Club settings | `/settings/club` | Club profile, teams, roles & permissions, users & invitations |
 | My profile | `/profile` | Own account, linked members, language |
-| Site admin | `/admin` | Site admins only (ADR-025): create an account with email and password, placed in the current club with a role |
+| Site admin | `/admin` | Site admins only (ADR-025, ADR-026): create an account with email and password, placed in the current club with a role; below that every account in the installation, searchable, with a new password for one that already has one |
 
 ## Features by area
 
@@ -85,6 +85,12 @@ tracked items) is **configuration data, not code**.
   and place it in a club with a role. It only creates: an address that already
   has an account is refused. Signing in with a password works without mail;
   registering and resetting wait until mail is configured.
+- A site admin also **sees every account** in the installation, searched by name
+  or address, with how each one signs in and which clubs and teams it belongs
+  to, and can **give one a new password** (ADR-026) — but only an account that
+  already has one, never a Google account, whose owner proved that address to
+  Google. The new password signs the account out everywhere, and the page can
+  suggest a readable strong one so nobody has to invent it.
 - Create club → creates first team, seeds default configuration, makes creator `Admin`.
 - Invite users by link/email with a preset role; configurable roles per club.
 - **Coaches per team** (`/settings/team`, `settings.club`): a membership scoped

@@ -237,7 +237,8 @@
     "close": "Stäng",
     "back": "Tillbaka",
     "yes": "Ja",
-    "no": "Nej"
+    "no": "Nej",
+    "copied": "Kopierad!"
   },
   "permissions": {
     "members.view": "Se medlemmar",
@@ -972,9 +973,34 @@
     "clubWide": "Hela klubben",
     "create": "Skapa användare",
     "created": "Konto skapat för {{email}}. De kan logga in med e-post och lösenordet du valde.",
+    "suggestPassword": "Föreslå säkert lösenord",
+    "copyPassword": "Kopiera lösenord",
+    "users": "Användare",
+    "usersHelp": "Alla konton i installationen. Sök på namn eller e-post.",
+    "search": "Sök",
+    "usersEmpty": "Inga konton matchar sökningen.",
+    "usersTruncated": "Visar de första {{shown}} kontona. Sök för att hitta ett särskilt konto.",
+    "signsInWithPassword": "Lösenord",
+    "signsInWithGoogle": "Google",
+    "signsInWithNothing": "Har aldrig loggat in",
+    "isSiteAdmin": "Webbplatsadmin",
+    "noMemberships": "Inget lag eller klubb ännu.",
+    "createdOn": "Skapat {{date}}",
+    "setPassword": "Sätt nytt lösenord",
+    "setPasswordUnavailableGoogle": "Kontot loggar in med Google. Sätt inget lösenord åt det — ägaren äger adressen hos Google.",
+    "setPasswordUnavailableNoPassword": "Kontot har inget lösenord ännu. Här byts ett lösenord, det läggs inte till.",
+    "setPasswordFor": "Nytt lösenord för {{name}}",
+    "newPassword": "Nytt lösenord",
+    "newPasswordHelp": "Minst {{min}} tecken. Syns medan du skriver, eftersom du ska lämna det vidare.",
+    "passwordSet": "Lösenordet är bytt. Lämna över {{password}} — det visas inte igen.",
+    "sessionsEnded_one": "{{count}} inloggning avslutades. Kontot är utloggat överallt och måste logga in med det nya lösenordet.",
+    "sessionsEnded_other": "{{count}} inloggningar avslutades. Kontot är utloggat överallt och måste logga in med det nya lösenordet.",
     "errors": {
       "emailTaken": "Adressen har redan ett konto. Lägg till den i klubben med en inbjudan i stället.",
-      "failed": "Kontot kunde inte skapas. Försök igen."
+      "failed": "Kontot kunde inte skapas. Försök igen.",
+      "noPassword": "Kontot har inget lösenord att byta. Det loggar in med Google.",
+      "passwordFailed": "Lösenordet kunde inte bytas. Försök igen.",
+      "usersFailed": "Kunde inte ladda användarna."
     },
     "validation": {
       "name": {
