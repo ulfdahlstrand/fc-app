@@ -10,11 +10,13 @@ import { formatDateLong, SEPARATOR, useDateLocale } from "@/lib/dates";
 import {
   CHART_VIEW_BOX,
   chartBounds,
+  chartPercent,
   formatMetricNumber,
   isChartable,
   latestAndDelta,
   readingLabel,
   polylinePoints,
+  scaleGridLines,
   scaleLabelFor,
   seriesForMetric,
   sparklinePoints,
@@ -250,7 +252,9 @@ function MetricCard({
   const reading = latestAndDelta(series, metric.higherIsBetter);
   if (!reading) return null;
 
-  const points = sparklinePoints(series, chartBounds(metric));
+  const bounds = chartBounds(metric);
+  const points = sparklinePoints(series, bounds);
+  const gridLines = scaleGridLines(bounds);
   const latestName = scaleLabelFor(metric, reading.latest.value);
 
   return (
@@ -296,43 +300,56 @@ function MetricCard({
       {/* A single reading is a number, not a trend — drawing a line through one
           point would suggest a history that is not there. */}
       {series.length > 1 && (
-        <svg
-          viewBox={CHART_VIEW_BOX}
-          // Stretches to the card's width on any shell, which is what the
-          // phone needs (DDR-010); the stroke is kept from stretching with it.
-          preserveAspectRatio="none"
-          className="mt-2 h-10 w-full"
-          role="img"
-          // Named steps read better than their numbers in a screen reader:
-          // "from Lätt to Svår" is the sentence a coach would say.
-          aria-label={t("development.trendLabel", {
-            metric: metric.name,
-            from: scaleLabelFor(metric, series[0]!.value) ?? series[0]!.value,
-            to:
-              scaleLabelFor(metric, series.at(-1)!.value) ??
-              series.at(-1)!.value,
-          })}
-        >
-          <polyline
-            points={polylinePoints(points)}
-            fill="none"
-            stroke="var(--green-500)"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            vectorEffect="non-scaling-stroke"
-          />
-          {points.map((point, index) => (
-            <circle
-              key={series[index]!.assessedOn}
-              cx={point.x}
-              cy={point.y}
-              r="2"
-              fill="var(--green-500)"
+        <div className="relative mt-3 h-16 w-full">
+          <svg
+            viewBox={CHART_VIEW_BOX}
+            // Stretches to the card's width on any shell, which is what the
+            // phone needs (DDR-010); the stroke is kept from stretching with it.
+            preserveAspectRatio="none"
+            className="absolute inset-0 h-full w-full overflow-visible"
+            role="img"
+            // Named steps read better than their numbers in a screen reader:
+            // "from Lätt to Svår" is the sentence a coach would say.
+            aria-label={t("development.trendLabel", {
+              metric: metric.name,
+              from: scaleLabelFor(metric, series[0]!.value) ?? series[0]!.value,
+              to:
+                scaleLabelFor(metric, series.at(-1)!.value) ??
+                series.at(-1)!.value,
+            })}
+          >
+            {gridLines.map((y) => (
+              <line
+                key={y}
+                x1="0"
+                x2="100"
+                y1={y}
+                y2={y}
+                stroke="var(--neutral-150)"
+                strokeWidth="1"
+                vectorEffect="non-scaling-stroke"
+              />
+            ))}
+            <polyline
+              points={polylinePoints(points)}
+              fill="none"
+              stroke="var(--green-500)"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
               vectorEffect="non-scaling-stroke"
             />
+          </svg>
+          {/* Outside the SVG so the stretch does not squash them into ovals. */}
+          {points.map((point, index) => (
+            <span
+              key={series[index]!.assessedOn}
+              aria-hidden
+              className="absolute size-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--green-500)]"
+              style={chartPercent(point)}
+            />
           ))}
-        </svg>
+        </div>
       )}
     </Card>
   );
