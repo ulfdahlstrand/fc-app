@@ -13,5 +13,5 @@ export const meHandler = os.me.handler(async ({ context }) => {
 
 /** Public, like `me`: the login page asks before anybody is signed in. */
 export const authOptionsHandler = os.authOptions.handler(async () => {
-  return { passwordLogin: canSendMail() };
+  return { passwordSignup: canSendMail() };
 });

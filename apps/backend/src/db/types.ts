@@ -9,6 +9,8 @@ export interface UsersTable {
   email: string;
   name: string;
   image_url: string | null;
+  /** Set with SQL only, never through the app (ADR-025). */
+  is_site_admin: Generated<boolean>;
   created_at: Timestamp;
   updated_at: ColumnType<Date, never, Date>;
 }

@@ -138,7 +138,8 @@
     "menu": "Meny",
     "menuTeam": "Lag",
     "menuClub": "Klubb",
-    "profile": "Profil"
+    "profile": "Profil",
+    "siteAdmin": "Webbplatsadmin"
   },
   "members": {
     "heading": "Medlemmar",
@@ -953,6 +954,41 @@
     "match": {
       "externalId": "SportAdmin-id",
       "name": "namn"
+    }
+  },
+  "siteAdmin": {
+    "heading": "Webbplatsadmin",
+    "description": "För den som driver appen. Det du gör här gäller mer än en enskild klubb.",
+    "noClub": "Välj ett lag först — ett nytt konto hamnar i klubben du tittar på.",
+    "createUser": "Skapa användare",
+    "createUserHelp": "Ett konto som loggar in med e-post och lösenord, i {{club}}. Lämna över lösenordet själv; inget mejl skickas.",
+    "name": "Namn",
+    "email": "E-postadress",
+    "password": "Lösenord",
+    "passwordHelp": "Minst {{min}} tecken. Syns medan du skriver, eftersom du ska lämna det vidare.",
+    "role": "Roll",
+    "chooseRole": "Välj en roll",
+    "team": "Lag",
+    "clubWide": "Hela klubben",
+    "create": "Skapa användare",
+    "created": "Konto skapat för {{email}}. De kan logga in med e-post och lösenordet du valde.",
+    "errors": {
+      "emailTaken": "Adressen har redan ett konto. Lägg till den i klubben med en inbjudan i stället.",
+      "failed": "Kontot kunde inte skapas. Försök igen."
+    },
+    "validation": {
+      "name": {
+        "too_small": "Ange ett namn."
+      },
+      "email": {
+        "invalid_format": "Ange en giltig e-postadress."
+      },
+      "password": {
+        "too_small": "Lösenordet är för kort."
+      },
+      "roleId": {
+        "too_small": "Välj en roll."
+      }
     }
   }
 }

@@ -144,6 +144,19 @@ To run migrations by hand:
 DATABASE_URL='postgresql://…' npm run migrate:deploy -w apps/backend
 ```
 
+## Site admins
+
+A site admin can create accounts with an email and password from `/admin`,
+reached through the user menu, so people without Google can sign in before mail
+is configured (ADR-025). The flag is set with SQL and never through the app —
+against Neon for production, or the local database:
+
+```bash
+psql "$DATABASE_URL" -c "UPDATE users SET is_site_admin = true WHERE lower(email) = 'you@example.com';"
+```
+
+No need to sign out and back in; the next page load picks it up.
+
 ## Environment variables
 
 `render.yaml` sets these; they are listed here so the deployed contract is
@@ -158,7 +171,7 @@ readable in one place.
 | `GOOGLE_CLIENT_ID` / `_SECRET` | api | You | |
 | `AUTH_CALLBACK_URL` | api | You | The **web** origin + `/api/auth/google/callback`. Must match Google Cloud Console exactly. |
 | `FRONTEND_URL` | api | You | Redirect target, CORS origin, the only `Origin` the password routes accept, and the base of the links in sign-in mails. |
-| `RESEND_API_KEY` | api | You | Sends the verification and password-reset mails (ADR-024). Email and password sign-in stays hidden until this **and** `MAIL_FROM` are set. |
+| `RESEND_API_KEY` | api | You | Sends the verification and password-reset mails (ADR-024). Signing in with a password always works; registering and resetting stay hidden until this **and** `MAIL_FROM` are set (ADR-025). |
 | `MAIL_FROM` | api | You | E.g. `FC App <noreply@your-domain>`. The domain must be verified in Resend. |
 | `VITE_API_URL=/api` | web | `render.yaml` | Build-time. Relative, so it resolves to the page's own origin. |
 | `VITE_ENABLE_DEV_LOGIN=false` | web | `render.yaml` | |

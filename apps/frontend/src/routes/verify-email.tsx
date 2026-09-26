@@ -13,13 +13,13 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   PasswordAuthError,
-  isPasswordLoginEnabled,
+  isPasswordSignupEnabled,
   verifyEmail,
 } from "../lib/password-auth";
 
 export const Route = createFileRoute("/verify-email")({
   beforeLoad: async () => {
-    if (!(await isPasswordLoginEnabled())) throw redirect({ to: "/login" });
+    if (!(await isPasswordSignupEnabled())) throw redirect({ to: "/login" });
   },
   component: VerifyEmailPage,
 });

@@ -116,7 +116,9 @@ export async function createTestUser(
   return {
     userId: user.id,
     email,
-    context: { user: { id: user.id, email, name, imageUrl: null } },
+    context: {
+      user: { id: user.id, email, name, imageUrl: null, isSiteAdmin: false },
+    },
   };
 }
 

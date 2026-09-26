@@ -17,18 +17,21 @@ import { queryClient } from "../query-client";
 import { getApiUrl } from "./api-url";
 import { orpcQuery } from "./orpc-query";
 
-/** Whether the API offers email and password at all (off until mail works). */
+/**
+ * Which password flows the API offers. Signing in is always on; registering and
+ * resetting by email are off until mail works (ADR-024, ADR-025).
+ */
 export const authOptionsQueryOptions = orpcQuery.authOptions.queryOptions({
   input: {},
   staleTime: Infinity,
 });
 
-/** For the password pages' guards: are they reachable at all? */
-export async function isPasswordLoginEnabled(): Promise<boolean> {
-  const { passwordLogin } = await queryClient.ensureQueryData(
+/** For the mail-backed password pages' guards: are they reachable at all? */
+export async function isPasswordSignupEnabled(): Promise<boolean> {
+  const { passwordSignup } = await queryClient.ensureQueryData(
     authOptionsQueryOptions
   );
-  return passwordLogin;
+  return passwordSignup;
 }
 
 /** What a failed call is about — each has its own message on screen. */

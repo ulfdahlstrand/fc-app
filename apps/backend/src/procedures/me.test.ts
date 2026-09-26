@@ -8,6 +8,7 @@ const USER = {
   name: "Alice",
   email: "alice@example.com",
   imageUrl: null,
+  isSiteAdmin: false,
 };
 
 describe("me", () => {

@@ -7,6 +7,8 @@ export const userSchema = z.object({
   name: z.string(),
   email: z.string(),
   imageUrl: z.string().nullable(),
+  /** Runs the installation, above every club (ADR-025). */
+  isSiteAdmin: z.boolean(),
 });
 
 export type User = z.infer<typeof userSchema>;
@@ -22,10 +24,12 @@ export const authOptionsInputSchema = z.object({});
 
 export const authOptionsOutputSchema = z.object({
   /**
-   * Email and password (ADR-024). Off until the API can send mail — a signup
-   * whose confirmation never arrives is a dead end, so it is not offered.
+   * Registering and resetting a password by email (ADR-024). Off until the API
+   * can send mail — a signup whose confirmation never arrives is a dead end, so
+   * it is not offered. Signing in with a password that already exists needs no
+   * mail and is always offered (ADR-025).
    */
-  passwordLogin: z.boolean(),
+  passwordSignup: z.boolean(),
 });
 
 

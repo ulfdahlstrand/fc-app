@@ -81,6 +81,18 @@ export const DESTINATIONS: readonly Destination[] = [
   },
 ];
 
+/**
+ * Site administration (ADR-025). Not in `DESTINATIONS`: it answers to the
+ * account's `isSiteAdmin` flag, not to a permission in the selected team, so
+ * the shells add it themselves beside the other `club` destinations.
+ */
+export const SITE_ADMIN_DESTINATION: Destination = {
+  to: "/admin",
+  labelKey: "siteAdmin",
+  anyOf: [],
+  group: "club",
+};
+
 /** Kit: five tabs at most, and the fifth is always `Menu`. */
 export const MAX_TABS = 4;
 

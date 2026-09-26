@@ -22,12 +22,12 @@ import {
   type ResetFormValues,
   resetFormSchema,
   resetPassword,
-  isPasswordLoginEnabled,
+  isPasswordSignupEnabled,
 } from "../lib/password-auth";
 
 export const Route = createFileRoute("/reset-password")({
   beforeLoad: async () => {
-    if (!(await isPasswordLoginEnabled())) throw redirect({ to: "/login" });
+    if (!(await isPasswordSignupEnabled())) throw redirect({ to: "/login" });
   },
   component: ResetPasswordPage,
 });

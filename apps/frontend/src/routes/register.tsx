@@ -17,13 +17,13 @@ import {
   type RegisterFormValues,
   registerFormSchema,
   registerWithPassword,
-  isPasswordLoginEnabled,
+  isPasswordSignupEnabled,
 } from "../lib/password-auth";
 
 export const Route = createFileRoute("/register")({
   beforeLoad: async () => {
     if (await ensureMe()) throw redirect({ to: "/" });
-    if (!(await isPasswordLoginEnabled())) throw redirect({ to: "/login" });
+    if (!(await isPasswordSignupEnabled())) throw redirect({ to: "/login" });
   },
   component: RegisterPage,
 });

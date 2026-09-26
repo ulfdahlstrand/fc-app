@@ -96,6 +96,10 @@ import {
 } from "./procedures/member-import.js";
 import { authOptionsHandler, meHandler } from "./procedures/me.js";
 import {
+  siteAdminClubHandler,
+  siteAdminCreateUserHandler,
+} from "./procedures/site-admin.js";
+import {
   createMemberHandler,
   getMemberHandler,
   listMembersHandler,
@@ -143,6 +147,8 @@ export const router = os.router({
   health: healthHandler,
   me: meHandler,
   authOptions: authOptionsHandler,
+  siteAdminClub: siteAdminClubHandler,
+  siteAdminCreateUser: siteAdminCreateUserHandler,
   myClubs: myClubsHandler,
   createClub: createClubHandler,
   listRoles: listRolesHandler,

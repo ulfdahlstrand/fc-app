@@ -1055,3 +1055,67 @@ register `coach@club.se`, receive the coach's appointment.
   out means moving them to the database.
 - ADR-004's "No passwords are ever stored" is replaced by "no password is ever
   stored in the clear, and none exists for an unproven address".
+
+---
+
+## ADR-025 — 2026-09-25 — Site admins create accounts; password sign-in no longer waits for mail
+
+**Status:** Accepted (amends ADR-024)
+
+**Context:**
+ADR-024 kept email and password switched off entirely until the API could send
+mail. That is a Resend account plus a verified sending domain, and the club has
+no domain yet — so families without Google still could not get in. What they
+need is an account somebody makes for them, with a password handed over in
+person. Nothing about *signing in* with a password needs mail; only registering
+and resetting do.
+
+The catch is ADR-024's central rule: an address is trusted only once a link
+sent to it has been used. An account made with a chosen address skips that
+proof, and the app matches invitations, coach appointments and contacts by
+address. Whoever made `coach@other.se` and knows its password would inherit what
+any club sends that address, and would still hold the password after the real
+owner later signed in with Google and was linked to the same account.
+
+**Decision:**
+- **A site admin** is an account with `users.is_site_admin = true`. The flag is
+  set with SQL and never through the app — no procedure grants it, not even to
+  another site admin. It sits above every club and is not a permission in the
+  catalog (ADR-005): it is about who runs the installation, not what a role in
+  a club may do.
+- A site admin may **create an account outright** — name, address, password —
+  and place it in a club with a role, club-wide or in one team
+  (`siteAdminCreateUser`, page `/admin`, reached from the user menu). This is
+  the one path where an address is trusted without proof, and it is sound only
+  because the person taking it could write the same rows with `psql`.
+- It **only ever creates**. An address that already has an account — Google or
+  password, in any letter case — is refused with `CONFLICT`: an existing
+  account belongs to whoever proved its address and must never gain a password
+  its owner did not choose. A pending signup for the address is spent, so its
+  link cannot attach a second password afterwards.
+- **Signing in with a password is always on.** `/auth/password/login` answers
+  whether or not mail works. `register`, `verify`, `forgot` and `reset` still
+  answer `404` until it does, and `authOptions` now says `passwordSignup` (was
+  `passwordLogin`): the login page always shows the email form, and shows
+  "Forgot password?" and "Create an account" only when mail can arrive.
+
+**Alternatives considered:**
+- **A club permission (`users.create`) held by Admin.** Every club admin could
+  then mint accounts for addresses that reach past their club — exactly the
+  inheritance ADR-024 exists to prevent — and guarding it would mean dropping
+  the admin-set password whenever the real owner later signs in with Google.
+- **Letting a site admin set the password of an existing account.** Takes an
+  account over rather than making one; a forgotten password is what the reset
+  link is for once mail works, and the operator can write a new hash by hand
+  in the meantime.
+- **Sending mail from Gmail over SMTP.** Render's free web services cannot open
+  ports 25, 465 or 587, so it would work locally and nowhere else.
+
+**Consequences:**
+- Someone given an account this way cannot reset a forgotten password until
+  mail is configured; the site admin has to set a new one by hand.
+- An account a site admin made is linked to the same person's Google sign-in
+  by address, like any other (ADR-004). The site admin knows its password until
+  the owner changes it — which is the trust this ADR places in the role.
+- Becoming a site admin, locally or in production:
+  `UPDATE users SET is_site_admin = true WHERE lower(email) = '…';`

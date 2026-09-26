@@ -138,7 +138,8 @@
     "menu": "Menu",
     "menuTeam": "Team",
     "menuClub": "Club",
-    "profile": "Profile"
+    "profile": "Profile",
+    "siteAdmin": "Site admin"
   },
   "members": {
     "heading": "Members",
@@ -953,6 +954,41 @@
     "match": {
       "externalId": "SportAdmin id",
       "name": "name"
+    }
+  },
+  "siteAdmin": {
+    "heading": "Site admin",
+    "description": "For whoever runs the app. What you do here reaches past any single club.",
+    "noClub": "Choose a team first — a new account is placed in the club you are looking at.",
+    "createUser": "Create a user",
+    "createUserHelp": "An account that signs in with email and password, placed in {{club}}. Hand the password over yourself; no mail is sent.",
+    "name": "Name",
+    "email": "Email address",
+    "password": "Password",
+    "passwordHelp": "At least {{min}} characters. Shown as you type, since you will pass it on.",
+    "role": "Role",
+    "chooseRole": "Choose a role",
+    "team": "Team",
+    "clubWide": "The whole club",
+    "create": "Create user",
+    "created": "Account created for {{email}}. They can sign in with email and the password you chose.",
+    "errors": {
+      "emailTaken": "That address already has an account. Add it to the club with an invitation instead.",
+      "failed": "The account could not be created. Please try again."
+    },
+    "validation": {
+      "name": {
+        "too_small": "Enter a name."
+      },
+      "email": {
+        "invalid_format": "Enter a valid email address."
+      },
+      "password": {
+        "too_small": "The password is too short."
+      },
+      "roleId": {
+        "too_small": "Choose a role."
+      }
     }
   }
 }

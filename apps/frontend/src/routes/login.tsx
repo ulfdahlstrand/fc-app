@@ -25,7 +25,7 @@ import {
   type LoginFormValues,
   PasswordAuthError,
   authOptionsQueryOptions,
-  isPasswordLoginEnabled,
+  isPasswordSignupEnabled,
   loginFormSchema,
   loginWithPassword,
 } from "../lib/password-auth";
@@ -45,9 +45,9 @@ export const Route = createFileRoute("/login")({
     if (user) {
       throw redirect({ to: "/" });
     }
-    // Loaded before render so the form does not pop in. If the API cannot
-    // say, Google alone is shown — the page must still work.
-    await isPasswordLoginEnabled().catch(() => false);
+    // Loaded before render so the links do not pop in. If the API cannot
+    // say, they stay hidden — the page must still work.
+    await isPasswordSignupEnabled().catch(() => false);
   },
   component: LoginPage,
 });
@@ -56,8 +56,11 @@ function LoginPage() {
   const { t } = useTranslation();
   const { error } = Route.useSearch();
   const navigate = useNavigate();
-  // Off until the API can send mail (ADR-024), and hidden while unknown.
-  const passwordLogin = useQuery(authOptionsQueryOptions).data?.passwordLogin;
+  // Signing in with a password needs no mail and is always offered — a site
+  // admin may have made the account (ADR-025). Registering and resetting do,
+  // so their links wait until the API can send it, and stay hidden while
+  // that is unknown (ADR-024).
+  const passwordSignup = useQuery(authOptionsQueryOptions).data?.passwordSignup;
 
   const form = useForm<LoginFormValues, unknown, LoginFormOutput>({
     resolver: useZodResolver(loginFormSchema, "login.validation"),
@@ -86,66 +89,64 @@ function LoginPage() {
         <a href={getGoogleSignInUrl()}>{t("login.google")}</a>
       </Button>
 
-      {passwordLogin && (
-        <>
-          <div
-            className="flex items-center gap-3 text-sm text-muted-foreground"
-            role="separator"
+      <div
+        className="flex items-center gap-3 text-sm text-muted-foreground"
+        role="separator"
+      >
+        <span className="h-px flex-1 bg-border" />
+        {t("login.or")}
+        <span className="h-px flex-1 bg-border" />
+      </div>
+
+      <Form {...form}>
+        <form
+          className="flex flex-col gap-4"
+          onSubmit={form.handleSubmit((input) => signIn.mutate(input))}
+          noValidate
+        >
+          {signIn.isError && (
+            <Alert variant="destructive">
+              <AlertDescription>
+                {t(`passwordAuth.errors.${errorCode}`)}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          <AuthTextField
+            control={form.control}
+            name="email"
+            type="email"
+            autoComplete="username"
+            label={t("passwordAuth.email")}
+          />
+          <AuthTextField
+            control={form.control}
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            label={t("passwordAuth.password")}
+          />
+
+          <Button
+            type="submit"
+            variant="outline"
+            size="lg"
+            disabled={signIn.isPending}
           >
-            <span className="h-px flex-1 bg-border" />
-            {t("login.or")}
-            <span className="h-px flex-1 bg-border" />
-          </div>
+            {t("login.withPassword")}
+          </Button>
+        </form>
+      </Form>
 
-          <Form {...form}>
-            <form
-              className="flex flex-col gap-4"
-              onSubmit={form.handleSubmit((input) => signIn.mutate(input))}
-              noValidate
-            >
-              {signIn.isError && (
-                <Alert variant="destructive">
-                  <AlertDescription>
-                    {t(`passwordAuth.errors.${errorCode}`)}
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              <AuthTextField
-                control={form.control}
-                name="email"
-                type="email"
-                autoComplete="username"
-                label={t("passwordAuth.email")}
-              />
-              <AuthTextField
-                control={form.control}
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                label={t("passwordAuth.password")}
-              />
-
-              <Button
-                type="submit"
-                variant="outline"
-                size="lg"
-                disabled={signIn.isPending}
-              >
-                {t("login.withPassword")}
-              </Button>
-            </form>
-          </Form>
-
-          <div className="flex flex-col items-center gap-1 text-sm">
-            <Button asChild variant="link" size="sm">
-              <Link to="/forgot-password">{t("login.forgotPassword")}</Link>
-            </Button>
-            <Button asChild variant="link" size="sm">
-              <Link to="/register">{t("login.createAccount")}</Link>
-            </Button>
-          </div>
-        </>
+      {passwordSignup && (
+        <div className="flex flex-col items-center gap-1 text-sm">
+          <Button asChild variant="link" size="sm">
+            <Link to="/forgot-password">{t("login.forgotPassword")}</Link>
+          </Button>
+          <Button asChild variant="link" size="sm">
+            <Link to="/register">{t("login.createAccount")}</Link>
+          </Button>
+        </div>
       )}
 
       {isDevLoginEnabled() && (
